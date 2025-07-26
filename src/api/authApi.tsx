@@ -1,7 +1,7 @@
 import { RegisterRequest,ILoginState, LoginResponse } from "@/types/auth";
 // src/api/authApi.ts
 
-const BASE = "https://localhost:44355/api/";
+const BASE = "http://localhost:5260/api/";
 
 export async function registerUser(data: RegisterRequest) {
   const response = await fetch(BASE + "users/register", {
