@@ -107,7 +107,7 @@ export const Login = () => {
             Don’t have an account?{" "}
             <span
               className="text-xs text-[#6270EF] font-semibold hover:underline cursor-pointer"
-              onClick={() => navigate("/register")}
+              onClick={() => navigate("/homepage")}
             >
               Signup Now
             </span>
