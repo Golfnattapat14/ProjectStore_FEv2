@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import catImage from "/assets/cat cute.jpeg";
+import catImage from "../../assets/catcute.jpeg";
 import { registerUser } from "@/api/authApi";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";

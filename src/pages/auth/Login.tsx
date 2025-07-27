@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import catImage from "../assets/cat cute.jpeg";
+import catImage from "../../assets/catcute.jpeg";
 import { loginUser } from "@/api/authApi";
 import {toast} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';

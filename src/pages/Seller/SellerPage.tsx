@@ -64,7 +64,7 @@ const SellerPage: React.FC = () => {
 
   const handleSignOut = () => {
     localStorage.clear();
-    window.location.href = "/login";
+    window.location.href = "/";
   };
 
   const handleDelete = async (id: string) => {
