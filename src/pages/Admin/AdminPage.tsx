@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { ProductResponse } from "@/types/product";
 import { deleteProduct, getProducts } from "@/api/Admin";
+import { useNavigate } from "react-router-dom";
 
 const Admin: React.FC = () => {
   const [products, setProducts] = useState<ProductResponse[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [errorProducts, setErrorProducts] = useState("");
+  const navigate = useNavigate();
 
   const fetchProducts = async () => {
     try {
@@ -106,9 +108,12 @@ const Admin: React.FC = () => {
                 >
                   {p.isActive ? "เปิดใช้งาน" : "ปิดใช้งาน"}
                 </td>
-                <td className="p-2 space-x-2">
-                  <button className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600">
-                    แก้ไขสินค้า
+                <td className="py-2 px-4 space-x-2">
+                  <button
+                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                    onClick={() => navigate(`/adminManageProducts/${p.id}`)}
+                  >
+                    แก้ไข
                   </button>
                   <button
                     className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"

@@ -61,6 +61,18 @@ export const NavbarComponent = () => {
           </div>
         </div>
 
+<div className="hidden lg:flex lg:flex-1 lg:justify-center gap-6">
+          {/* ลิงก์สำหรับ admin เท่านั้น */}
+          {role === "admin" && (
+            <Link
+              to="/admin"
+              className="text-blue-600 font-semibold hover:underline"
+            >
+              จัดการสินค้า
+            </Link>
+          )}
+        </div>
+
         <div className="hidden lg:flex lg:flex-1 lg:justify-center gap-6">
           {/* ลิงก์สำหรับ admin เท่านั้น */}
           {role === "admin" && (

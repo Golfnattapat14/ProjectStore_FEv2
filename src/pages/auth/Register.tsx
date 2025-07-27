@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import catImage from "../../assets/catcute.jpeg";
+import Shopay from "../../assets/Shopay.jpeg";
 import { registerUser } from "@/api/authApi";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -59,8 +59,8 @@ export const Register = () => {
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-6">
           <div className="flex flex-col items-center gap-4">
             <img
-              src={catImage}
-              alt="Cute Cat"
+              src={Shopay}
+              alt="Shopay"
               className="w-40 h-40 rounded-full object-cover"
             />
 

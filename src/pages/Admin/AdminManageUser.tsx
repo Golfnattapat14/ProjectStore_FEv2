@@ -1,7 +1,7 @@
 import React, { useState, useEffect, type ChangeEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { UpdateUserRequest,UserResponse } from "@/types/adminDashborad";
-import { updateUser,updateProduct, getUserById } from "@/api/Admin";
+import { updateUser, getUserById } from "@/api/Admin";
 
 const AdminManageUser: React.FC = () => {
   const { id } = useParams<{ id: string }>();

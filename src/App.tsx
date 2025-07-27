@@ -11,6 +11,7 @@ import AdminPage from "./pages/Admin/AdminPage";
 import { NavbarComponent } from "./components/layouts/navbar";
 import AdminManage from "./pages/Admin/AdminManage";
 import AdminManageUser from "./pages/Admin/AdminManageUser";
+import AdminManageProducts from "./pages/Admin/AdminManageProducts";
 
 const App = () => {
   const location = useLocation();
@@ -38,6 +39,8 @@ const App = () => {
         <Route path="/admin" element={<AdminPage />} />
         <Route path ="/adminManage" element={<AdminManage/>}></Route>
         <Route path ="/adminManageUser/:id" element={<AdminManageUser/>}></Route>
+        <Route path ="/adminManageProducts/:id" element={<AdminManageProducts/>}></Route>
+
 
 
         {/* Layout ทั่วไป (ในอนาคต) */}

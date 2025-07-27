@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import catImage from "../../assets/catcute.jpeg";
+import Shopay from "../../assets/Shopay.jpeg";
 import { loginUser } from "@/api/authApi";
 import {toast} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -56,8 +56,8 @@ export const Login = () => {
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-6">
           <div className="flex flex-col items-center gap-4">
             <img
-              src={catImage}
-              alt="Cute Cat"
+              src={Shopay}
+              alt="Shopay"
               className="w-40 h-40 rounded-full object-cover"
             />
             <div className="w-full">
@@ -109,7 +109,7 @@ export const Login = () => {
               className="text-xs text-[#6270EF] font-semibold hover:underline cursor-pointer"
               onClick={() => navigate("/register")}
             >
-              Signup Now
+              Sign up Here!
             </span>
           </p>
         </form>
