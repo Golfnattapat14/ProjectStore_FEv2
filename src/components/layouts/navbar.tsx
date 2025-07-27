@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { LogoutModal } from "../modals/logout";
 import { Button } from "../ui/button";
@@ -17,7 +17,8 @@ interface NavigationItem {
 export const NavbarComponent = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const navigate = useNavigate();
-  const username = localStorage.getItem("firstname"); // ดึงชื่อผู้ใช้
+  const username = localStorage.getItem("username");
+  const role = localStorage.getItem("role");
 
   useEffect(() => {
     if (!username) {
@@ -56,8 +57,20 @@ export const NavbarComponent = () => {
         {/* Logo */}
         <div className="flex lg:flex-1 text-xl font-bold text-gray-500">
           <div className="bg-gradient-to-r from-red-500 via-violet-500 to-sky-500 bg-clip-text text-transparent font-bold text-xl hover:scale-110">
-            TODO-LSIT
+            Store Shope
           </div>
+        </div>
+
+        <div className="hidden lg:flex lg:flex-1 lg:justify-center gap-6">
+          {/* ลิงก์สำหรับ admin เท่านั้น */}
+          {role === "admin" && (
+            <Link
+              to="/adminManage"
+              className="text-blue-600 font-semibold hover:underline"
+            >
+              จัดการผู้ใช้
+            </Link>
+          )}
         </div>
 
         {/* User Profile + Logout */}

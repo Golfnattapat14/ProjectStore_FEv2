@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProductResponse } from "@/types/product";
-import { getProductsSeller,deleteProduct } from "@/api/Seller";
+import { getProductsSeller, deleteProduct } from "@/api/Seller";
 import { toast } from "react-toastify";
-
 
 const SellerPage: React.FC = () => {
   const [query, setQuery] = useState<string>("");
@@ -24,12 +23,11 @@ const SellerPage: React.FC = () => {
       .catch((err) => setError(err.message || "เกิดข้อผิดพลาด"))
       .finally(() => setLoading(false));
   };
-useEffect(() => {
-  getProductsSeller()
-    .then(setProducts)
-    .catch(err => toast.error(err.message));
-}, []);
-
+  useEffect(() => {
+    getProductsSeller()
+      .then(setProducts)
+      .catch((err) => toast.error(err.message));
+  }, []);
 
   const getProductTypeName = (type: number) => {
     switch (type) {
@@ -65,11 +63,6 @@ useEffect(() => {
     }
   };
 
-  const handleSignOut = () => {
-    localStorage.clear();
-    window.location.href = "/";
-  };
-
   const handleDelete = async (id: string) => {
     const confirmDelete = window.confirm("คุณแน่ใจว่าจะลบสินค้านี้?");
     if (!confirmDelete) return;
@@ -90,7 +83,7 @@ useEffect(() => {
     <div className="flex bg-white w-full min-h-screen justify-center items-center">
       <div className="w-[1100px] h-max bg-[#F8F9FF] shadow-lg px-10 py-10 rounded-lg flex flex-col gap-6">
         {/* Top bar */}
-        <div className="flex justify-between items-center">
+        {/* <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold text-gray-700 flex gap-2 items-center">
             📦 Seller Panel
           </h2>
@@ -100,7 +93,7 @@ useEffect(() => {
           >
             Sign Out
           </button>
-        </div>
+        </div> */}
 
         {/* Subheading */}
         <h1 className="text-lg font-medium text-gray-600">
@@ -196,7 +189,10 @@ useEffect(() => {
               })}
               {products.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="text-center py-6 text-gray-400 italic">
+                  <td
+                    colSpan={8}
+                    className="text-center py-6 text-gray-400 italic"
+                  >
                     ไม่พบสินค้า
                   </td>
                 </tr>
