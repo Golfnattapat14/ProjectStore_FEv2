@@ -1,0 +1,190 @@
+import React, { useState, type ChangeEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import { addNewProduct } from "@/api/Seller";
+import { ProductRequest } from "@/types/product";
+
+const SellerAdd: React.FC = () => {
+  const navigate = useNavigate();
+
+  const savedUser = localStorage.getItem("user");
+  const currentUser = savedUser ? JSON.parse(savedUser) : null;
+
+  const [product, setProduct] = useState<ProductRequest>({
+    ProductName: "",
+    ProductPrice: 0,
+    ProductType: 5,
+    Quantity: 0,
+    IsActive: true,
+    CreateBy: currentUser?.username || "",
+  });
+
+  const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+
+    let newValue: string | number | boolean;
+
+    if (type === "checkbox") {
+      newValue = checked;
+    } else if (["ProductPrice", "Quantity", "ProductType"].includes(name)) {
+      newValue = Number(value);
+    } else {
+      newValue = value;
+    }
+
+    setProduct((prev) => ({
+      ...prev,
+      [name]: newValue,
+    }));
+  };
+
+  const handleSave = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
+
+    if (
+      !product.ProductName.trim() ||
+      product.ProductPrice <= 0 ||
+      product.Quantity < 0 ||
+      product.ProductType < 1 ||
+      product.ProductType > 5
+    ) {
+      setMessage(
+        "กรุณากรอกข้อมูลให้ถูกต้อง และประเภทสินค้าต้องอยู่ระหว่าง 1 ถึง 5"
+      );
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setMessage("กำลังบันทึก...");
+
+      await addNewProduct(product);
+
+      setMessage("เพิ่มสินค้าเรียบร้อยแล้ว");
+      setTimeout(() => navigate("/seller"), 1500);
+    } catch (err) {
+      setMessage("เกิดข้อผิดพลาดในการบันทึก");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="max-w-lg mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+      <h2 className="text-2xl font-semibold mb-6 text-center">เพิ่มสินค้าใหม่</h2>
+
+      <label htmlFor="productName" className="block mb-4">
+        <span className="block mb-1 font-medium">ชื่อสินค้า:</span>
+        <input
+          id="productName"
+          type="text"
+          name="ProductName"
+          value={product.ProductName}
+          onChange={handleChange}
+          aria-required="true"
+          disabled={saving}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+        />
+      </label>
+
+      <label htmlFor="productPrice" className="block mb-4">
+        <span className="block mb-1 font-medium">ราคา:</span>
+        <input
+          id="productPrice"
+          type="number"
+          name="ProductPrice"
+          value={product.ProductPrice}
+          onChange={handleChange}
+          min={0}
+          aria-required="true"
+          disabled={saving}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+        />
+      </label>
+
+      <label htmlFor="productType" className="block mb-4">
+        <span className="block font-medium mb-2 text-center">
+          ประเภทสินค้า
+          <br />
+          1=อาหาร
+          <br />
+          2= เครื่องใช้
+          <br />
+          3= เครื่องดื่ม
+          <br />
+          4= ของเล่น
+          <br />
+          5= อื่นๆ
+        </span>
+
+        <input
+          id="productType"
+          type="number"
+          name="ProductType"
+          value={product.ProductType}
+          onChange={handleChange}
+          min={1}
+          max={5}
+          disabled={saving}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+        />
+      </label>
+
+      <label htmlFor="quantity" className="block mb-4">
+        <span className="block mb-1 font-medium">จำนวน:</span>
+        <input
+          id="quantity"
+          type="number"
+          name="Quantity"
+          value={product.Quantity}
+          onChange={handleChange}
+          min={0}
+          aria-required="true"
+          disabled={saving}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+        />
+      </label>
+
+      <label htmlFor="isActive" className="flex items-center mb-6 cursor-pointer select-none">
+        <input
+          id="isActive"
+          type="checkbox"
+          name="IsActive"
+          checked={product.IsActive}
+          onChange={handleChange}
+          disabled={saving}
+          className="mr-2 w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+        />
+        <span>เปิดใช้งาน</span>
+      </label>
+
+      <div className="flex justify-center gap-4">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className={`px-6 py-2 rounded-md text-white font-semibold ${
+            saving ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+          }`}
+        >
+          {saving ? "กำลังบันทึก..." : "เพิ่มสินค้า"}
+        </button>
+
+        <button
+          onClick={() => navigate("/seller")}
+          disabled={saving}
+          className="px-6 py-2 rounded-md border border-gray-400 hover:bg-gray-100 disabled:opacity-50"
+        >
+          ยกเลิก
+        </button>
+      </div>
+
+      {message && (
+        <p className="mt-4 text-center text-red-600 font-medium select-none">{message}</p>
+      )}
+    </div>
+  );
+};
+
+export default SellerAdd;

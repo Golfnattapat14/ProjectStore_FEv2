@@ -44,7 +44,11 @@ export async function addNewProduct(product: ProductRequest): Promise<ProductRes
 
 // แก้ไขสินค้า
 export async function updateProduct(id: string, data: ProductRequest): Promise<ProductResponse> {
-  const headers = getAuthHeaders();
+  const headers = {
+    ...getAuthHeaders(),
+    "Content-Type": "application/json", 
+  };
+
   if (!headers.Authorization) throw new Error("Token not found, please login");
 
   const response = await fetch(`${BASE}products/${id}`, {
@@ -60,6 +64,7 @@ export async function updateProduct(id: string, data: ProductRequest): Promise<P
 
   return response.json();
 }
+
 
 // ดึงสินค้าตาม ID
 export async function getProductById(id: string): Promise<ProductResponse> {
@@ -79,6 +84,8 @@ export async function getProductById(id: string): Promise<ProductResponse> {
 
 export async function deleteProduct(id: string): Promise<void> {
   const headers = getAuthHeaders();
+  console.log("Auth Headers:", headers);  // เช็ค header
+
   if (!headers.Authorization) throw new Error("Token not found, please login");
 
   const response = await fetch(`${BASE}products/${id}`, {
@@ -86,10 +93,12 @@ export async function deleteProduct(id: string): Promise<void> {
     headers,
   });
 
+  console.log("Response status:", response.status);
+
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.message || "ไม่สามารถลบสินค้าได้");
   }
+}
 
-}    
 

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProductResponse } from "@/types/product";
 import { getProductsSeller,deleteProduct } from "@/api/Seller";
+import { toast } from "react-toastify";
 
 
 const SellerPage: React.FC = () => {
@@ -23,10 +24,12 @@ const SellerPage: React.FC = () => {
       .catch((err) => setError(err.message || "เกิดข้อผิดพลาด"))
       .finally(() => setLoading(false));
   };
+useEffect(() => {
+  getProductsSeller()
+    .then(setProducts)
+    .catch(err => toast.error(err.message));
+}, []);
 
-  useEffect(() => {
-    loadProducts();
-  }, []);
 
   const getProductTypeName = (type: number) => {
     switch (type) {
@@ -126,7 +129,7 @@ const SellerPage: React.FC = () => {
         {/* Add product */}
         <div className="flex justify-end">
           <button
-            onClick={() => navigate("/seller/add")}
+            onClick={() => navigate("/sellerAdd")}
             className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
           >
             + เพิ่มสินค้าใหม่
@@ -172,7 +175,7 @@ const SellerPage: React.FC = () => {
                       <button
                         onClick={() =>
                           p.id
-                            ? navigate(`/seller/edit/${p.id}`)
+                            ? navigate(`/sellerManage/${p.id}`)
                             : alert("ไม่พบรหัสสินค้านี้")
                         }
                         className="text-indigo-600 hover:underline"
