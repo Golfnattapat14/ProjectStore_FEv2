@@ -12,6 +12,7 @@ import { NavbarComponent } from "./components/layouts/navbar";
 import AdminManage from "./pages/Admin/AdminManage";
 import AdminManageUser from "./pages/Admin/AdminManageUser";
 import AdminManageProducts from "./pages/Admin/AdminManageProducts";
+import Buyer from "./pages/Buyer/BuyerPage";
 
 const App = () => {
   const location = useLocation();
@@ -40,6 +41,10 @@ const App = () => {
         <Route path ="/adminManage" element={<AdminManage/>}></Route>
         <Route path ="/adminManageUser/:id" element={<AdminManageUser/>}></Route>
         <Route path ="/adminManageProducts/:id" element={<AdminManageProducts/>}></Route>
+
+
+        <Route path="/buyer" element={<Buyer />} />
+
 
 
 
