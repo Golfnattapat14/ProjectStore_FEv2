@@ -50,6 +50,8 @@ export const NavbarComponent = () => {
     const interval = setInterval(checkTokenExpiry, 1000 * 60);
     return () => clearInterval(interval);
   }, []);
+  
+  
 
   return (
     <header className="bg-white border-b-2 border-gray-200 shadow sticky top-0 z-50">
@@ -61,7 +63,43 @@ export const NavbarComponent = () => {
           </div>
         </div>
 
-<div className="hidden lg:flex lg:flex-1 lg:justify-center gap-6">
+        <div className="hidden lg:flex lg:flex-1 lg:justify-center gap-6">
+          {/* ลิงก์สำหรับ admin เท่านั้น */}
+          {role === "buyer" && (
+            <Link
+              to="/buyer"
+              className="text-blue-600 font-semibold hover:underline"
+            >
+              เลือกซื้อสินค้า
+            </Link>
+          )}
+        </div>
+
+        <div className="hidden lg:flex lg:flex-1 lg:justify-center gap-6">
+          {/* ลิงก์สำหรับ admin เท่านั้น */}
+          {role === "buyer" && (
+            <Link
+              to="/buyerCart"
+              className="text-blue-600 font-semibold hover:underline"
+            >
+              ตะกร้าของคุณ
+            </Link>
+          )}
+        </div>
+        
+          <div className="hidden lg:flex lg:flex-1 lg:justify-center gap-6">
+          {/* ลิงก์สำหรับ admin เท่านั้น */}
+          {role === "buyer" && (
+            <Link
+              to="/buyer"
+              className="text-blue-600 font-semibold hover:underline"
+            >
+              สถานะการสั่งซื้อ
+            </Link>
+          )}
+        </div>
+
+        <div className="hidden lg:flex lg:flex-1 lg:justify-center gap-6">
           {/* ลิงก์สำหรับ admin เท่านั้น */}
           {role === "admin" && (
             <Link

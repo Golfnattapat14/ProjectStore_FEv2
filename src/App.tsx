@@ -12,7 +12,8 @@ import { NavbarComponent } from "./components/layouts/navbar";
 import AdminManage from "./pages/Admin/AdminManage";
 import AdminManageUser from "./pages/Admin/AdminManageUser";
 import AdminManageProducts from "./pages/Admin/AdminManageProducts";
-import Buyer from "./pages/Buyer/BuyerPage";
+import BuyerCart from "./pages/Buyer/BuyerCart";
+import BuyerPage from "./pages/Buyer/BuyerPage";
 
 const App = () => {
   const location = useLocation();
@@ -43,7 +44,9 @@ const App = () => {
         <Route path ="/adminManageProducts/:id" element={<AdminManageProducts/>}></Route>
 
 
-        <Route path="/buyer" element={<Buyer />} />
+        <Route path="/buyer" element={<BuyerPage />} />
+        <Route path="/buyerCart" element={<BuyerCart />} />
+        
 
 
 

@@ -28,7 +28,8 @@ export const Login = () => {
       localStorage.setItem("username", result.username);
       localStorage.setItem("role", result.role.toLowerCase());
 
-      
+            window.dispatchEvent(new Event("storage"));
+
       toast.success("Login success!");
       
       switch (result.role.toLowerCase()) {
