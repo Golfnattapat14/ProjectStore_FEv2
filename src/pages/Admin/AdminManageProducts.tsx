@@ -2,6 +2,7 @@ import React, { useState, useEffect, type ChangeEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { updateProduct } from "@/api/Seller";
 import { ProductRequest,ProductResponse} from "@/types/product";
+import { getAuthHeadersJSON } from "@/api/Token";
 
 
 const AdminManageProducts: React.FC = () => {
@@ -26,7 +27,9 @@ const AdminManageProducts: React.FC = () => {
       return;
     }
 
-    fetch(`http://localhost:5260/api/products/${id}`)
+    fetch(`http://localhost:5260/api/products/${id}`, {
+        headers: getAuthHeadersJSON(),
+      })
       .then((res) => {
         if (!res.ok) {
           if (res.status === 404) {

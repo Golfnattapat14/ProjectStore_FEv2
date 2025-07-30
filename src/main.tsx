@@ -5,6 +5,7 @@ import App from "./App.tsx";
 import { BrowserRouter } from "react-router-dom";
 import { CartProvider } from "./components/layouts/CartContext";
 
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter basename="">

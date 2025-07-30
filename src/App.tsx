@@ -1,20 +1,21 @@
+import { useEffect } from "react";
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
+
 import { Login } from "./pages/auth/Login";
 import { Register } from "./pages/auth/Register";
 import { ErrorPage } from "./pages/auth/Error";
-import { Layout } from "./components/layouts/layout";
+import { NavbarComponent } from "./components/layouts/navbar";
 import SellerPage from "./pages/Seller/SellerPage";
 import SellerAdd from "./pages/Seller/SellerAdd";
 import SellerManage from "./pages/Seller/SellerManage";
 import AdminPage from "./pages/Admin/AdminPage";
-import { NavbarComponent } from "./components/layouts/navbar";
 import AdminManage from "./pages/Admin/AdminManage";
 import AdminManageUser from "./pages/Admin/AdminManageUser";
 import AdminManageProducts from "./pages/Admin/AdminManageProducts";
 import BuyerCart from "./pages/Buyer/BuyerCart";
 import BuyerPage from "./pages/Buyer/BuyerPage";
-import { useEffect } from "react";
+
 import { getToken, isTokenExpired } from "./api/Token";
 
 const AuthChecker = () => {
@@ -25,9 +26,9 @@ const AuthChecker = () => {
     const token = getToken();
     if (token && isTokenExpired(token)) {
       localStorage.removeItem("token");
-      navigate("/"); // redirect ไปหน้า Login
+      navigate("/", { replace: true }); // redirect ไปหน้า login
     }
-  }, [location]);
+  }, [location, navigate]);
 
   return null;
 };
@@ -42,7 +43,8 @@ const App = () => {
   return (
     <>
       <AuthChecker />
-      {/* Navbar จะแสดงเฉพาะเมื่อไม่อยู่ในหน้า Login/Register */}
+
+      {/* แสดง Navbar เฉพาะหน้าอื่น ๆ ที่ไม่ใช่ Login/Register */}
       {!shouldHideNavbar && <NavbarComponent />}
 
       <Routes>
@@ -50,30 +52,20 @@ const App = () => {
         <Route path="/register" element={<Register />} />
         <Route path="*" element={<ErrorPage />} />
 
-        {/* หน้าสำหรับ Seller */}
+        {/* Seller */}
         <Route path="/seller" element={<SellerPage />} />
         <Route path="/sellerAdd" element={<SellerAdd />} />
         <Route path="/sellerManage/:id" element={<SellerManage />} />
 
-        {/* หน้าสำหรับ Admin */}
+        {/* Admin */}
         <Route path="/admin" element={<AdminPage />} />
-        <Route path="/adminManage" element={<AdminManage />}></Route>
-        <Route
-          path="/adminManageUser/:id"
-          element={<AdminManageUser />}
-        ></Route>
-        <Route
-          path="/adminManageProducts/:id"
-          element={<AdminManageProducts />}
-        ></Route>
+        <Route path="/adminManage" element={<AdminManage />} />
+        <Route path="/adminManageUser/:id" element={<AdminManageUser />} />
+        <Route path="/adminManageProducts/:id" element={<AdminManageProducts />} />
 
+        {/* Buyer */}
         <Route path="/buyer" element={<BuyerPage />} />
         <Route path="/buyerCart" element={<BuyerCart />} />
-
-        {/* Layout ทั่วไป (ในอนาคต) */}
-        <Route element={<Layout />}>
-          {/* เช่น: <Route path="/todo" element={<TodosList />} /> */}
-        </Route>
       </Routes>
 
       <ToastContainer aria-label="Notification Container" />

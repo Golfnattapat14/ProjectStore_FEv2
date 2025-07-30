@@ -66,12 +66,13 @@ export async function updateProduct(id: string, req: ProductRequest) {
 }
 
 export async function deleteProduct(id: string) {
-  const res = await fetch(`${BASE}Admin/Products/${id}`, {
+  const res = await fetch(`http://localhost:5260/api/products/${id}`, {
     method: "DELETE",
     headers: getAuthHeadersJSON(),
   });
   if (!res.ok) throw new Error("ลบสินค้าล้มเหลว");
 }
+
 
 export async function deleteUser(id: string) {
   const res = await fetch(`${BASE}Admin/user/${id}`, {

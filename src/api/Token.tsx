@@ -1,38 +1,35 @@
 // Token.ts
-export function getToken() {
+export function getToken(): string {
   return localStorage.getItem("token") ?? "";
 }
 
 export function getAuthHeadersJSON(): Record<string, string> {
   const token = getToken();
-  const headers: Record<string, string> = {
+  return {
     "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-  return headers;
 }
 
-
-export function getAuthHeadersFormData() {
+export function getAuthHeadersFormData(): Record<string, string> {
   const token = getToken();
   return {
-    ...(token ? { Authorization: `Bearer ${token}` } : {})
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
 
-// utils/jwt.ts
+// ตรวจสอบว่า token หมดอายุหรือยัง
 export function isTokenExpired(token: string): boolean {
   if (!token) return true;
 
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    // decode payload จาก JWT
+    const payload = JSON.parse(atob(token.split(".")[1]));
     const exp = payload.exp;
     const now = Math.floor(Date.now() / 1000);
     return exp < now;
   } catch (e) {
-    return true; // ถ้า decode ไม่ได้ ให้ถือว่าหมดอายุ
+    // decode ไม่ได้ ถือว่า token หมดอายุ
+    return true;
   }
 }
-

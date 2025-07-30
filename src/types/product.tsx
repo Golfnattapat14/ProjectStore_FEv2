@@ -21,5 +21,4 @@ export interface ProductRequest {
   Quantity: number;
   CreateBy?: string;
   IsActive?: boolean;
-  // Image : File;
 }
