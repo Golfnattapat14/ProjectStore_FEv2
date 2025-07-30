@@ -93,6 +93,7 @@ const SellerManage: React.FC = () => {
         ProductType: product.ProductType ?? 0,
         Quantity: product.Quantity ?? 0,
         IsActive: product.IsActive ?? true,
+      
       });
       setMessage("บันทึกเรียบร้อยแล้ว");
       setTimeout(() => navigate("/seller"), 1500);

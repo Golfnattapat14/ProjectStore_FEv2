@@ -1,16 +1,16 @@
-import { getAuthHeaders } from "./Token";
+import { getAuthHeadersJSON } from "./Token";
 
 const BASE = "http://localhost:5260/api/";
 
 export async function getProducts() {
-  const headers = getAuthHeaders();
+  const headers = getAuthHeadersJSON();
   const res = await fetch(`${BASE}buyer/all`, { method: "GET", headers });
   if (!res.ok) throw new Error("โหลดสินค้า (Buyer) ล้มเหลว");
   return res.json();
 }
 
 export const getCartItems = async () => {
-  const headers = getAuthHeaders();
+  const headers = getAuthHeadersJSON();
   const res = await fetch(`${BASE}buyer/cart`, { headers });
   if (!res.ok) throw new Error("โหลดตะกร้าไม่สำเร็จ");
   return res.json();
@@ -27,7 +27,7 @@ export const getCartItemCount = async (): Promise<number> => {
 
 
 export const addToCart = async (productId: string, quantity = 1) => {
-  const headers = { ...getAuthHeaders(), "Content-Type": "application/json" };
+  const headers = { ...getAuthHeadersJSON(), "Content-Type": "application/json" };
   const res = await fetch(`${BASE}buyer/cart`, {
     method: "POST",
     headers,
@@ -38,7 +38,7 @@ export const addToCart = async (productId: string, quantity = 1) => {
 };
 
 export const updateCartItem = async (cartItemId: string, quantity: number) => {
-  const headers = { ...getAuthHeaders(), "Content-Type": "application/json" };
+  const headers = { ...getAuthHeadersJSON(), "Content-Type": "application/json" };
   const res = await fetch(`${BASE}buyer/cart/${cartItemId}`, {
     method: "PUT",
     headers,
@@ -49,7 +49,7 @@ export const updateCartItem = async (cartItemId: string, quantity: number) => {
 };
 
 export const removeCartItem = async (cartItemId: string) => {
-  const headers = getAuthHeaders();
+  const headers = getAuthHeadersJSON();
   const res = await fetch(`${BASE}buyer/cart/${cartItemId}`, {
     method: "DELETE",
     headers,
@@ -59,7 +59,7 @@ export const removeCartItem = async (cartItemId: string) => {
 };
 
 export const clearCart = async () => {
-  const headers = getAuthHeaders();
+  const headers = getAuthHeadersJSON();
   const res = await fetch(`${BASE}buyer/cart`, {
     method: "DELETE",
     headers,

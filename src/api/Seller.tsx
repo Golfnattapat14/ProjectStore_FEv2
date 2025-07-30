@@ -1,13 +1,13 @@
 // src/api/sellerApi.ts
 
-import { getAuthHeaders } from "./Token";
+import { getAuthHeadersJSON } from "./Token";
 import type { ProductRequest, ProductResponse } from "../types/product";
 
 const BASE = "http://localhost:5260/api/";
 
 // ดึงสินค้าทั้งหมดของ Seller นั้นๆ
 export async function getProductsSeller(): Promise<ProductResponse[]> {
-  const headers = getAuthHeaders();
+  const headers = getAuthHeadersJSON();
   if (!headers.Authorization) throw new Error("Token not found, please login");
 
   const response = await fetch(`${BASE}products/all`, {
@@ -25,9 +25,16 @@ export async function getProductsSeller(): Promise<ProductResponse[]> {
 
 // เพิ่มสินค้า
 export async function addNewProduct(product: ProductRequest): Promise<ProductResponse> {
-  const headers = getAuthHeaders();
+  const headers = getAuthHeadersJSON();
   if (!headers.Authorization) throw new Error("Token not found, please login");
 
+  // var data = new FormData
+
+  // data.append('productName', product.ProductName)
+  // data.append('productName', product.ProductName)
+  // data.append('productName', product.ProductName)
+  // data.append('productName', product.ProductName)
+  
   const response = await fetch(`${BASE}products`, {
     method: "POST",
     headers,
@@ -45,11 +52,11 @@ export async function addNewProduct(product: ProductRequest): Promise<ProductRes
 // แก้ไขสินค้า
 export async function updateProduct(id: string, data: ProductRequest): Promise<ProductResponse> {
   const headers = {
-    ...getAuthHeaders(),
+    ...getAuthHeadersJSON(),
     "Content-Type": "application/json", 
   };
 
-  if (!headers.Authorization) throw new Error("Token not found, please login");
+  // if (!headers.Authorization) throw new Error("Token not found, please login");
 
   const response = await fetch(`${BASE}products/${id}`, {
     method: "PUT",
@@ -68,7 +75,7 @@ export async function updateProduct(id: string, data: ProductRequest): Promise<P
 
 // ดึงสินค้าตาม ID
 export async function getProductById(id: string): Promise<ProductResponse> {
-  const headers = getAuthHeaders();
+  const headers = getAuthHeadersJSON();
   const response = await fetch(`${BASE}products/${id}`, {
     method: "GET",
     headers,
@@ -83,7 +90,7 @@ export async function getProductById(id: string): Promise<ProductResponse> {
 }
 
 export async function deleteProduct(id: string): Promise<void> {
-  const headers = getAuthHeaders();
+  const headers = getAuthHeadersJSON();
   console.log("Auth Headers:", headers);  // เช็ค header
 
   if (!headers.Authorization) throw new Error("Token not found, please login");

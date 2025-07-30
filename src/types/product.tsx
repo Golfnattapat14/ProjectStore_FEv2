@@ -10,6 +10,7 @@ export interface ProductResponse {
   updateBy?: string;
   isActive?: boolean;
   createdByName: string;
+  
 }
 
 export interface ProductRequest {
@@ -20,4 +21,5 @@ export interface ProductRequest {
   Quantity: number;
   CreateBy?: string;
   IsActive?: boolean;
+  // Image : File;
 }

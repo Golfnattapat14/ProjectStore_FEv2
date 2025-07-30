@@ -169,7 +169,7 @@ const AdminManageUser: React.FC = () => {
             className="h-5 w-5 text-red-600 rounded border-gray-300 focus:ring-red-500"
           />
           <label htmlFor="isDeleted" className="text-gray-700 font-medium">
-            ลบผู้ใช้นี้
+            ปิดการใช้งานผู้ใช้นี้
           </label>
         </div>
 

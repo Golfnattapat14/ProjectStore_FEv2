@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import { Login } from "./pages/auth/Login";
 import { Register } from "./pages/auth/Register";
@@ -14,6 +14,23 @@ import AdminManageUser from "./pages/Admin/AdminManageUser";
 import AdminManageProducts from "./pages/Admin/AdminManageProducts";
 import BuyerCart from "./pages/Buyer/BuyerCart";
 import BuyerPage from "./pages/Buyer/BuyerPage";
+import { useEffect } from "react";
+import { getToken, isTokenExpired } from "./api/Token";
+
+const AuthChecker = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = getToken();
+    if (token && isTokenExpired(token)) {
+      localStorage.removeItem("token");
+      navigate("/"); // redirect ไปหน้า Login
+    }
+  }, [location]);
+
+  return null;
+};
 
 const App = () => {
   const location = useLocation();
@@ -24,6 +41,7 @@ const App = () => {
 
   return (
     <>
+      <AuthChecker />
       {/* Navbar จะแสดงเฉพาะเมื่อไม่อยู่ในหน้า Login/Register */}
       {!shouldHideNavbar && <NavbarComponent />}
 
@@ -39,17 +57,18 @@ const App = () => {
 
         {/* หน้าสำหรับ Admin */}
         <Route path="/admin" element={<AdminPage />} />
-        <Route path ="/adminManage" element={<AdminManage/>}></Route>
-        <Route path ="/adminManageUser/:id" element={<AdminManageUser/>}></Route>
-        <Route path ="/adminManageProducts/:id" element={<AdminManageProducts/>}></Route>
-
+        <Route path="/adminManage" element={<AdminManage />}></Route>
+        <Route
+          path="/adminManageUser/:id"
+          element={<AdminManageUser />}
+        ></Route>
+        <Route
+          path="/adminManageProducts/:id"
+          element={<AdminManageProducts />}
+        ></Route>
 
         <Route path="/buyer" element={<BuyerPage />} />
         <Route path="/buyerCart" element={<BuyerCart />} />
-        
-
-
-
 
         {/* Layout ทั่วไป (ในอนาคต) */}
         <Route element={<Layout />}>
