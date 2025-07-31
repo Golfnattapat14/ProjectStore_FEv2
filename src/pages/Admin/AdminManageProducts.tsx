@@ -1,6 +1,6 @@
 import React, { useState, useEffect, type ChangeEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { updateProduct } from "@/api/Seller";
+import {  updateProduct,deleteProductFile } from "@/api/Admin";
 import { ProductRequest,ProductResponse} from "@/types/product";
 import { getAuthHeadersJSON } from "@/api/Token";
 
@@ -8,13 +8,15 @@ import { getAuthHeadersJSON } from "@/api/Token";
 const AdminManageProducts: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
+    const [filePath, setFilePath] = useState<string | undefined>("");
+  
   const [product, setProduct] = useState<Partial<ProductRequest>>({
     ProductName: "",
     ProductPrice: 0,
     ProductType: 0,
     Quantity: 0,
     IsActive: true,
+    FilePath: null,
   });
 
   const [message, setMessage] = useState("");
@@ -40,6 +42,7 @@ const AdminManageProducts: React.FC = () => {
         return res.json();
       })
       .then((data: ProductResponse) => {
+        setFilePath(data.filePath);
         setProduct({
           Id: data.id,
           ProductName: data.productName,
@@ -70,9 +73,9 @@ const AdminManageProducts: React.FC = () => {
 
   const handleSave = async (e?: React.MouseEvent) => {
     e?.preventDefault();
-
+  
     if (!id) return;
-
+  
     if (
       !product.ProductName ||
       (product.ProductPrice ?? 0) <= 0 ||
@@ -85,18 +88,16 @@ const AdminManageProducts: React.FC = () => {
       );
       return;
     }
-
+  
+    const confirmSave = window.confirm("คุณต้องการบันทึกการแก้ไขนี้หรือไม่?");
+    if (!confirmSave) return; // ถ้ากดยกเลิก หยุดการทำงาน
+  
     try {
       setSaving(true);
       setMessage("กำลังบันทึก...");
-      await updateProduct(id, {
-        Id: product.Id ?? id,
-        ProductName: product.ProductName ?? "",
-        ProductPrice: product.ProductPrice ?? 0,
-        ProductType: product.ProductType ?? 0,
-        Quantity: product.Quantity ?? 0,
-        IsActive: product.IsActive ?? true,
-      });
+  
+      await updateProduct(id, product as ProductRequest);
+  
       setMessage("บันทึกเรียบร้อยแล้ว");
       setTimeout(() => navigate("/admin"), 1500);
     } catch (err) {
@@ -105,6 +106,25 @@ const AdminManageProducts: React.FC = () => {
       setSaving(false);
     }
   };
+
+ const handleDeleteFile = async () => {
+   if (!id) return;
+ 
+   const confirmDelete = window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรูปภาพนี้?");
+   if (!confirmDelete) return; // ถ้ากดยกเลิก ให้หยุด
+ 
+   try {
+     setMessage("กำลังลบรูปภาพ...");
+     await deleteProductFile(id);
+     setFilePath("");
+     setMessage("ลบรูปภาพเรียบร้อยแล้ว");
+     alert("ลบรูปภาพเรียบร้อยแล้ว");
+   } catch (err) {
+     setMessage("ไม่สามารถลบรูปภาพได้");
+     alert("ไม่สามารถลบรูปภาพได้");
+   }
+ };
+
 
   if (loading) return <p className="text-center mt-6 text-gray-700">กำลังโหลดข้อมูลสินค้า...</p>;
 
@@ -193,6 +213,44 @@ const AdminManageProducts: React.FC = () => {
           <span>เปิดใช้งาน</span>
         </label>
 
+{filePath && (
+          <div className="mb-4 text-center">
+            <img
+              src={filePath}
+              alt="รูปสินค้า"
+              className="mx-auto mb-2 max-h-60 object-contain rounded-md border"
+            />
+            <button
+              type="button"
+              onClick={handleDeleteFile}
+              disabled={saving}
+              className="px-4 py-1 bg-red-500 hover:bg-red-600 text-white rounded-md text-sm"
+            >
+              ลบรูปภาพ
+            </button>
+          </div>
+        )}
+       
+       <div className="mb-4">
+    <label htmlFor="filePath" className="block mb-1 font-medium">อัปโหลดรูปภาพใหม่:</label>
+    <input
+      type="file"
+      id="filePath"
+      name="FilePath"
+      accept="image/*"
+      disabled={saving}
+      className="w-full"
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          setProduct((prev) => ({ ...prev, FilePath: file }));
+          setFilePath(""); // ล้าง URL รูปเก่า เพราะมีรูปใหม่ที่ยังไม่อัปโหลด
+        }
+      }}
+    />
+  </div>
+
+
         <div className="flex justify-center gap-4">
           <button
             onClick={handleSave}
@@ -217,3 +275,4 @@ const AdminManageProducts: React.FC = () => {
 };
 
 export default AdminManageProducts;
+

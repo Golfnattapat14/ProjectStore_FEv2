@@ -1,4 +1,4 @@
-import { getAuthHeadersJSON } from "./Token";
+import { getAuthHeadersFormData, getAuthHeadersJSON } from "./Token";
 import type { ProductRequest, ProductResponse} from "../types/product";
 import { User,UpdateUserRequest,UserResponse } from "@/types/adminDashborad";
 
@@ -55,24 +55,82 @@ export async function updateUser(id: string, req: UpdateUserRequest) {
   });
   if (!res.ok) throw new Error("แก้ไขผู้ใช้ล้มเหลว");
 }
-export async function updateProduct(id: string, req: ProductRequest) {
-  const res = await fetch(`${BASE}Admin/${id}`, {
+
+
+export async function updateProduct(
+  id: string,
+  data: ProductRequest
+): Promise<ProductResponse> {
+  const headers = getAuthHeadersFormData();
+
+  if (!headers.Authorization) throw new Error("Token not found, please login");
+
+  const formData = new FormData();
+  formData.append("Id", id);
+  formData.append("ProductName", data.ProductName);
+  formData.append("ProductPrice", data.ProductPrice.toString());
+  formData.append("ProductType", data.ProductType.toString());
+  formData.append("Quantity", data.Quantity.toString());
+  formData.append("IsActive", data.IsActive ? "true" : "false");
+
+  // เพิ่มเฉพาะถ้า FilePath เป็นไฟล์จริง
+  if (data.FilePath instanceof File) {
+    formData.append("FilePath", data.FilePath);
+  }
+
+  const { Authorization } = headers;
+
+  const response = await fetch(`${BASE}products/${id}`, {
     method: "PUT",
-    headers: getAuthHeadersJSON(),
-    body: JSON.stringify(req),
+    headers: {
+      Authorization,
+    },
+    body: formData,
   });
-  if (!res.ok) throw new Error("แก้ไขสินค้าล้มเหลว");
-  return await res.json();
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "ไม่สามารถอัปเดตสินค้าได้");
+  }
+
+  return response.json();
 }
 
-export async function deleteProduct(id: string) {
-  const res = await fetch(`http://localhost:5260/api/products/${id}`, {
+
+export async function deleteProduct(id: string): Promise<void> {
+  const headers = getAuthHeadersJSON();
+  console.log("Auth Headers:", headers); // เช็ค header
+
+  if (!headers.Authorization) throw new Error("Token not found, please login");
+
+  const response = await fetch(`${BASE}products/${id}`, {
     method: "DELETE",
-    headers: getAuthHeadersJSON(),
+    headers,
   });
-  if (!res.ok) throw new Error("ลบสินค้าล้มเหลว");
+
+  console.log("Response status:", response.status);
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "ไม่สามารถลบสินค้าได้");
+  }
 }
 
+// ลบไฟล์ของสินค้า
+export async function deleteProductFile(id: string): Promise<void> {
+  const headers = getAuthHeadersJSON();
+  if (!headers.Authorization) throw new Error("Token not found, please login");
+
+  const response = await fetch(`${BASE}products/delete-file/${id}`, {
+    method: "DELETE",
+    headers,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || "ไม่สามารถลบไฟล์ของสินค้าได้");
+  }
+}
 
 export async function deleteUser(id: string) {
   const res = await fetch(`${BASE}Admin/user/${id}`, {
@@ -81,4 +139,5 @@ export async function deleteUser(id: string) {
   });
   if (!res.ok) throw new Error("ลบผู้ใช้ล้มเหลว");
 }
+
 

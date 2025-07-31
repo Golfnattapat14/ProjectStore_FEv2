@@ -17,14 +17,18 @@ export async function getProductsSeller(): Promise<ProductResponse[]> {
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.message || "ไม่สามารถโหลดสินค้าสำหรับ Seller ได้");
+    throw new Error(
+      errorData.message || "ไม่สามารถโหลดสินค้าสำหรับ Seller ได้"
+    );
   }
 
   return response.json();
 }
 
 // เพิ่มสินค้า
-export async function addNewProduct(product: ProductRequest): Promise<ProductResponse> {
+export async function addNewProduct(
+  product: ProductRequest
+): Promise<ProductResponse> {
   const headers = getAuthHeadersFormData();
   if (!headers.Authorization) throw new Error("Token not found, please login");
 
@@ -58,13 +62,14 @@ export async function addNewProduct(product: ProductRequest): Promise<ProductRes
   return response.json();
 }
 
-
-
 // แก้ไขสินค้า
-export async function updateProduct(id: string, data: ProductRequest): Promise<ProductResponse> {
-    const headers = getAuthHeadersFormData();
+export async function updateProduct(
+  id: string,
+  data: ProductRequest
+): Promise<ProductResponse> {
+  const headers = getAuthHeadersFormData();
 
-      if (!headers.Authorization) throw new Error("Token not found, please login");
+  if (!headers.Authorization) throw new Error("Token not found, please login");
 
   const formData = new FormData();
   formData.append("Id", id);
@@ -79,7 +84,7 @@ export async function updateProduct(id: string, data: ProductRequest): Promise<P
     formData.append("FilePath", data.FilePath);
   }
 
-    const { Authorization } = headers;
+  const { Authorization } = headers;
 
   const response = await fetch(`${BASE}products/${id}`, {
     method: "PUT",
@@ -96,9 +101,6 @@ export async function updateProduct(id: string, data: ProductRequest): Promise<P
 
   return response.json();
 }
-
-
-
 
 // ดึงสินค้าตาม ID
 export async function getProductById(id: string): Promise<ProductResponse> {
@@ -118,7 +120,7 @@ export async function getProductById(id: string): Promise<ProductResponse> {
 
 export async function deleteProduct(id: string): Promise<void> {
   const headers = getAuthHeadersJSON();
-  console.log("Auth Headers:", headers);  // เช็ค header
+  console.log("Auth Headers:", headers); // เช็ค header
 
   if (!headers.Authorization) throw new Error("Token not found, please login");
 
@@ -135,7 +137,6 @@ export async function deleteProduct(id: string): Promise<void> {
   }
 }
 
-
 // ลบไฟล์ของสินค้า
 export async function deleteProductFile(id: string): Promise<void> {
   const headers = getAuthHeadersJSON();
@@ -151,6 +152,3 @@ export async function deleteProductFile(id: string): Promise<void> {
     throw new Error(errorData.error || "ไม่สามารถลบไฟล์ของสินค้าได้");
   }
 }
-
-
-
