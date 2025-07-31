@@ -1,4 +1,5 @@
 export interface ProductResponse {
+  FilePath: any;
   id: string;
   productName: string;
   productPrice: number;
@@ -10,7 +11,7 @@ export interface ProductResponse {
   updateBy?: string;
   isActive?: boolean;
   createdByName: string;
-  
+  filePath?: string;
 }
 
 export interface ProductRequest {
@@ -21,4 +22,5 @@ export interface ProductRequest {
   Quantity: number;
   CreateBy?: string;
   IsActive?: boolean;
+  FilePath? :File | null;
 }

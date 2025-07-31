@@ -16,13 +16,25 @@ const SellerAdd: React.FC = () => {
     Quantity: 0,
     IsActive: true,
     CreateBy: currentUser?.username || "",
+    FilePath: null,
   });
 
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value, type, checked, files } = e.target;
+
+    if (type === "file") {
+      // ถ้ามีไฟล์ ให้เก็บไฟล์ตัวแรก (รองรับแค่ 1 ไฟล์)
+      setProduct((prev) => ({
+        ...prev,
+        FilePath: files && files.length > 0 ? files[0] : null,
+      }));
+      return;
+    }
 
     let newValue: string | number | boolean;
 
@@ -144,6 +156,20 @@ const SellerAdd: React.FC = () => {
           aria-required="true"
           disabled={saving}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+        />
+      </label>
+
+      {/* เพิ่ม input ไฟล์ */}
+      <label htmlFor="filePath" className="block mb-6">
+        <span className="block mb-1 font-medium">รูปภาพสินค้า:</span>
+        <input
+          id="filePath"
+          type="file"
+          name="FilePath"
+          onChange={handleChange}
+          disabled={saving}
+          accept="image/*"
+          className="w-full"
         />
       </label>
 

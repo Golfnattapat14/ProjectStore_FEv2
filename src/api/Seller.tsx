@@ -1,6 +1,6 @@
 // src/api/sellerApi.ts
 
-import { getAuthHeadersJSON } from "./Token";
+import { getAuthHeadersFormData, getAuthHeadersJSON } from "./Token";
 import type { ProductRequest, ProductResponse } from "../types/product";
 
 const BASE = "http://localhost:5260/api/";
@@ -25,29 +25,40 @@ export async function getProductsSeller(): Promise<ProductResponse[]> {
 
 // เพิ่มสินค้า
 export async function addNewProduct(product: ProductRequest): Promise<ProductResponse> {
-  const headers = getAuthHeadersJSON();
+  const headers = getAuthHeadersFormData();
   if (!headers.Authorization) throw new Error("Token not found, please login");
 
-  // var data = new FormData
+  const formData = new FormData();
+  formData.append("ProductName", product.ProductName);
+  formData.append("ProductPrice", String(product.ProductPrice));
+  formData.append("ProductType", String(product.ProductType));
+  formData.append("Quantity", String(product.Quantity));
+  formData.append("IsActive", product.IsActive ? "true" : "false");
 
-  // data.append('productName', product.ProductName)
-  // data.append('productName', product.ProductName)
-  // data.append('productName', product.ProductName)
-  // data.append('productName', product.ProductName)
-  
+  if (product.FilePath) {
+    formData.append("FilePath", product.FilePath);
+  }
+
+  const { Authorization } = headers;
+
   const response = await fetch(`${BASE}products`, {
     method: "POST",
-    headers,
-    body: JSON.stringify(product),
+    headers: {
+      Authorization,
+    },
+    body: formData,
   });
 
   if (!response.ok) {
     const errorData = await response.json();
+    console.log("Error response from server:", errorData);
     throw new Error(errorData.message || "ไม่สามารถเพิ่มสินค้าได้");
   }
 
   return response.json();
 }
+
+
 
 // แก้ไขสินค้า
 export async function updateProduct(id: string, data: ProductRequest): Promise<ProductResponse> {

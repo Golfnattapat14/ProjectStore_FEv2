@@ -155,7 +155,25 @@ const SellerPage: React.FC = () => {
                     }`}
                   >
                     <td className="px-4 py-2">{index + 1}</td>
-                    <td className="px-4 py-2">{p.productName}</td>
+                    <td className="px-4 py-2">
+  <div className="flex flex-col items-start gap-1">
+    {p.filePath ? (
+      <img
+  src={p.filePath.includes("dropbox.com") ? p.filePath.replace("?dl=0", "?raw=1") : p.filePath}
+  alt={p.productName}
+  className="w-20 h-20 object-cover rounded"
+/>
+
+
+    ) : (
+      <div className="w-20 h-20 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded">
+        ไม่มีรูป
+      </div>
+    )}
+    <span>{p.productName}</span>
+  </div>
+</td>
+
                     <td className="px-4 py-2">
                       {new Date(p.createDate).toLocaleDateString()}
                     </td>
