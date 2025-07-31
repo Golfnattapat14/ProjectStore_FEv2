@@ -74,6 +74,7 @@ const Admin: React.FC = () => {
           <thead className="bg-gray-100">
             <tr>
               <th className="p-2">รายการที่</th>
+              <th className="p-2">รูปภาพสินค้า</th>
               <th className="p-2">สินค้า</th>
               <th className="p-2">จำหน่ายโดย</th>
               <th className="p-2">วันที่วางจำหน่าย</th>
@@ -92,6 +93,24 @@ const Admin: React.FC = () => {
                 }`}
               >
                 <td className="p-2 text-center">{index + 1}</td>
+                <td className="px-4 py-2">
+                  {p.filePath ? (
+                    <img
+                      src={
+                        p.filePath.includes("dropbox.com")
+                          ? p.filePath.replace("?dl=0", "?raw=1")
+                          : p.filePath
+                      }
+                      alt={p.productName}
+                      className="w-20 h-20 object-cover rounded"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded">
+                      No Image!
+                    </div>
+                  )}
+                </td>
+
                 <td className="p-2">{p.productName}</td>
                 <td className="p-2">{p.createdByName}</td>
                 <td className="p-2">
