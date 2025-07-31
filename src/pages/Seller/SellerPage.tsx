@@ -135,6 +135,7 @@ const SellerPage: React.FC = () => {
             <thead className="bg-gray-100 text-left font-semibold">
               <tr>
                 <th className="px-4 py-3">#</th>
+                <th className="px-4 py-3">รูปภาพ</th>
                 <th className="px-4 py-3">สินค้า</th>
                 <th className="px-4 py-3">วันที่วางจำหน่าย</th>
                 <th className="px-4 py-3">ประเภทสินค้า</th>
@@ -156,23 +157,25 @@ const SellerPage: React.FC = () => {
                   >
                     <td className="px-4 py-2">{index + 1}</td>
                     <td className="px-4 py-2">
-  <div className="flex flex-col items-start gap-1">
-    {p.filePath ? (
-      <img
-  src={p.filePath.includes("dropbox.com") ? p.filePath.replace("?dl=0", "?raw=1") : p.filePath}
-  alt={p.productName}
-  className="w-20 h-20 object-cover rounded"
-/>
-
-
-    ) : (
-      <div className="w-20 h-20 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded">
-        ไม่มีรูป
-      </div>
-    )}
-    <span>{p.productName}</span>
-  </div>
-</td>
+                      {p.filePath ? (
+                        <img
+                          src={
+                            p.filePath.includes("dropbox.com")
+                              ? p.filePath.replace("?dl=0", "?raw=1")
+                              : p.filePath
+                          }
+                          alt={p.productName}
+                          className="w-20 h-20 object-cover rounded"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded">
+                          No Image!
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-2">
+                      <span>{p.productName}</span>
+                    </td>
 
                     <td className="px-4 py-2">
                       {new Date(p.createDate).toLocaleDateString()}

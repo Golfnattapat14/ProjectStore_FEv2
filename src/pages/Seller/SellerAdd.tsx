@@ -8,7 +8,6 @@ const SellerAdd: React.FC = () => {
 
   const savedUser = localStorage.getItem("user");
   const currentUser = savedUser ? JSON.parse(savedUser) : null;
-
   const [product, setProduct] = useState<ProductRequest>({
     ProductName: "",
     ProductPrice: 0,
@@ -21,10 +20,8 @@ const SellerAdd: React.FC = () => {
 
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
-
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement>
-  ) => {
+  
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked, files } = e.target;
 
     if (type === "file") {
@@ -85,7 +82,9 @@ const SellerAdd: React.FC = () => {
 
   return (
     <div className="max-w-lg mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold mb-6 text-center">เพิ่มสินค้าใหม่</h2>
+      <h2 className="text-2xl font-semibold mb-6 text-center">
+        เพิ่มสินค้าใหม่
+      </h2>
 
       <label htmlFor="productName" className="block mb-4">
         <span className="block mb-1 font-medium">ชื่อสินค้า:</span>
@@ -171,9 +170,17 @@ const SellerAdd: React.FC = () => {
           accept="image/*"
           className="w-full"
         />
+        {product.FilePath && typeof product.FilePath !== "string" && (
+  <p className="mt-2 text-sm text-gray-600">
+    ไฟล์ที่เลือก: {(product.FilePath as File).name}
+  </p>
+)}
       </label>
 
-      <label htmlFor="isActive" className="flex items-center mb-6 cursor-pointer select-none">
+      <label
+        htmlFor="isActive"
+        className="flex items-center mb-6 cursor-pointer select-none"
+      >
         <input
           id="isActive"
           type="checkbox"
@@ -191,7 +198,9 @@ const SellerAdd: React.FC = () => {
           onClick={handleSave}
           disabled={saving}
           className={`px-6 py-2 rounded-md text-white font-semibold ${
-            saving ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+            saving
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
           }`}
         >
           {saving ? "กำลังบันทึก..." : "เพิ่มสินค้า"}
@@ -207,7 +216,9 @@ const SellerAdd: React.FC = () => {
       </div>
 
       {message && (
-        <p className="mt-4 text-center text-red-600 font-medium select-none">{message}</p>
+        <p className="mt-4 text-center text-red-600 font-medium select-none">
+          {message}
+        </p>
       )}
     </div>
   );

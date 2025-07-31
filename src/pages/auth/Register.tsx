@@ -134,8 +134,13 @@ export const Register = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="Buyer">Buyer</SelectItem>
-                    <SelectItem value="Seller">Seller</SelectItem>
+                    {roles.map((item, index) =>{
+                      console.log(item)
+                      console.log(index)
+                      return <SelectItem value={item.value}>{item.label}</SelectItem>
+                    })}
+                    {/* <SelectItem value="Buyer">Buyer</SelectItem>
+                    <SelectItem value="Seller">Seller</SelectItem> */}
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -163,3 +168,18 @@ export const Register = () => {
     </div>
   );
 };
+
+const roles = [
+  {
+    label: "ผู้ขาย",
+    value: "buyer"
+  },
+  {
+    label: "ผู้ซื้อ",
+    value: "seller"
+  },
+  {
+    label: "แอดมิน",
+    value: "admin"
+  }
+]

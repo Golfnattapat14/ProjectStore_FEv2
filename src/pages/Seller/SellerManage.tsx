@@ -1,13 +1,13 @@
 import React, { useState, useEffect, type ChangeEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { updateProduct } from "@/api/Seller";
-import { ProductRequest,ProductResponse} from "@/types/product";
+import { deleteProductFile, updateProduct } from "@/api/Seller";
+import { ProductRequest, ProductResponse } from "@/types/product";
 import { getAuthHeadersJSON } from "@/api/Token";
-
 
 const SellerManage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [filePath, setFilePath] = useState<string | undefined>("");
 
   const [product, setProduct] = useState<Partial<ProductRequest>>({
     ProductName: "",
@@ -15,6 +15,7 @@ const SellerManage: React.FC = () => {
     ProductType: 0,
     Quantity: 0,
     IsActive: true,
+    FilePath: null,
   });
 
   const [message, setMessage] = useState("");
@@ -28,8 +29,8 @@ const SellerManage: React.FC = () => {
     }
 
     fetch(`http://localhost:5260/api/products/${id}`, {
-    headers: getAuthHeadersJSON(),
-  })
+      headers: getAuthHeadersJSON(),
+    })
       .then((res) => {
         if (!res.ok) {
           if (res.status === 404) {
@@ -40,6 +41,7 @@ const SellerManage: React.FC = () => {
         return res.json();
       })
       .then((data: ProductResponse) => {
+        setFilePath(data.filePath);
         setProduct({
           Id: data.id,
           ProductName: data.productName,
@@ -68,53 +70,79 @@ const SellerManage: React.FC = () => {
     }));
   };
 
-  const handleSave = async (e?: React.MouseEvent) => {
-    e?.preventDefault();
+ const handleSave = async (e?: React.MouseEvent) => {
+  e?.preventDefault();
 
-    if (!id) return;
+  if (!id) return;
 
-    if (
-      !product.ProductName ||
-      (product.ProductPrice ?? 0) <= 0 ||
-      (product.Quantity ?? 0) < 0 ||
-      product.ProductType! < 1 ||
-      product.ProductType! > 5
-    ) {
-      setMessage(
-        "กรุณากรอกข้อมูลให้ถูกต้อง และประเภทสินค้าต้องอยู่ระหว่าง 1 ถึง 5"
-      );
-      return;
-    }
+  if (
+    !product.ProductName ||
+    (product.ProductPrice ?? 0) <= 0 ||
+    (product.Quantity ?? 0) < 0 ||
+    product.ProductType! < 1 ||
+    product.ProductType! > 5
+  ) {
+    setMessage(
+      "กรุณากรอกข้อมูลให้ถูกต้อง และประเภทสินค้าต้องอยู่ระหว่าง 1 ถึง 5"
+    );
+    return;
+  }
 
-    try {
-      setSaving(true);
-      setMessage("กำลังบันทึก...");
-      await updateProduct(id, {
-        Id: product.Id ?? id,
-        ProductName: product.ProductName ?? "",
-        ProductPrice: product.ProductPrice ?? 0,
-        ProductType: product.ProductType ?? 0,
-        Quantity: product.Quantity ?? 0,
-        IsActive: product.IsActive ?? true,
-      
-      });
-      setMessage("บันทึกเรียบร้อยแล้ว");
-      setTimeout(() => navigate("/seller"), 1500);
-    } catch (err) {
-      setMessage("เกิดข้อผิดพลาดในการบันทึก");
-    } finally {
-      setSaving(false);
-    }
-  };
+  const confirmSave = window.confirm("คุณต้องการบันทึกการแก้ไขนี้หรือไม่?");
+  if (!confirmSave) return; // ถ้ากดยกเลิก หยุดการทำงาน
 
-  if (loading) return <p className="text-center mt-6 text-gray-700">กำลังโหลดข้อมูลสินค้า...</p>;
+  try {
+    setSaving(true);
+    setMessage("กำลังบันทึก...");
+
+    await updateProduct(id, product as ProductRequest);
+
+    setMessage("บันทึกเรียบร้อยแล้ว");
+    setTimeout(() => navigate("/seller"), 1500);
+  } catch (err) {
+    setMessage("เกิดข้อผิดพลาดในการบันทึก");
+  } finally {
+    setSaving(false);
+  }
+};
+
+
+
+ const handleDeleteFile = async () => {
+  if (!id) return;
+
+  const confirmDelete = window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรูปภาพนี้?");
+  if (!confirmDelete) return; // ถ้ากดยกเลิก ให้หยุด
+
+  try {
+    setMessage("กำลังลบรูปภาพ...");
+    await deleteProductFile(id);
+    setFilePath("");
+    setMessage("ลบรูปภาพเรียบร้อยแล้ว");
+    alert("ลบรูปภาพเรียบร้อยแล้ว");
+  } catch (err) {
+    setMessage("ไม่สามารถลบรูปภาพได้");
+    alert("ไม่สามารถลบรูปภาพได้");
+  }
+};
+
+
+
+  if (loading)
+    return (
+      <p className="text-center mt-6 text-gray-700">กำลังโหลดข้อมูลสินค้า...</p>
+    );
 
   return (
     <div className="max-w-lg mx-auto p-6 bg-white shadow-md rounded-md mt-10">
       <h2 className="text-2xl font-semibold mb-6 text-center">แก้ไขสินค้า</h2>
 
       {message && (
-        <p className={`mb-4 text-center ${message.includes("ผิดพลาด") ? "text-red-600" : "text-green-600"}`}>
+        <p
+          className={`mb-4 text-center ${
+            message.includes("ผิดพลาด") ? "text-red-600" : "text-green-600"
+          }`}
+        >
           {message}
         </p>
       )}
@@ -151,7 +179,8 @@ const SellerManage: React.FC = () => {
 
         <label htmlFor="productType" className="block mb-4">
           <span className="block mb-1 font-medium text-center">
-            ประเภทสินค้า (1=อาหาร, 2=เครื่องใช้, 3=เครื่องดื่ม, 4=ของเล่น, 5=อื่นๆ)
+            ประเภทสินค้า (1=อาหาร, 2=เครื่องใช้, 3=เครื่องดื่ม, 4=ของเล่น,
+            5=อื่นๆ)
           </span>
           <input
             id="productType"
@@ -194,12 +223,52 @@ const SellerManage: React.FC = () => {
           <span>เปิดใช้งาน</span>
         </label>
 
+        {filePath && (
+          <div className="mb-4 text-center">
+            <img
+              src={filePath}
+              alt="รูปสินค้า"
+              className="mx-auto mb-2 max-h-60 object-contain rounded-md border"
+            />
+            <button
+              type="button"
+              onClick={handleDeleteFile}
+              disabled={saving}
+              className="px-4 py-1 bg-red-500 hover:bg-red-600 text-white rounded-md text-sm"
+            >
+              ลบรูปภาพ
+            </button>
+          </div>
+        )}
+       
+       <div className="mb-4">
+    <label htmlFor="filePath" className="block mb-1 font-medium">อัปโหลดรูปภาพใหม่:</label>
+    <input
+      type="file"
+      id="filePath"
+      name="FilePath"
+      accept="image/*"
+      disabled={saving}
+      className="w-full"
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          setProduct((prev) => ({ ...prev, FilePath: file }));
+          setFilePath(""); // ล้าง URL รูปเก่า เพราะมีรูปใหม่ที่ยังไม่อัปโหลด
+        }
+      }}
+    />
+  </div>
+
+
         <div className="flex justify-center gap-4">
           <button
             onClick={handleSave}
             disabled={saving}
             className={`px-6 py-2 rounded-md text-white font-semibold ${
-              saving ? "bg-blue-300 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+              saving
+                ? "bg-blue-300 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
             {saving ? "กำลังบันทึก..." : "บันทึก"}
