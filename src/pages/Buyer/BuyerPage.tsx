@@ -1,13 +1,11 @@
 // Buyer.tsx
-import React, { useState, useRef, useEffect, ChangeEvent } from "react";
+import React, { useState, useEffect } from "react";
 import { getProducts } from "@/api/Buyer";
 import { ProductResponse } from "@/types/product";
 import { useCart } from "@/components/layouts/CartContext";
 import CartIcon from "@/components/layouts/CartIcon";
 
 const BuyerPage: React.FC = () => {
-  const [query, setQuery] = useState<string>("");
-  const inputRef = useRef<HTMLInputElement>(null);
   const [products, setProducts] = useState<ProductResponse[]>([]);
   const [message, setMessage] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -16,7 +14,7 @@ const BuyerPage: React.FC = () => {
 
   // เก็บตะกร้าพร้อมจำนวนสินค้า
   const { addToCart, totalCount } = useCart();
-  
+
 
   useEffect(() => {
     setLoading(true);
@@ -44,22 +42,6 @@ const BuyerPage: React.FC = () => {
     }
   };
 
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setQuery(event.target.value);
-  };
-
-  const handleSearchClick = () => {
-    if (inputRef.current) {
-      setMessage(`กำลังค้นหา: "${query}"`);
-      // เพิ่มการ filter หรือเรียก API ตาม query ได้ที่นี่
-    }
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      handleSearchClick();
-    }
-  };
 
   const handleAddToCart = async (productId: string) => {
     try {
@@ -71,6 +53,8 @@ const BuyerPage: React.FC = () => {
       setAddingToCartId(null);
     }
   };
+
+  
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -87,24 +71,6 @@ const BuyerPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex gap-2 mb-6">
-          <input
-            type="text"
-            placeholder="ค้นหาสินค้าที่ต้องการ ..."
-            value={query}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            ref={inputRef}
-            className="flex-1 border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-          />
-          <button
-            onClick={handleSearchClick}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
-          >
-            Search
-          </button>
-        </div>
-
         {loading && <p className="text-gray-500 mb-4">กำลังโหลดข้อมูล...</p>}
         {error && <p className="text-red-500 mb-4">{error}</p>}
         {message && <p className="text-blue-600 mb-4">{message}</p>}
@@ -115,6 +81,9 @@ const BuyerPage: React.FC = () => {
               <tr>
                 <th className="px-4 py-3 text-left font-semibold text-gray-600">
                   #
+                </th>
+                 <th className="px-4 py-3 text-left font-semibold text-gray-600">
+                  รูปภาพสินค้า
                 </th>
                 <th className="px-4 py-3 text-left font-semibold text-gray-600">
                   ชื่อสินค้า
@@ -146,6 +115,23 @@ const BuyerPage: React.FC = () => {
                   className="hover:bg-gray-50"
                 >
                   <td className="px-4 py-2">{index + 1}</td>
+                  <td className="px-4 py-2">
+                  {p.filePath ? (
+                    <img
+                      src={
+                        p.filePath.includes("dropbox.com")
+                          ? p.filePath.replace("?dl=0", "?raw=1")
+                          : p.filePath
+                      }
+                      alt={p.productName}
+                      className="w-20 h-20 object-cover rounded"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded">
+                      No Image!
+                    </div>
+                  )}
+                </td>
                   <td className="px-4 py-2">{p.productName}</td>
                   <td className="px-4 py-2">
                     {new Date(p.createDate).toLocaleDateString()}

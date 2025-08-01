@@ -1,12 +1,10 @@
-import React, { useState, useRef, useEffect, type ChangeEvent } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProductResponse } from "@/types/product";
 import { getProductsSeller, deleteProduct } from "@/api/Seller";
 import { toast } from "react-toastify";
 
 const SellerPage: React.FC = () => {
-  const [query, setQuery] = useState<string>("");
-  const inputRef = useRef<HTMLInputElement>(null);
   const [products, setProducts] = useState<ProductResponse[]>([]);
   const navigate = useNavigate();
 
@@ -44,25 +42,7 @@ const SellerPage: React.FC = () => {
     }
   };
   
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setQuery(event.target.value);
-  };
-
-  const handleSearchClick = () => {
-    if (inputRef.current) {
-      const filtered = products.filter((p) =>
-        p.productName.toLowerCase().includes(query.toLowerCase())
-      );
-      setProducts(filtered);
-    }
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      handleSearchClick();
-    }
-  };
-
+  
   const handleDelete = async (id: string) => {
     const confirmDelete = window.confirm("คุณแน่ใจว่าจะลบสินค้านี้?");
     if (!confirmDelete) return;
@@ -82,42 +62,11 @@ const SellerPage: React.FC = () => {
   return (
     <div className="flex bg-white w-full min-h-screen justify-center items-center">
       <div className="w-[1100px] h-max bg-[#F8F9FF] shadow-lg px-10 py-10 rounded-lg flex flex-col gap-6">
-        {/* Top bar */}
-        {/* <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-700 flex gap-2 items-center">
-            📦 Seller Panel
-          </h2>
-          <button
-            onClick={handleSignOut}
-            className="px-4 py-2 border border-red-500 text-red-500 rounded hover:bg-red-100 text-sm"
-          >
-            Sign Out
-          </button>
-        </div> */}
 
         {/* Subheading */}
         <h1 className="text-lg font-medium text-gray-600">
           จัดการสินค้าของคุณ / ดูออเดอร์
         </h1>
-
-        {/* Search bar */}
-        <div className="flex gap-4 items-center">
-          <input
-            type="text"
-            placeholder="ค้นหาสินค้าที่ต้องการ ..."
-            value={query}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            ref={inputRef}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-300"
-          />
-          <button
-            onClick={handleSearchClick}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-          >
-            Search
-          </button>
-        </div>
 
         {/* Add product */}
         <div className="flex justify-end">

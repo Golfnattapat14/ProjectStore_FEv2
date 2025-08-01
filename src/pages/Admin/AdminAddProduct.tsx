@@ -72,7 +72,7 @@ const AdminAddProduct: React.FC = () => {
       await addNewProduct(product);
 
       setMessage("เพิ่มสินค้าเรียบร้อยแล้ว");
-      setTimeout(() => navigate("/seller"), 1500);
+      setTimeout(() => navigate("/admin"), 1500);
     } catch (err) {
       setMessage("เกิดข้อผิดพลาดในการบันทึก");
     } finally {
@@ -211,7 +211,7 @@ const productTypes = [
         </button>
 
         <button
-          onClick={() => navigate("/seller")}
+          onClick={() => navigate("/admin")}
           disabled={saving}
           className="px-6 py-2 rounded-md border border-gray-400 hover:bg-gray-100 disabled:opacity-50"
         >

@@ -9,6 +9,8 @@ const Admin: React.FC = () => {
   const [errorProducts, setErrorProducts] = useState("");
   const navigate = useNavigate();
 
+
+
   const fetchProducts = async () => {
     try {
       setLoadingProducts(true);
@@ -52,20 +54,11 @@ const Admin: React.FC = () => {
     }
   };
 
+
+
   return (
     <div className="p-6">
-      {/* <nav className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <button
-          onClick={() => signOut()}
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-        >
-          Sign Out
-        </button>
-      </nav> */}
-
       <h3 className="text-xl font-semibold mb-4">ข้อมูลสินค้า</h3>
-
       {loadingProducts && <p>กำลังโหลดข้อมูลสินค้า...</p>}
       {errorProducts && <p className="text-red-500">{errorProducts}</p>}
 
