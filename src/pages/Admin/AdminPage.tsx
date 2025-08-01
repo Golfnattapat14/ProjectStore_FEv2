@@ -2,13 +2,16 @@ import React, { useState, useEffect } from "react";
 import { ProductResponse } from "@/types/product";
 import { deleteProduct, getProducts } from "@/api/Admin";
 import { useNavigate } from "react-router-dom";
-
+import { SearchBar, SearchBarData } from "@/components/layouts/SearchBar";
+import { toast } from "react-toastify";
 const Admin: React.FC = () => {
   const [products, setProducts] = useState<ProductResponse[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [errorProducts, setErrorProducts] = useState("");
+  const [, setLoading] = useState(false);
   const navigate = useNavigate();
-  
+  //search
+  const [searchKeyword, setSearchKeyword] = useState("");
 
   const fetchProducts = async () => {
     try {
@@ -53,15 +56,67 @@ const Admin: React.FC = () => {
     }
   };
 
+  const handleSearch = async (filters: SearchBarData) => {
+    try {
+      setLoading(true);
+      const all = await getProducts();
+      const filtered = all.filter((p) => {
+        const kw = filters.keyword?.toLowerCase() || "";
+        const matchKeyword =
+          !kw ||
+          p.productName.toLowerCase().includes(kw) ||
+          (p.createdByName?.toLowerCase().includes(kw) ?? false);
 
+        const matchMin =
+          filters.priceMin == null || p.productPrice >= filters.priceMin;
+        const matchMax =
+          filters.priceMax == null || p.productPrice <= filters.priceMax;
+        const matchCategory =
+          filters.category == null || p.productType === filters.category;
+        const matchDate =
+          !filters.releaseDate ||
+          new Date(p.createDate).toISOString().split("T")[0] ===
+            filters.releaseDate;
+
+        const matchStatus =
+          filters.isActive === undefined || p.isActive === filters.isActive;
+        const matchSeller =
+          !filters.sellerName ||
+          p.createdByName
+            .toLowerCase()
+            .includes(filters.sellerName.toLowerCase());
+        return (
+          matchKeyword &&
+          matchMin &&
+          matchMax &&
+          matchCategory &&
+          matchDate &&
+          matchStatus &&
+          matchSeller
+        );
+      });
+
+      setProducts(filtered);
+    } catch (err: any) {
+      toast.error(err.message || "ค้นหาไม่สำเร็จ");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="p-6">
       <h3 className="text-xl font-semibold mb-4">ข้อมูลสินค้า</h3>
       {loadingProducts && <p>กำลังโหลดข้อมูลสินค้า...</p>}
       {errorProducts && <p className="text-red-500">{errorProducts}</p>}
-
       <div className="overflow-x-auto mb-6">
+        {/* SearchBar */}
+        <SearchBar
+          value={searchKeyword}
+          onChange={setSearchKeyword}
+          onSearch={handleSearch}
+          placeholder="ค้นหาสินค้าของคุณ..."
+        />
         <table className="min-w-full table-auto border border-gray-200 rounded">
           <thead className="bg-gray-100">
             <tr>
@@ -77,7 +132,7 @@ const Admin: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-           {products.map((p, index) => (
+            {products.map((p, index) => (
               <tr
                 key={p.id}
                 className={`border-t ${

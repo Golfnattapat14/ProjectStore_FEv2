@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ProductResponse } from "@/types/product";
 import { getProductsSeller, deleteProduct } from "@/api/Seller";
 import { toast } from "react-toastify";
+import { SearchBar, SearchBarData } from "@/components/layouts/SearchBar";
 
 const SellerPage: React.FC = () => {
   const [products, setProducts] = useState<ProductResponse[]>([]);
@@ -11,13 +12,14 @@ const SellerPage: React.FC = () => {
   const [, setLoading] = useState<boolean>(false);
   const [, setError] = useState<string>("");
 
+  //search
+  const [searchKeyword, setSearchKeyword] = useState("");
 
-  
   const loadProducts = () => {
     setLoading(true);
     getProductsSeller()
       .then((data) => {
-        setProducts(data.filter((p) => p.isActive));
+        setProducts(data);
         setError("");
       })
       .catch((err) => setError(err.message || "เกิดข้อผิดพลาด"))
@@ -43,8 +45,7 @@ const SellerPage: React.FC = () => {
         return "อื่น ๆ";
     }
   };
-  
-  
+
   const handleDelete = async (id: string) => {
     const confirmDelete = window.confirm("คุณแน่ใจว่าจะลบสินค้านี้?");
     if (!confirmDelete) return;
@@ -61,15 +62,68 @@ const SellerPage: React.FC = () => {
     }
   };
 
+  const handleSearch = async (filters: SearchBarData) => {
+    try {
+      setLoading(true);
+      const all = await getProductsSeller();
+      const filtered = all.filter((p) => {
+        const kw = filters.keyword?.toLowerCase() || "";
+        const matchKeyword =
+          !kw ||
+          p.productName.toLowerCase().includes(kw) ||
+          (p.createdByName?.toLowerCase().includes(kw) ?? false);
+
+        const matchMin =
+          filters.priceMin == null || p.productPrice >= filters.priceMin;
+        const matchMax =
+          filters.priceMax == null || p.productPrice <= filters.priceMax;
+        const matchCategory =
+          filters.category == null || p.productType === filters.category;
+        const matchDate =
+          !filters.releaseDate ||
+          new Date(p.createDate).toISOString().split("T")[0] ===
+            filters.releaseDate;
+
+        const matchStatus =
+          filters.isActive === undefined || p.isActive === filters.isActive;
+        const matchSeller =
+          !filters.sellerName ||
+          p.createdByName
+            .toLowerCase()
+            .includes(filters.sellerName.toLowerCase());
+        return (
+          matchKeyword &&
+          matchMin &&
+          matchMax &&
+          matchCategory &&
+          matchDate &&
+          matchStatus &&
+          matchSeller
+        );
+      });
+
+      setProducts(filtered);
+    } catch (err: any) {
+      toast.error(err.message || "ค้นหาไม่สำเร็จ");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex bg-white w-full min-h-screen justify-center items-center">
       <div className="w-[1100px] h-max bg-[#F8F9FF] shadow-lg px-10 py-10 rounded-lg flex flex-col gap-6">
-
         {/* Subheading */}
         <h1 className="text-lg font-medium text-gray-600">
           จัดการสินค้าของคุณ / ดูออเดอร์
         </h1>
-
+        {/* SearchBar */}
+        <SearchBar
+          value={searchKeyword}
+          onChange={setSearchKeyword}
+          onSearch={handleSearch}
+          placeholder="ค้นหาสินค้าของคุณ..."
+        />
         {/* Add product */}
         <div className="flex justify-end">
           <button

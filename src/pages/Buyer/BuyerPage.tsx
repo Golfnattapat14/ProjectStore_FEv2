@@ -4,10 +4,12 @@ import { getProducts } from "@/api/Buyer";
 import { ProductResponse } from "@/types/product";
 import { useCart } from "@/components/layouts/CartContext";
 import CartIcon from "@/components/layouts/CartIcon";
+import { toast } from "react-toastify";
+import { SearchBar, SearchBarData } from "@/components/layouts/SearchBar";
 
 const BuyerPage: React.FC = () => {
   const [products, setProducts] = useState<ProductResponse[]>([]);
-  const [message, setMessage] = useState<string>("");
+  const [message] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [addingToCartId, setAddingToCartId] = useState<string | null>(null);
@@ -15,7 +17,8 @@ const BuyerPage: React.FC = () => {
   // เก็บตะกร้าพร้อมจำนวนสินค้า
   const { addToCart, totalCount } = useCart();
 
-
+  //search
+  const [searchKeyword, setSearchKeyword] = useState("");
 
   useEffect(() => {
     setLoading(true);
@@ -30,7 +33,7 @@ const BuyerPage: React.FC = () => {
 
   const getProductTypeName = (type: number) => {
     switch (type) {
-      case  1:
+      case 1:
         return "อาหาร";
       case 2:
         return "เครื่องใช้";
@@ -43,7 +46,6 @@ const BuyerPage: React.FC = () => {
     }
   };
 
-
   const handleAddToCart = async (productId: string) => {
     try {
       setAddingToCartId(productId);
@@ -55,7 +57,53 @@ const BuyerPage: React.FC = () => {
     }
   };
 
-  
+  const handleSearch = async (filters: SearchBarData) => {
+    try {
+      setLoading(true);
+      const all = await getProducts();
+      const filtered = all.filter((p: any) => {
+        const kw = filters.keyword?.toLowerCase() || "";
+        const matchKeyword =
+          !kw ||
+          p.productName.toLowerCase().includes(kw) ||
+          (p.createdByName?.toLowerCase().includes(kw) ?? false);
+
+        const matchMin =
+          filters.priceMin == null || p.productPrice >= filters.priceMin;
+        const matchMax =
+          filters.priceMax == null || p.productPrice <= filters.priceMax;
+        const matchCategory =
+          filters.category == null || p.productType === filters.category;
+        const matchDate =
+          !filters.releaseDate ||
+          new Date(p.createDate).toISOString().split("T")[0] ===
+            filters.releaseDate;
+
+        const matchStatus =
+          filters.isActive === undefined || p.isActive === filters.isActive;
+        const matchSeller =
+          !filters.sellerName ||
+          p.createdByName
+            .toLowerCase()
+            .includes(filters.sellerName.toLowerCase());
+        return (
+          matchKeyword &&
+          matchMin &&
+          matchMax &&
+          matchCategory &&
+          matchDate &&
+          matchStatus &&
+          matchSeller
+        );
+      });
+
+      setProducts(filtered);
+    } catch (err: any) {
+      toast.error(err.message || "ค้นหาไม่สำเร็จ");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -71,8 +119,13 @@ const BuyerPage: React.FC = () => {
             ตะกร้า: {totalCount} รายการ
           </div>
         </div>
-
-
+        {/* SearchBar */}
+        <SearchBar
+          value={searchKeyword}
+          onChange={setSearchKeyword}
+          onSearch={handleSearch}
+          placeholder="ค้นหาสินค้าของคุณ..."
+        />
         {loading && <p className="text-gray-500 mb-4">กำลังโหลดข้อมูล...</p>}
         {error && <p className="text-red-500 mb-4">{error}</p>}
         {message && <p className="text-blue-600 mb-4">{message}</p>}
@@ -84,7 +137,7 @@ const BuyerPage: React.FC = () => {
                 <th className="px-4 py-3 text-left font-semibold text-gray-600">
                   #
                 </th>
-                 <th className="px-4 py-3 text-left font-semibold text-gray-600">
+                <th className="px-4 py-3 text-left font-semibold text-gray-600">
                   รูปภาพสินค้า
                 </th>
                 <th className="px-4 py-3 text-left font-semibold text-gray-600">
@@ -118,22 +171,22 @@ const BuyerPage: React.FC = () => {
                 >
                   <td className="px-4 py-2">{index + 1}</td>
                   <td className="px-4 py-2">
-                  {p.filePath ? (
-                    <img
-                      src={
-                        p.filePath.includes("dropbox.com")
-                          ? p.filePath.replace("?dl=0", "?raw=1")
-                          : p.filePath
-                      }
-                      alt={p.productName}
-                      className="w-20 h-20 object-cover rounded"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded">
-                      No Image!
-                    </div>
-                  )}
-                </td>
+                    {p.filePath ? (
+                      <img
+                        src={
+                          p.filePath.includes("dropbox.com")
+                            ? p.filePath.replace("?dl=0", "?raw=1")
+                            : p.filePath
+                        }
+                        alt={p.productName}
+                        className="w-20 h-20 object-cover rounded"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded">
+                        No Image!
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-2">{p.productName}</td>
                   <td className="px-4 py-2">
                     {new Date(p.createDate).toLocaleDateString()}
