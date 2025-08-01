@@ -70,6 +70,7 @@ const App = () => {
         {/* Buyer */}
         <Route path="/buyer" element={<BuyerPage />} />
         <Route path="/buyerCart" element={<BuyerCart />} />
+
       </Routes>
 
       <ToastContainer aria-label="Notification Container" />

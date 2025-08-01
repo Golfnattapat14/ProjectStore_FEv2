@@ -11,6 +11,8 @@ const SellerPage: React.FC = () => {
   const [, setLoading] = useState<boolean>(false);
   const [, setError] = useState<string>("");
 
+
+  
   const loadProducts = () => {
     setLoading(true);
     getProductsSeller()

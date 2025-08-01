@@ -8,6 +8,8 @@ const Admin: React.FC = () => {
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [errorProducts, setErrorProducts] = useState("");
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
+  
 
 
 
@@ -61,6 +63,16 @@ const Admin: React.FC = () => {
       <h3 className="text-xl font-semibold mb-4">ข้อมูลสินค้า</h3>
       {loadingProducts && <p>กำลังโหลดข้อมูลสินค้า...</p>}
       {errorProducts && <p className="text-red-500">{errorProducts}</p>}
+<div className="mb-4">
+  <input
+    type="text"
+    placeholder="ค้นหาสินค้า / ผู้ขาย..."
+    className="border p-2 w-full md:w-1/3 rounded"
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+  />
+</div>
+
 
       <div className="overflow-x-auto mb-6">
         <table className="min-w-full table-auto border border-gray-200 rounded">
@@ -78,7 +90,15 @@ const Admin: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {products.map((p, index) => (
+          {products
+            .filter((p) => {
+              const term = searchTerm.toLowerCase();
+              return (
+                p.productName.toLowerCase().includes(term) ||
+                p.createdByName.toLowerCase().includes(term)
+              );
+            })
+            .map((p, index) => (
               <tr
                 key={p.id}
                 className={`border-t ${

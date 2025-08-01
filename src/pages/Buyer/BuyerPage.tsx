@@ -16,6 +16,7 @@ const BuyerPage: React.FC = () => {
   const { addToCart, totalCount } = useCart();
 
 
+
   useEffect(() => {
     setLoading(true);
     getProducts()
@@ -70,6 +71,7 @@ const BuyerPage: React.FC = () => {
             ตะกร้า: {totalCount} รายการ
           </div>
         </div>
+
 
         {loading && <p className="text-gray-500 mb-4">กำลังโหลดข้อมูล...</p>}
         {error && <p className="text-red-500 mb-4">{error}</p>}
