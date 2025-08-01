@@ -123,6 +123,19 @@ export const NavbarComponent = () => {
           )}
         </div>
 
+        <div className="hidden lg:flex lg:flex-1 lg:justify-center gap-6">
+          {/* ลิงก์สำหรับ admin เท่านั้น */}
+          {role === "admin" && (
+            <Link
+              to="/adminAdd"
+              className="text-blue-600 font-semibold hover:underline"
+            >
+              เพิ่มสินค้า
+            </Link>
+          )}
+        </div>
+
+
         {/* User Profile + Logout */}
         <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center gap-3">
           {/* Herei Icon + Username */}

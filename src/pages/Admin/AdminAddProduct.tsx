@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { addNewProduct } from "@/api/Seller";
 import { ProductRequest } from "@/types/product";
 
-const SellerAdd: React.FC = () => {
+const AdminAddProduct: React.FC = () => {
   const navigate = useNavigate();
 
   const savedUser = localStorage.getItem("user");
@@ -228,4 +228,4 @@ const productTypes = [
   );
 };
 
-export default SellerAdd;
+export default AdminAddProduct;

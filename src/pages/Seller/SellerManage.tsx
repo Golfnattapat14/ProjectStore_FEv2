@@ -55,20 +55,33 @@ const SellerManage: React.FC = () => {
       .catch((err) => setMessage(err.message || "โหลดข้อมูลไม่สำเร็จ"));
   }, [id]);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setProduct((prev) => ({
-      ...prev,
-      [name]:
-        type === "checkbox"
-          ? checked
-          : name === "ProductPrice" ||
-            name === "Quantity" ||
-            name === "ProductType"
-          ? Number(value)
-          : value,
-    }));
-  };
+ const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+   const { name, value, type, checked, files } = e.target as HTMLInputElement;
+ 
+   if (type === "file") {
+     setProduct((prev) => ({
+       ...prev,
+       FilePath: files && files.length > 0 ? files[0] : null,
+     }));
+     return;
+   }
+ 
+   let newValue: string | number | boolean;
+ 
+   if (type === "checkbox") {
+     newValue = checked;
+   } else if (["ProductPrice", "Quantity", "ProductType"].includes(name)) {
+     newValue = Number(value);
+   } else {
+     newValue = value;
+   }
+ 
+   setProduct((prev) => ({
+     ...prev,
+     [name]: newValue,
+   }));
+ };
+
 
  const handleSave = async (e?: React.MouseEvent) => {
   e?.preventDefault();
@@ -126,6 +139,14 @@ const SellerManage: React.FC = () => {
   }
 };
 
+const productTypes = [
+  { label: "อาหาร", value: 1 },
+  { label: "เครื่องใช้", value: 2 },
+  { label: "เครื่องดื่ม", value: 3 },
+  { label: "ของเล่น", value: 4 },
+  { label: "อื่นๆ", value: 5 },
+];
+
 
 
   if (loading)
@@ -178,22 +199,25 @@ const SellerManage: React.FC = () => {
         </label>
 
         <label htmlFor="productType" className="block mb-4">
-          <span className="block mb-1 font-medium text-center">
-            ประเภทสินค้า (1=อาหาร, 2=เครื่องใช้, 3=เครื่องดื่ม, 4=ของเล่น,
-            5=อื่นๆ)
-          </span>
-          <input
-            id="productType"
-            type="number"
-            name="ProductType"
-            value={product.ProductType ?? 0}
-            onChange={handleChange}
-            min={1}
-            max={5}
-            disabled={saving}
-            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 text-center"
-          />
-        </label>
+  <span className="block mb-1 font-medium">ประเภทสินค้า:</span>
+  <select
+    id="productType"
+    name="ProductType"
+    value={product.ProductType ?? 0}
+    onChange={handleChange}
+    disabled={saving}
+    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+  >
+    <option value={0} disabled>
+      -- กรุณาเลือกประเภทสินค้า --
+    </option>
+    {productTypes.map((type) => (
+      <option key={type.value} value={type.value}>
+        {type.label}
+      </option>
+    ))}
+  </select>
+</label>
 
         <label htmlFor="quantity" className="block mb-4">
           <span className="block mb-1 font-medium">จำนวน:</span>

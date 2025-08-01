@@ -178,8 +178,4 @@ const roles = [
     label: "ผู้ซื้อ",
     value: "seller"
   },
-  {
-    label: "แอดมิน",
-    value: "admin"
-  }
 ]

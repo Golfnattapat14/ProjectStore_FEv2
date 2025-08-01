@@ -17,6 +17,7 @@ import BuyerCart from "./pages/Buyer/BuyerCart";
 import BuyerPage from "./pages/Buyer/BuyerPage";
 
 import { getToken, isTokenExpired } from "./api/Token";
+import AdminAddProduct from "./pages/Admin/AdminAddProduct";
 
 const AuthChecker = () => {
   const location = useLocation();
@@ -62,6 +63,9 @@ const App = () => {
         <Route path="/adminManage" element={<AdminManage />} />
         <Route path="/adminManageUser/:id" element={<AdminManageUser />} />
         <Route path="/adminManageProducts/:id" element={<AdminManageProducts />} />
+        <Route path="adminAdd" element={<AdminAddProduct />} />
+
+
 
         {/* Buyer */}
         <Route path="/buyer" element={<BuyerPage />} />

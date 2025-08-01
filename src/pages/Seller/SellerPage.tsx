@@ -43,7 +43,7 @@ const SellerPage: React.FC = () => {
         return "อื่น ๆ";
     }
   };
-
+  
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setQuery(event.target.value);
   };
