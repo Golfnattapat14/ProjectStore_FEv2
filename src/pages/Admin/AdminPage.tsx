@@ -8,10 +8,7 @@ const Admin: React.FC = () => {
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [errorProducts, setErrorProducts] = useState("");
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState("");
   
-
-
 
   const fetchProducts = async () => {
     try {
@@ -31,13 +28,13 @@ const Admin: React.FC = () => {
 
   const getProductTypeName = (type: number) => {
     switch (type) {
-      case 0:
-        return "อาหาร";
       case 1:
-        return "เครื่องใช้";
+        return "อาหาร";
       case 2:
-        return "เครื่องดื่ม";
+        return "เครื่องใช้";
       case 3:
+        return "เครื่องดื่ม";
+      case 4:
         return "ของเล่น";
       default:
         return "อื่น ๆ";
@@ -63,16 +60,6 @@ const Admin: React.FC = () => {
       <h3 className="text-xl font-semibold mb-4">ข้อมูลสินค้า</h3>
       {loadingProducts && <p>กำลังโหลดข้อมูลสินค้า...</p>}
       {errorProducts && <p className="text-red-500">{errorProducts}</p>}
-<div className="mb-4">
-  <input
-    type="text"
-    placeholder="ค้นหาสินค้า / ผู้ขาย..."
-    className="border p-2 w-full md:w-1/3 rounded"
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-  />
-</div>
-
 
       <div className="overflow-x-auto mb-6">
         <table className="min-w-full table-auto border border-gray-200 rounded">
@@ -90,15 +77,7 @@ const Admin: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-          {products
-            .filter((p) => {
-              const term = searchTerm.toLowerCase();
-              return (
-                p.productName.toLowerCase().includes(term) ||
-                p.createdByName.toLowerCase().includes(term)
-              );
-            })
-            .map((p, index) => (
+           {products.map((p, index) => (
               <tr
                 key={p.id}
                 className={`border-t ${

@@ -55,99 +55,98 @@ const SellerManage: React.FC = () => {
       .catch((err) => setMessage(err.message || "โหลดข้อมูลไม่สำเร็จ"));
   }, [id]);
 
- const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-   const { name, value, type, checked, files } = e.target as HTMLInputElement;
- 
-   if (type === "file") {
-     setProduct((prev) => ({
-       ...prev,
-       FilePath: files && files.length > 0 ? files[0] : null,
-     }));
-     return;
-   }
- 
-   let newValue: string | number | boolean;
- 
-   if (type === "checkbox") {
-     newValue = checked;
-   } else if (["ProductPrice", "Quantity", "ProductType"].includes(name)) {
-     newValue = Number(value);
-   } else {
-     newValue = value;
-   }
- 
-   setProduct((prev) => ({
-     ...prev,
-     [name]: newValue,
-   }));
- };
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type, checked, files } = e.target as HTMLInputElement;
 
+    if (type === "file") {
+      setProduct((prev) => ({
+        ...prev,
+        FilePath: files && files.length > 0 ? files[0] : null,
+      }));
+      return;
+    }
 
- const handleSave = async (e?: React.MouseEvent) => {
-  e?.preventDefault();
+    let newValue: string | number | boolean;
 
-  if (!id) return;
+    if (type === "checkbox") {
+      newValue = checked;
+    } else if (["ProductPrice", "Quantity", "ProductType"].includes(name)) {
+      newValue = Number(value);
+    } else {
+      newValue = value;
+    }
 
-  if (
-    !product.ProductName ||
-    (product.ProductPrice ?? 0) <= 0 ||
-    (product.Quantity ?? 0) < 0 ||
-    product.ProductType! < 1 ||
-    product.ProductType! > 5
-  ) {
-    setMessage(
-      "กรุณากรอกข้อมูลให้ถูกต้อง และประเภทสินค้าต้องอยู่ระหว่าง 1 ถึง 5"
+    setProduct((prev) => ({
+      ...prev,
+      [name]: newValue,
+    }));
+  };
+
+  const handleSave = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
+
+    if (!id) return;
+
+    if (
+      !product.ProductName ||
+      (product.ProductPrice ?? 0) <= 0 ||
+      (product.Quantity ?? 0) < 0 ||
+      product.ProductType! < 1 ||
+      product.ProductType! > 5
+    ) {
+      setMessage(
+        "กรุณากรอกข้อมูลให้ถูกต้อง และประเภทสินค้าต้องอยู่ระหว่าง 1 ถึง 5"
+      );
+      return;
+    }
+
+    const confirmSave = window.confirm("คุณต้องการบันทึกการแก้ไขนี้หรือไม่?");
+    if (!confirmSave) return; // ถ้ากดยกเลิก หยุดการทำงาน
+
+    try {
+      setSaving(true);
+      setMessage("กำลังบันทึก...");
+
+      await updateProduct(id, product as ProductRequest);
+
+      setMessage("บันทึกเรียบร้อยแล้ว");
+      setTimeout(() => navigate("/seller"), 1500);
+    } catch (err) {
+      setMessage("เกิดข้อผิดพลาดในการบันทึก");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteFile = async () => {
+    if (!id) return;
+
+    const confirmDelete = window.confirm(
+      "คุณแน่ใจหรือไม่ว่าต้องการลบรูปภาพนี้?"
     );
-    return;
-  }
+    if (!confirmDelete) return; // ถ้ากดยกเลิก ให้หยุด
 
-  const confirmSave = window.confirm("คุณต้องการบันทึกการแก้ไขนี้หรือไม่?");
-  if (!confirmSave) return; // ถ้ากดยกเลิก หยุดการทำงาน
+    try {
+      setMessage("กำลังลบรูปภาพ...");
+      await deleteProductFile(id);
+      setFilePath("");
+      setMessage("ลบรูปภาพเรียบร้อยแล้ว");
+      alert("ลบรูปภาพเรียบร้อยแล้ว");
+    } catch (err) {
+      setMessage("ไม่สามารถลบรูปภาพได้");
+      alert("ไม่สามารถลบรูปภาพได้");
+    }
+  };
 
-  try {
-    setSaving(true);
-    setMessage("กำลังบันทึก...");
-
-    await updateProduct(id, product as ProductRequest);
-
-    setMessage("บันทึกเรียบร้อยแล้ว");
-    setTimeout(() => navigate("/seller"), 1500);
-  } catch (err) {
-    setMessage("เกิดข้อผิดพลาดในการบันทึก");
-  } finally {
-    setSaving(false);
-  }
-};
-
-
-
- const handleDeleteFile = async () => {
-  if (!id) return;
-
-  const confirmDelete = window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรูปภาพนี้?");
-  if (!confirmDelete) return; // ถ้ากดยกเลิก ให้หยุด
-
-  try {
-    setMessage("กำลังลบรูปภาพ...");
-    await deleteProductFile(id);
-    setFilePath("");
-    setMessage("ลบรูปภาพเรียบร้อยแล้ว");
-    alert("ลบรูปภาพเรียบร้อยแล้ว");
-  } catch (err) {
-    setMessage("ไม่สามารถลบรูปภาพได้");
-    alert("ไม่สามารถลบรูปภาพได้");
-  }
-};
-
-const productTypes = [
-  { label: "อาหาร", value: 1 },
-  { label: "เครื่องใช้", value: 2 },
-  { label: "เครื่องดื่ม", value: 3 },
-  { label: "ของเล่น", value: 4 },
-  { label: "อื่นๆ", value: 5 },
-];
-
-
+  const productTypes = [
+    { label: "อาหาร", value: 1 },
+    { label: "เครื่องใช้", value: 2 },
+    { label: "เครื่องดื่ม", value: 3 },
+    { label: "ของเล่น", value: 4 },
+    { label: "อื่นๆ", value: 5 },
+  ];
 
   if (loading)
     return (
@@ -199,25 +198,25 @@ const productTypes = [
         </label>
 
         <label htmlFor="productType" className="block mb-4">
-  <span className="block mb-1 font-medium">ประเภทสินค้า:</span>
-  <select
-    id="productType"
-    name="ProductType"
-    value={product.ProductType ?? 0}
-    onChange={handleChange}
-    disabled={saving}
-    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-  >
-    <option value={0} disabled>
-      -- กรุณาเลือกประเภทสินค้า --
-    </option>
-    {productTypes.map((type) => (
-      <option key={type.value} value={type.value}>
-        {type.label}
-      </option>
-    ))}
-  </select>
-</label>
+          <span className="block mb-1 font-medium">ประเภทสินค้า:</span>
+          <select
+            id="productType"
+            name="ProductType"
+            value={product.ProductType ?? 0}
+            onChange={handleChange}
+            disabled={saving}
+            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+          >
+            <option value={0} disabled>
+              -- กรุณาเลือกประเภทสินค้า --
+            </option>
+            {productTypes.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <label htmlFor="quantity" className="block mb-4">
           <span className="block mb-1 font-medium">จำนวน:</span>
@@ -264,26 +263,27 @@ const productTypes = [
             </button>
           </div>
         )}
-       
-       <div className="mb-4">
-    <label htmlFor="filePath" className="block mb-1 font-medium">อัปโหลดรูปภาพใหม่:</label>
-    <input
-      type="file"
-      id="filePath"
-      name="FilePath"
-      accept="image/*"
-      disabled={saving}
-      className="w-full"
-      onChange={(e) => {
-        const file = e.target.files?.[0];
-        if (file) {
-          setProduct((prev) => ({ ...prev, FilePath: file }));
-          setFilePath(""); // ล้าง URL รูปเก่า เพราะมีรูปใหม่ที่ยังไม่อัปโหลด
-        }
-      }}
-    />
-  </div>
 
+        <div className="mb-4">
+          <label htmlFor="filePath" className="block mb-1 font-medium">
+            อัปโหลดรูปภาพใหม่:
+          </label>
+          <input
+            type="file"
+            id="filePath"
+            name="FilePath"
+            accept="image/*"
+            disabled={saving}
+            className="w-full"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setProduct((prev) => ({ ...prev, FilePath: file }));
+                setFilePath(""); // ล้าง URL รูปเก่า เพราะมีรูปใหม่ที่ยังไม่อัปโหลด
+              }
+            }}
+          />
+        </div>
 
         <div className="flex justify-center gap-4">
           <button

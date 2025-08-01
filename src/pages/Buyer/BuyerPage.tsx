@@ -30,13 +30,13 @@ const BuyerPage: React.FC = () => {
 
   const getProductTypeName = (type: number) => {
     switch (type) {
-      case 0:
+      case  1:
         return "อาหาร";
-      case 1:
-        return "เครื่องใช้";
       case 2:
-        return "เครื่องดื่ม";
+        return "เครื่องใช้";
       case 3:
+        return "เครื่องดื่ม";
+      case 4:
         return "ของเล่น";
       default:
         return "อื่น ๆ";
