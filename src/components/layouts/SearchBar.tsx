@@ -42,7 +42,7 @@ export const SearchBar = ({
   const [category, setCategory] = useState("");
   const [releaseDate, setReleaseDate] = useState("");
 
-  const [sellerName, setSellerName] = useState("");
+  const [sellerName] = useState("");
   
 
   // ควบคุมช่วงราคา
