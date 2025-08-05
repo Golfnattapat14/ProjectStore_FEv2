@@ -29,7 +29,7 @@ interface SearchBarProps {
 }
 
 const minPrice = 0;
-const maxPrice = 1000;
+const maxPrice = 5000;
 
 export const SearchBar = ({
   value,
@@ -55,7 +55,15 @@ export const SearchBar = ({
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [inputValue, sellerName, category, priceRange, releaseDateFrom, releaseDateTo, isActive]);
+  }, [
+    inputValue,
+    sellerName,
+    category,
+    priceRange,
+    releaseDateFrom,
+    releaseDateTo,
+    isActive,
+  ]);
 
   // Check date validity and clear if invalid
   useEffect(() => {
@@ -187,7 +195,9 @@ export const SearchBar = ({
 
       {/* Category Checkbox */}
       <div>
-        <span className="block text-sm font-medium text-gray-700 mb-2">ประเภทสินค้า</span>
+        <span className="block text-sm font-medium text-gray-700 mb-2">
+          ประเภทสินค้า
+        </span>
         <div className="flex flex-wrap gap-2">
           {productTypes.map((type) => (
             <label
@@ -209,7 +219,9 @@ export const SearchBar = ({
       {/* Release Date */}
       <div className="flex gap-2">
         <label className="flex-1">
-          <span className="block text-sm font-medium text-gray-700 mb-1">วันที่เริ่มต้น</span>
+          <span className="block text-sm font-medium text-gray-700 mb-1">
+            วันที่วางขาย (เริ่มต้น)
+          </span>
           <input
             type="date"
             value={releaseDateFrom}
@@ -217,8 +229,11 @@ export const SearchBar = ({
             className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500"
           />
         </label>
+
         <label className="flex-1">
-          <span className="block text-sm font-medium text-gray-700 mb-1">วันที่สิ้นสุด</span>
+          <span className="block text-sm font-medium text-gray-700 mb-1">
+            วันที่วางขาย (สิ้นสุด)
+          </span>
           <input
             type="date"
             value={releaseDateTo}

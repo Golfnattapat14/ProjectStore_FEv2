@@ -20,34 +20,36 @@ const AdminAddProduct: React.FC = () => {
 
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
-  
- const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-  const { name, value, type, checked, files } = e.target as HTMLInputElement;
 
-  if (type === "file") {
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type, checked, files } = e.target as HTMLInputElement;
+
+    if (type === "file") {
+      setProduct((prev) => ({
+        ...prev,
+        FilePath: files && files.length > 0 ? files[0] : null,
+      }));
+      return;
+    }
+
+    let newValue: string | number | boolean;
+
+    if (type === "checkbox") {
+      newValue = checked;
+    } else if (["ProductPrice", "Quantity", "ProductType"].includes(name)) {
+      newValue = Number(value);
+      if (name === "Quantity" && newValue < 0) newValue = 0;
+    } else {
+      newValue = value;
+    }
+
     setProduct((prev) => ({
       ...prev,
-      FilePath: files && files.length > 0 ? files[0] : null,
+      [name]: newValue,
     }));
-    return;
-  }
-
-  let newValue: string | number | boolean;
-
-  if (type === "checkbox") {
-    newValue = checked;
-  } else if (["ProductPrice", "Quantity", "ProductType"].includes(name)) {
-    newValue = Number(value);
-  } else {
-    newValue = value;
-  }
-
-  setProduct((prev) => ({
-    ...prev,
-    [name]: newValue,
-  }));
-};
-
+  };
 
   const handleSave = async (e?: React.MouseEvent) => {
     e?.preventDefault();
@@ -55,7 +57,7 @@ const AdminAddProduct: React.FC = () => {
     if (
       !product.ProductName.trim() ||
       product.ProductPrice <= 0 ||
-      product.Quantity < 0 ||
+      product.Quantity <= 0 ||
       product.ProductType < 1 ||
       product.ProductType > 5
     ) {
@@ -80,16 +82,14 @@ const AdminAddProduct: React.FC = () => {
     }
   };
 
+  const productTypes = [
+    { label: "อาหาร", value: 1 },
+    { label: "เครื่องใช้", value: 2 },
+    { label: "เครื่องดื่ม", value: 3 },
+    { label: "ของเล่น", value: 4 },
+    { label: "อื่นๆ", value: 5 },
+  ];
 
-const productTypes = [
-  { label: "อาหาร", value: 1 },
-  { label: "เครื่องใช้", value: 2 },
-  { label: "เครื่องดื่ม", value: 3 },
-  { label: "ของเล่น", value: 4 },
-  { label: "อื่นๆ", value: 5 },
-];
-
-  
   return (
     <div className="max-w-lg mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold mb-6 text-center">
@@ -111,7 +111,9 @@ const productTypes = [
       </label>
 
       <label htmlFor="productPrice" className="block mb-4">
-        <span className="block mb-1 font-medium">ราคา:</span>
+        <span className="block mb-1 font-medium">
+          ราคา: {Number(product.ProductPrice).toFixed(2)} บาท
+        </span>
         <input
           id="productPrice"
           type="number"
@@ -119,6 +121,7 @@ const productTypes = [
           value={product.ProductPrice}
           onChange={handleChange}
           min={0}
+          step="0.01"
           aria-required="true"
           disabled={saving}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
@@ -126,26 +129,25 @@ const productTypes = [
       </label>
 
       <label htmlFor="productType" className="block mb-4">
-  <span className="block mb-1 font-medium">ประเภทสินค้า:</span>
-  <select
-    id="productType"
-    name="ProductType"
-    value={product.ProductType ?? 0}
-    onChange={handleChange}
-    disabled={saving}
-    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-  >
-    <option value={0} disabled>
-      -- กรุณาเลือกประเภทสินค้า --
-    </option>
-    {productTypes.map((type) => (
-      <option key={type.value} value={type.value}>
-        {type.label}
-      </option>
-    ))}
-  </select>
-</label>
-
+        <span className="block mb-1 font-medium">ประเภทสินค้า:</span>
+        <select
+          id="productType"
+          name="ProductType"
+          value={product.ProductType ?? 0}
+          onChange={handleChange}
+          disabled={saving}
+          className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+        >
+          <option value={0} disabled>
+            -- กรุณาเลือกประเภทสินค้า --
+          </option>
+          {productTypes.map((type) => (
+            <option key={type.value} value={type.value}>
+              {type.label}
+            </option>
+          ))}
+        </select>
+      </label>
 
       <label htmlFor="quantity" className="block mb-4">
         <span className="block mb-1 font-medium">จำนวน:</span>
@@ -175,10 +177,10 @@ const productTypes = [
           className="w-full"
         />
         {product.FilePath && typeof product.FilePath !== "string" && (
-  <p className="mt-2 text-sm text-gray-600">
-    ไฟล์ที่เลือก: {(product.FilePath as File).name}
-  </p>
-)}
+          <p className="mt-2 text-sm text-gray-600">
+            ไฟล์ที่เลือก: {(product.FilePath as File).name}
+          </p>
+        )}
       </label>
 
       <label

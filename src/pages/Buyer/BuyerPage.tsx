@@ -12,7 +12,9 @@ const BuyerPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [addingToCartId, setAddingToCartId] = useState<string | null>(null);
-  const [quantityToAdd, setQuantityToAdd] = useState<{ [id: string]: number }>({});
+  const [quantityToAdd, setQuantityToAdd] = useState<{ [id: string]: number }>(
+    {}
+  );
 
   const { addToCart, totalCount } = useCart();
 
@@ -194,92 +196,116 @@ const BuyerPage: React.FC = () => {
 
           {/* Grid แสดงสินค้า */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {products.length > 0 ? (
-              products.map((p) => (
-                <div
-                  key={p.id}
-                  className="bg-white border border-orange-100 rounded-xl shadow-sm hover:shadow-lg transition-shadow flex flex-col cursor-pointer group relative overflow-hidden"
-                  title={p.productName}
-                >
-                  {/* Badge ตัวอย่าง */}
-                  {/* {p.quantity > 10 && (
+            {products.length > 0
+              ? products.map((p) => (
+                  <div
+                    key={p.id}
+                    className="bg-white border border-orange-100 rounded-xl shadow-sm hover:shadow-lg transition-shadow flex flex-col h-full cursor-pointer group"
+                    title={p.productName}
+                  >
+                    {/* Badge ตัวอย่าง */}
+                    {/* {p.quantity > 10 && (
                     <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full z-10 shadow">
                       ขายดี
                     </span>
                   )} */}
-                  <div className="relative pb-[100%] overflow-hidden rounded-t-xl">
-                    {p.filePath ? (
-                      <img
-                        src={
-                          p.filePath.includes("dropbox.com")
-                            ? p.filePath.replace("?dl=0", "?raw=1")
-                            : p.filePath
-                        }
-                        alt={p.productName}
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 bg-gray-200 flex items-center justify-center text-xs text-gray-500">
-                        ไม่มีรูปภาพ
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-3 flex flex-col flex-grow">
-                    <h3 className="text-base font-semibold text-gray-900 line-clamp-2 mb-1">
-                      {p.productName}
-                    </h3>
-                    <p
-                      className="text-xs text-gray-500 mb-1 truncate"
-                      title={p.createdByName}
-                    >
-                      โดย: {p.createdByName || "-"}
-                    </p>
-                    <p className="text-xs text-gray-400 mb-2">
-                      {getProductTypeName(p.productType ?? 0)} • เหลือ {p.quantity}{" "}
-                      ชิ้น
-                    </p>
-                    <div className="mt-auto flex flex-col gap-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xl font-bold text-orange-500">
-                          {p.productPrice.toLocaleString()} บาท
-                        </span>
-                        <div className="flex items-center gap-1">
-                          <button
-                            className="w-7 h-7 rounded-full bg-gray-200 text-lg font-bold text-gray-700 hover:bg-orange-100"
-                            onClick={() => handleQuantityChange(p.id, -1, p.quantity)}
-                            disabled={(quantityToAdd[p.id] ?? 1) <= 1}
-                            type="button"
-                          >-</button>
-                          <span className="w-8 text-center">{quantityToAdd[p.id] ?? 1}</span>
-                          <button
-                            className="w-7 h-7 rounded-full bg-gray-200 text-lg font-bold text-gray-700 hover:bg-orange-100"
-                            onClick={() => handleQuantityChange(p.id, 1, p.quantity)}
-                            disabled={(quantityToAdd[p.id] ?? 1) >= p.quantity}
-                            type="button"
-                          >+</button>
+                    <div className="relative pb-[100%] overflow-hidden rounded-t-xl">
+                      {p.filePath ? (
+                        <img
+                          src={
+                            p.filePath.includes("dropbox.com")
+                              ? p.filePath.replace("?dl=0", "?raw=1")
+                              : p.filePath
+                          }
+                          alt={p.productName}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+                          ไม่มีรูปภาพ
                         </div>
-                      </div>
-                      <button
-                        disabled={addingToCartId === p.id || p.quantity === 0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAddToCart(p.id);
-                        }}
-                        className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed shadow"
+                      )}
+                    </div>
+                    <div className="p-3 flex flex-col flex-grow">
+                      <h3 className="text-base font-semibold text-gray-900 break-words mb-1">
+                        {p.productName}
+                      </h3>
+                      <p
+                        className="text-xs text-gray-500 mb-1 break-words"
+                        title={p.createdByName}
                       >
-                        {addingToCartId === p.id ? "กำลังเพิ่ม..." : "ใส่ตะกร้า"}
-                      </button>
+                        โดย: {p.createdByName || "-"}
+                      </p>
+                      <p className="text-xs text-gray-400 mb-1">
+                        โพสต์เมื่อ:{" "}
+                        {new Date(p.createDate).toLocaleDateString("th-TH")}
+                      </p>
+                      <p className="text-xs text-gray-500 mb-2">
+                        ประเภทสินค้า : {getProductTypeName(p.productType ?? 0)} 
+                      </p>
+                      <p className="text-xs text-gray-500 mb-2">
+                        คงเหลือ:{" "}
+                        {p.quantity > 0
+                          ? p.quantity.toLocaleString()
+                          : "หมดสต็อก"} ชิ้น
+                      </p>
+                      <div className="mt-auto flex flex-col gap-2">
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="text-base sm:text-lg font-semibold text-orange-500">
+                            {p.productPrice.toLocaleString()} บาท
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <button
+                              className="min-w-[28px] h-7 px-2 rounded-full bg-gray-200 text-sm font-bold text-gray-700 hover:bg-orange-100"
+                              onClick={() =>
+                                handleQuantityChange(p.id, -1, p.quantity)
+                              }
+                              disabled={(quantityToAdd[p.id] ?? 1) <= 1}
+                              type="button"
+                            >
+                              -
+                            </button>
+
+                            <span className="min-w-[32px] text-center text-sm">
+                              {quantityToAdd[p.id] ?? 1}
+                            </span>
+
+                            <button
+                              className="min-w-[28px] h-7 px-2 rounded-full bg-gray-200 text-sm font-bold text-gray-700 hover:bg-orange-100"
+                              onClick={() =>
+                                handleQuantityChange(p.id, 1, p.quantity)
+                              }
+                              disabled={
+                                (quantityToAdd[p.id] ?? 1) >= p.quantity
+                              }
+                              type="button"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+
+                        <button
+                          disabled={addingToCartId === p.id || p.quantity === 0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToCart(p.id);
+                          }}
+                          className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed shadow"
+                        >
+                          {addingToCartId === p.id
+                            ? "กำลังเพิ่ม..."
+                            : "ใส่ตะกร้า"}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
-            ) : (
-              !loading && (
-                <p className="col-span-full text-center text-gray-400 text-lg py-20">
-                  ไม่พบสินค้า
-                </p>
-              )
-            )}
+                ))
+              : !loading && (
+                  <p className="col-span-full text-center text-gray-400 text-lg py-20">
+                    ไม่พบสินค้า
+                  </p>
+                )}
           </div>
         </div>
       </main>

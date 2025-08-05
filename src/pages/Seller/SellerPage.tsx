@@ -8,8 +8,8 @@ import { SearchBar, SearchBarData } from "@/components/layouts/SearchBar";
 const SellerPage: React.FC = () => {
   const [products, setProducts] = useState<ProductResponse[]>([]);
   const navigate = useNavigate();
-  const [, setLoading] = useState<boolean>(false);
-  const [, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
   const [searchKeyword, setSearchKeyword] = useState("");
 
   const loadProducts = () => {
@@ -199,7 +199,12 @@ const SellerPage: React.FC = () => {
                       <td className="px-4 py-2">
                         {getProductTypeName(p.productType ?? 0)}
                       </td>
-                      <td className="px-4 py-2">{p.productPrice} บาท</td>
+                      <td>
+                        {Number(p.productPrice).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })} บาท
+                      </td>
                       <td className="px-4 py-2">{p.quantity}</td>
                       <td className="px-4 py-2">
                         <button
