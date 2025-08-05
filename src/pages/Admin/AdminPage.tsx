@@ -4,13 +4,13 @@ import { deleteProduct, getProducts } from "@/api/Admin";
 import { useNavigate } from "react-router-dom";
 import { SearchBar, SearchBarData } from "@/components/layouts/SearchBar";
 import { toast } from "react-toastify";
+
 const Admin: React.FC = () => {
   const [products, setProducts] = useState<ProductResponse[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [errorProducts, setErrorProducts] = useState("");
   const [, setLoading] = useState(false);
   const navigate = useNavigate();
-  //search
   const [searchKeyword, setSearchKeyword] = useState("");
 
   const fetchProducts = async () => {
@@ -110,94 +110,109 @@ const Admin: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
-      <h3 className="text-xl font-semibold mb-4">ข้อมูลสินค้า</h3>
-      {loadingProducts && <p>กำลังโหลดข้อมูลสินค้า...</p>}
-      {errorProducts && <p className="text-red-500">{errorProducts}</p>}
-      <div className="overflow-x-auto mb-6">
-        {/* SearchBar */}
-        <SearchBar
-          value={searchKeyword}
-          onChange={setSearchKeyword}
-          onSearch={handleSearch}
-          placeholder="ค้นหาสินค้าและชื่อของคนขาย..."
-        />
-        <table className="min-w-full table-auto border border-gray-200 rounded">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-2">รายการที่</th>
-              <th className="p-2">รูปภาพสินค้า</th>
-              <th className="p-2">สินค้า</th>
-              <th className="p-2">จำหน่ายโดย</th>
-              <th className="p-2">วันที่วางจำหน่าย</th>
-              <th className="p-2">ประเภทสินค้า</th>
-              <th className="p-2">ราคา</th>
-              <th className="p-2">สถานะ</th>
-              <th className="p-2">จัดการ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((p, index) => (
-              <tr
-                key={p.id}
-                className={`border-t ${
-                  !p.isActive ? "bg-gray-100 opacity-60" : ""
-                }`}
-              >
-                <td className="p-2 text-center">{index + 1}</td>
-                <td className="px-4 py-2">
-                  {p.filePath ? (
-                    <img
-                      src={
-                        p.filePath.includes("dropbox.com")
-                          ? p.filePath.replace("?dl=0", "?raw=1")
-                          : p.filePath
-                      }
-                      alt={p.productName}
-                      className="w-20 h-20 object-cover rounded"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded">
-                      No Image!
-                    </div>
-                  )}
-                </td>
-
-                <td className="p-2">{p.productName}</td>
-                <td className="p-2">{p.createdByName}</td>
-                <td className="p-2">
-                  {new Date(p.createDate).toLocaleDateString()}
-                </td>
-                <td className="p-2">
-                  {getProductTypeName(p.productType ?? 0)}
-                </td>
-                <td className="p-2">{p.productPrice} บาท</td>
-                <td
-                  className={`p-2 font-semibold ${
-                    p.isActive ? "text-green-600" : "text-red-600"
-                  }`}
-                >
-                  {p.isActive ? "เปิดใช้งาน" : "ปิดใช้งาน"}
-                </td>
-                <td className="py-2 px-4 space-x-2">
-                  <button
-                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                    onClick={() => navigate(`/adminManageProducts/${p.id}`)}
+    <div className="min-h-screen bg-[#f5f5f5] pb-20">
+      <main className="max-w-7xl mx-auto mt-6 px-4 flex gap-6">
+        {/* Sidebar SearchBar */}
+        <div className="hidden md:block flex-shrink-0">
+          <SearchBar
+            value={searchKeyword}
+            onChange={setSearchKeyword}
+            onSearch={handleSearch}
+            placeholder="ค้นหาสินค้าและชื่อของคนขาย..."
+          />
+        </div>
+        {/* Mobile SearchBar */}
+        <div className="block md:hidden mb-4 w-full">
+          <SearchBar
+            value={searchKeyword}
+            onChange={setSearchKeyword}
+            onSearch={handleSearch}
+            placeholder="ค้นหาสินค้าและชื่อของคนขาย..."
+          />
+        </div>
+        {/* Content */}
+        <div className="flex-1">
+          <h3 className="text-xl font-semibold mb-4">ข้อมูลสินค้า</h3>
+          {loadingProducts && <p>กำลังโหลดข้อมูลสินค้า...</p>}
+          {errorProducts && <p className="text-red-500">{errorProducts}</p>}
+          <div className="overflow-x-auto mb-6">
+            <table className="min-w-full table-auto border border-gray-200 rounded bg-white">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="p-2">รายการที่</th>
+                  <th className="p-2">รูปภาพสินค้า</th>
+                  <th className="p-2">สินค้า</th>
+                  <th className="p-2">จำหน่ายโดย</th>
+                  <th className="p-2">วันที่วางจำหน่าย</th>
+                  <th className="p-2">ประเภทสินค้า</th>
+                  <th className="p-2">ราคา</th>
+                  <th className="p-2">สถานะ</th>
+                  <th className="p-2">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map((p, index) => (
+                  <tr
+                    key={p.id}
+                    className={`border-t ${
+                      !p.isActive ? "bg-gray-100 opacity-60" : ""
+                    }`}
                   >
-                    แก้ไข
-                  </button>
-                  <button
-                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                    onClick={() => handleDelete(p.id)}
-                  >
-                    ลบ
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                    <td className="p-2 text-center">{index + 1}</td>
+                    <td className="px-4 py-2">
+                      {p.filePath ? (
+                        <img
+                          src={
+                            p.filePath.includes("dropbox.com")
+                              ? p.filePath.replace("?dl=0", "?raw=1")
+                              : p.filePath
+                          }
+                          alt={p.productName}
+                          className="w-20 h-20 object-cover rounded"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded">
+                          No Image!
+                        </div>
+                      )}
+                    </td>
+                    <td className="p-2">{p.productName}</td>
+                    <td className="p-2">{p.createdByName}</td>
+                    <td className="p-2">
+                      {new Date(p.createDate).toLocaleDateString()}
+                    </td>
+                    <td className="p-2">
+                      {getProductTypeName(p.productType ?? 0)}
+                    </td>
+                    <td className="p-2">{p.productPrice} บาท</td>
+                    <td
+                      className={`p-2 font-semibold ${
+                        p.isActive ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      {p.isActive ? "เปิดใช้งาน" : "ปิดใช้งาน"}
+                    </td>
+                    <td className="py-2 px-4 space-x-2">
+                      <button
+                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                        onClick={() => navigate(`/adminManageProducts/${p.id}`)}
+                      >
+                        แก้ไข
+                      </button>
+                      <button
+                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                        onClick={() => handleDelete(p.id)}
+                      >
+                        ลบ
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
     </div>
   );
 };

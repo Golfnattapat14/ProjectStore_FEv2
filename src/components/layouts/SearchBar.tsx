@@ -44,24 +44,28 @@ export const SearchBar = ({
     minPrice,
     maxPrice,
   ]);
-
   const [releaseDateFrom, setReleaseDateFrom] = useState("");
   const [releaseDateTo, setReleaseDateTo] = useState("");
+  const [isActive, setIsActive] = useState<boolean | undefined>(undefined);
 
-  // เมื่อ checkbox เปลี่ยน ให้ update category array แล้วค้นหาใหม่เลย
+  // Debounce keyword + sellerName before search
   useEffect(() => {
-    handleSearch();
-  }, [category]);
+    const timer = setTimeout(() => {
+      triggerSearch();
+    }, 500);
 
-useEffect(() => {
-  if (releaseDateFrom && releaseDateTo) {
-    if (new Date(releaseDateTo) < new Date(releaseDateFrom)) {
-      alert("วันที่สิ้นสุดต้องมากกว่าหรือเท่ากับวันที่เริ่มต้น");
-      setReleaseDateTo("");
+    return () => clearTimeout(timer);
+  }, [inputValue, sellerName, category, priceRange, releaseDateFrom, releaseDateTo, isActive]);
+
+  // Check date validity and clear if invalid
+  useEffect(() => {
+    if (releaseDateFrom && releaseDateTo) {
+      if (new Date(releaseDateTo) < new Date(releaseDateFrom)) {
+        alert("วันที่สิ้นสุดต้องมากกว่าหรือเท่ากับวันที่เริ่มต้น");
+        setReleaseDateTo("");
+      }
     }
-  }
-}, [releaseDateFrom, releaseDateTo]);
-
+  }, [releaseDateFrom, releaseDateTo]);
 
   const handleRangeChange = (values: number[]) => {
     setPriceRange([values[0], values[1]]);
@@ -78,7 +82,7 @@ useEffect(() => {
     );
   };
 
-  const handleSearch = () => {
+  const triggerSearch = () => {
     onSearch?.({
       keyword: inputValue,
       priceMin: priceRange[0],
@@ -87,75 +91,78 @@ useEffect(() => {
       releaseDateFrom: releaseDateFrom || undefined,
       releaseDateTo: releaseDateTo || undefined,
       sellerName: sellerName || undefined,
+      isActive,
     });
   };
 
   const handleReset = () => {
-  setInputValue("");
-  onChange("");
-  setCategory([]);
-  setReleaseDateFrom("");
-  setReleaseDateTo("");
-  setSellerName("");
-  setPriceRange([minPrice, maxPrice]);
+    setInputValue("");
+    onChange("");
+    setCategory([]);
+    setReleaseDateFrom("");
+    setReleaseDateTo("");
+    setSellerName("");
+    setPriceRange([minPrice, maxPrice]);
+    setIsActive(undefined);
 
-  onSearch?.({
-    keyword: "",
-    priceMin: minPrice,
-    priceMax: maxPrice,
-    category: undefined,
-    releaseDateFrom: undefined,
-    releaseDateTo: undefined,
-    sellerName: undefined,
-    isActive: undefined,
-  });
-};
-
+    onSearch?.({
+      keyword: "",
+      priceMin: minPrice,
+      priceMax: maxPrice,
+      category: undefined,
+      releaseDateFrom: undefined,
+      releaseDateTo: undefined,
+      sellerName: undefined,
+      isActive: undefined,
+    });
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      handleSearch();
+      triggerSearch();
     }
   };
 
   return (
-    <div className="w-full max-w-xl mb-6 space-y-3">
+    <aside className="w-80 bg-white rounded-xl shadow p-5 space-y-6 sticky top-24 self-start">
       {/* Keyword + Seller */}
-      <div className="flex gap-2">
+      <div className="space-y-3">
         <Input
           type="text"
           placeholder={placeholder ?? "ค้นหาสินค้า..."}
           value={inputValue}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          className="flex-grow"
+          className="w-full"
         />
-        {/* <Input
+        <Input
           type="text"
           placeholder="ค้นหาชื่อคนขาย..."
           value={sellerName}
           onChange={(e) => setSellerName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-          className="flex-grow"
-        /> */}
-        <button
-          onClick={handleSearch}
-          className="bg-blue-600 text-white px-4 rounded hover:bg-blue-700"
-        >
-          ค้นหา
-        </button>
-        <button
-          onClick={handleReset}
-          className="bg-gray-400 text-white px-4 rounded hover:bg-gray-500"
-        >
-          รีเซ็ต
-        </button>
+          onKeyDown={(e) => e.key === "Enter" && triggerSearch()}
+          className="w-full"
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={triggerSearch}
+            className="flex-1 bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition"
+          >
+            ค้นหา
+          </button>
+          <button
+            onClick={handleReset}
+            className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition"
+          >
+            รีเซ็ต
+          </button>
+        </div>
       </div>
 
       {/* Price Slider */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-700">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
           ช่วงราคา (บาท)
         </label>
         <Slider.Root
@@ -167,12 +174,12 @@ useEffect(() => {
           onValueChange={handleRangeChange}
         >
           <Slider.Track className="bg-gray-200 relative grow rounded-full h-2">
-            <Slider.Range className="absolute bg-blue-500 rounded-full h-full" />
+            <Slider.Range className="absolute bg-orange-500 rounded-full h-full" />
           </Slider.Track>
-          <Slider.Thumb className="block w-4 h-4 bg-white border border-gray-400 rounded-full shadow hover:bg-blue-300 focus:outline-none" />
-          <Slider.Thumb className="block w-4 h-4 bg-white border border-gray-400 rounded-full shadow hover:bg-blue-300 focus:outline-none" />
+          <Slider.Thumb className="block w-4 h-4 bg-white border border-orange-400 rounded-full shadow hover:bg-orange-300 focus:outline-none" />
+          <Slider.Thumb className="block w-4 h-4 bg-white border border-orange-400 rounded-full shadow hover:bg-orange-300 focus:outline-none" />
         </Slider.Root>
-        <div className="flex justify-between text-sm text-gray-600">
+        <div className="flex justify-between text-sm text-gray-600 mt-1">
           <span>฿{priceRange[0]}</span>
           <span>฿{priceRange[1]}</span>
         </div>
@@ -180,46 +187,59 @@ useEffect(() => {
 
       {/* Category Checkbox */}
       <div>
-        <span className="text-sm font-medium text-gray-700">ประเภทสินค้า</span>
-        <div className="flex flex-wrap gap-3 mt-2">
+        <span className="block text-sm font-medium text-gray-700 mb-2">ประเภทสินค้า</span>
+        <div className="flex flex-wrap gap-2">
           {productTypes.map((type) => (
             <label
               key={type.value}
-              className="inline-flex items-center space-x-2 cursor-pointer"
+              className="flex items-center space-x-2 cursor-pointer"
             >
               <input
                 type="checkbox"
-                className="form-checkbox"
+                className="form-checkbox accent-orange-500"
                 checked={category.includes(type.value)}
                 onChange={() => toggleCategory(type.value)}
               />
-              <span>{type.label}</span>
+              <span className="text-sm">{type.label}</span>
             </label>
           ))}
         </div>
       </div>
 
-      <div className="flex gap-4">
-  <label className="block">
-    <span className="text-sm font-medium text-gray-700">วันที่เริ่มต้น</span>
-    <input
-      type="date"
-      value={releaseDateFrom}
-      onChange={(e) => setReleaseDateFrom(e.target.value)}
-      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-    />
-  </label>
-  <label className="block">
-    <span className="text-sm font-medium text-gray-700">วันที่สิ้นสุด</span>
-    <input
-      type="date"
-      value={releaseDateTo}
-      onChange={(e) => setReleaseDateTo(e.target.value)}
-      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-    />
-  </label>
-</div>
+      {/* Release Date */}
+      <div className="flex gap-2">
+        <label className="flex-1">
+          <span className="block text-sm font-medium text-gray-700 mb-1">วันที่เริ่มต้น</span>
+          <input
+            type="date"
+            value={releaseDateFrom}
+            onChange={(e) => setReleaseDateFrom(e.target.value)}
+            className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500"
+          />
+        </label>
+        <label className="flex-1">
+          <span className="block text-sm font-medium text-gray-700 mb-1">วันที่สิ้นสุด</span>
+          <input
+            type="date"
+            value={releaseDateTo}
+            onChange={(e) => setReleaseDateTo(e.target.value)}
+            className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500"
+          />
+        </label>
+      </div>
 
-    </div>
+      {/* Active Status Checkbox */}
+      <div>
+        <label className="inline-flex items-center space-x-2 cursor-pointer">
+          <input
+            type="checkbox"
+            className="form-checkbox accent-orange-500"
+            checked={isActive === true}
+            onChange={() => setIsActive(isActive === true ? undefined : true)}
+          />
+          <span className="text-sm text-gray-700">แสดงเฉพาะสินค้าที่เปิดใช้งาน</span>
+        </label>
+      </div>
+    </aside>
   );
 };

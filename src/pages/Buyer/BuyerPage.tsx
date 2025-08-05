@@ -1,4 +1,3 @@
-// Buyer.tsx
 import React, { useState, useEffect } from "react";
 import { getProducts } from "@/api/Buyer";
 import { ProductResponse } from "@/types/product";
@@ -13,11 +12,10 @@ const BuyerPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [addingToCartId, setAddingToCartId] = useState<string | null>(null);
+  const [quantityToAdd, setQuantityToAdd] = useState<{ [id: string]: number }>({});
 
-  // เก็บตะกร้าพร้อมจำนวนสินค้า
   const { addToCart, totalCount } = useCart();
 
-  //search
   const [searchKeyword, setSearchKeyword] = useState("");
 
   useEffect(() => {
@@ -46,12 +44,27 @@ const BuyerPage: React.FC = () => {
     }
   };
 
+  const handleQuantityChange = (id: string, delta: number, max: number) => {
+    setQuantityToAdd((prev) => {
+      const current = prev[id] ?? 1;
+      let next = current + delta;
+      if (next < 1) next = 1;
+      if (next > max) next = max;
+      return { ...prev, [id]: next };
+    });
+  };
+
   const handleAddToCart = async (productId: string) => {
     try {
       setAddingToCartId(productId);
-      await addToCart(productId, 1);
+      const qty = quantityToAdd[productId] ?? 1;
+      await addToCart(productId, qty);
+      toast.success("เพิ่มสินค้าในตะกร้าเรียบร้อย");
+      // reset quantity after add if you want
+      setQuantityToAdd((prev) => ({ ...prev, [productId]: 1 }));
     } catch (error) {
       console.error(error);
+      toast.error("เพิ่มสินค้าในตะกร้าไม่สำเร็จ");
     } finally {
       setAddingToCartId(null);
     }
@@ -111,71 +124,70 @@ const BuyerPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* ไอคอนตะกร้าแบบลอย */}
-      <CartIcon count={totalCount} />
-
-      <main className="max-w-6xl mx-auto mt-8 px-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-700">
-            เลือกซื้อสินค้า
+    <div className="min-h-screen bg-[#f5f5f5] pb-20">
+      {/* Sticky Top Bar */}
+      <div className="sticky top-0 z-20 bg-white shadow-md border-b border-orange-200">
+        <div className="max-w-7xl mx-auto flex items-center px-4 py-3 gap-4">
+          <h2 className="text-2xl font-bold text-orange-500 tracking-wide">
+            Store Shope
           </h2>
-          <div className="bg-blue-100 text-blue-700 px-4 py-2 rounded-md">
-            ตะกร้า: {totalCount} รายการ
+          <div className="flex-1" />
+          <div className="relative ml-4">
+            <CartIcon count={totalCount} />
           </div>
         </div>
-        {/* SearchBar */}
-        <SearchBar
-          value={searchKeyword}
-          onChange={setSearchKeyword}
-          onSearch={handleSearch}
-          placeholder="ค้นหาสินค้าและชื่อของคนขาย..."
-        />
-        {loading && <p className="text-gray-500 mb-4">กำลังโหลดข้อมูล...</p>}
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-        {message && <p className="text-blue-600 mb-4">{message}</p>}
+      </div>
 
-        <div className="overflow-x-auto bg-white shadow rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                  #
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                  รูปภาพสินค้า
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                  ชื่อสินค้า
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                  วันที่วางจำหน่าย
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                  จำหน่ายโดย
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                  ประเภทสินค้า
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                  สินค้าคงเหลือ
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                  ราคา
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {products.map((p, index) => (
-                <tr
-                  key={p.id ?? `${p.productName}-${index}`}
-                  className="hover:bg-gray-50"
+      <main className="max-w-7xl mx-auto mt-6 px-4 flex gap-6">
+        {/* Sidebar SearchBar */}
+        <div className="hidden md:block flex-shrink-0">
+          <SearchBar
+            value={searchKeyword}
+            onChange={setSearchKeyword}
+            onSearch={handleSearch}
+            placeholder="ค้นหาสินค้าและชื่อของคนขาย..."
+          />
+        </div>
+        {/* Mobile SearchBar (แสดงเฉพาะจอเล็ก) */}
+        <div className="block md:hidden mb-4 w-full">
+          <SearchBar
+            value={searchKeyword}
+            onChange={setSearchKeyword}
+            onSearch={handleSearch}
+            placeholder="ค้นหาสินค้าและชื่อของคนขาย..."
+          />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1">
+          {loading && (
+            <p className="text-gray-500 text-center py-20 text-lg">
+              กำลังโหลดข้อมูล...
+            </p>
+          )}
+          {error && (
+            <p className="text-red-500 text-center py-20 text-lg">{error}</p>
+          )}
+          {message && (
+            <p className="text-blue-600 text-center py-20 text-lg">{message}</p>
+          )}
+
+          {/* Grid แสดงสินค้า */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {products.length > 0 ? (
+              products.map((p) => (
+                <div
+                  key={p.id}
+                  className="bg-white border border-orange-100 rounded-xl shadow-sm hover:shadow-lg transition-shadow flex flex-col cursor-pointer group relative overflow-hidden"
+                  title={p.productName}
                 >
-                  <td className="px-4 py-2">{index + 1}</td>
-                  <td className="px-4 py-2">
+                  {/* Badge ตัวอย่าง */}
+                  {/* {p.quantity > 10 && (
+                    <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full z-10 shadow">
+                      ขายดี
+                    </span>
+                  )} */}
+                  <div className="relative pb-[100%] overflow-hidden rounded-t-xl">
                     {p.filePath ? (
                       <img
                         src={
@@ -184,43 +196,71 @@ const BuyerPage: React.FC = () => {
                             : p.filePath
                         }
                         alt={p.productName}
-                        className="w-20 h-20 object-cover rounded"
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     ) : (
-                      <div className="w-20 h-20 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded">
-                        No Image!
+                      <div className="absolute inset-0 bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+                        ไม่มีรูปภาพ
                       </div>
                     )}
-                  </td>
-                  <td className="px-4 py-2">{p.productName}</td>
-                  <td className="px-4 py-2">
-                    {new Date(p.createDate).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-2">{p.createdByName}</td>
-                  <td className="px-4 py-2">
-                    {getProductTypeName(p.productType ?? 0)}
-                  </td>
-                  <td className="px-4 py-2">{p.quantity}</td>
-                  <td className="px-4 py-2">{p.productPrice} บาท</td>
-                  <td className="px-4 py-2">
-                    <button
-                      disabled={addingToCartId === p.id}
-                      className={`bg-green-500 text-white px-3 py-1 rounded transition ${
-                        addingToCartId === p.id
-                          ? "opacity-50 cursor-not-allowed"
-                          : "hover:bg-green-600"
-                      }`}
-                      onClick={() => handleAddToCart(p.id)}
+                  </div>
+                  <div className="p-3 flex flex-col flex-grow">
+                    <h3 className="text-base font-semibold text-gray-900 line-clamp-2 mb-1">
+                      {p.productName}
+                    </h3>
+                    <p
+                      className="text-xs text-gray-500 mb-1 truncate"
+                      title={p.createdByName}
                     >
-                      {addingToCartId === p.id
-                        ? "กำลังเพิ่ม..."
-                        : "เพิ่มใส่ตะกร้า"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      โดย: {p.createdByName || "-"}
+                    </p>
+                    <p className="text-xs text-gray-400 mb-2">
+                      {getProductTypeName(p.productType ?? 0)} • เหลือ {p.quantity}{" "}
+                      ชิ้น
+                    </p>
+                    <div className="mt-auto flex flex-col gap-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xl font-bold text-orange-500">
+                          {p.productPrice.toLocaleString()} บาท
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            className="w-7 h-7 rounded-full bg-gray-200 text-lg font-bold text-gray-700 hover:bg-orange-100"
+                            onClick={() => handleQuantityChange(p.id, -1, p.quantity)}
+                            disabled={(quantityToAdd[p.id] ?? 1) <= 1}
+                            type="button"
+                          >-</button>
+                          <span className="w-8 text-center">{quantityToAdd[p.id] ?? 1}</span>
+                          <button
+                            className="w-7 h-7 rounded-full bg-gray-200 text-lg font-bold text-gray-700 hover:bg-orange-100"
+                            onClick={() => handleQuantityChange(p.id, 1, p.quantity)}
+                            disabled={(quantityToAdd[p.id] ?? 1) >= p.quantity}
+                            type="button"
+                          >+</button>
+                        </div>
+                      </div>
+                      <button
+                        disabled={addingToCartId === p.id || p.quantity === 0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToCart(p.id);
+                        }}
+                        className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed shadow"
+                      >
+                        {addingToCartId === p.id ? "กำลังเพิ่ม..." : "ใส่ตะกร้า"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              !loading && (
+                <p className="col-span-full text-center text-gray-400 text-lg py-20">
+                  ไม่พบสินค้า
+                </p>
+              )
+            )}
+          </div>
         </div>
       </main>
     </div>
