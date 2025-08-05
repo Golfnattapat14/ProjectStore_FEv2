@@ -170,7 +170,7 @@ const BuyerPage: React.FC = () => {
             placeholder="ค้นหาสินค้าและชื่อของคนขาย..."
           />
         </div>
-        {/* Mobile SearchBar (แสดงเฉพาะจอเล็ก) */}
+        {/* Mobile SearchBar (แสดงเฉพาะจอเล็ก)
         <div className="block md:hidden mb-4 w-full">
           <SearchBar
             value={searchKeyword}
@@ -178,7 +178,7 @@ const BuyerPage: React.FC = () => {
             onSearch={handleSearch}
             placeholder="ค้นหาสินค้าและชื่อของคนขาย..."
           />
-        </div>
+        </div> */}
 
         {/* Content */}
         <div className="flex-1">

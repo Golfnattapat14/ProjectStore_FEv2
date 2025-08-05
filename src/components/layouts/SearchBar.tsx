@@ -26,6 +26,7 @@ interface SearchBarProps {
   onChange: (val: string) => void;
   onSearch?: (filters: SearchBarData) => void;
   placeholder?: string;
+  userRole?: string; 
 }
 
 const minPrice = 0;
@@ -36,6 +37,7 @@ export const SearchBar = ({
   onChange,
   onSearch,
   placeholder,
+  userRole = "",
 }: SearchBarProps) => {
   const [inputValue, setInputValue] = useState(value);
   const [category, setCategory] = useState<number[]>([]);
@@ -244,17 +246,34 @@ export const SearchBar = ({
       </div>
 
       {/* Active Status Checkbox */}
-      {/* <div>
-        <label className="inline-flex items-center space-x-2 cursor-pointer">
-          <input
-            type="checkbox"
-            className="form-checkbox accent-orange-500"
-            checked={isActive === true}
-            onChange={() => setIsActive(isActive === true ? undefined : true)}
-          />
-          <span className="text-sm text-gray-700">แสดงเฉพาะสินค้าที่เปิดใช้งาน</span>
-        </label>
-      </div> */}
+      {(userRole === "seller" || userRole === "admin") && (
+  <>
+    <div>
+      <label className="inline-flex items-center space-x-2 cursor-pointer">
+        <input
+          type="checkbox"
+          className="form-checkbox accent-orange-500"
+          checked={isActive === true}
+          onChange={() => setIsActive(isActive === true ? undefined : true)}
+        />
+        <span className="text-sm text-gray-700">สินค้าที่เปิดใช้งาน</span>
+      </label>
+    </div>
+
+    <div>
+      <label className="inline-flex items-center space-x-2 cursor-pointer">
+        <input
+          type="checkbox"
+          className="form-checkbox accent-orange-500"
+          checked={isActive === false}
+          onChange={() => setIsActive(isActive === false ? undefined : false)}
+        />
+        <span className="text-sm text-gray-700">สินค้าที่ปิดใช้งาน</span>
+      </label>
+    </div>
+  </>
+)}
+
     </aside>
   );
 };

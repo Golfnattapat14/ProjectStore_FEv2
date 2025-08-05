@@ -123,9 +123,10 @@ const SellerPage: React.FC = () => {
             onChange={setSearchKeyword}
             onSearch={handleSearch}
             placeholder="ค้นหาสินค้าของคุณ..."
+            userRole={"seller"}
           />
         </div>
-        {/* Mobile SearchBar */}
+        {/* Mobile SearchBar
         <div className="block md:hidden mb-4 w-full">
           <SearchBar
             value={searchKeyword}
@@ -133,7 +134,7 @@ const SellerPage: React.FC = () => {
             onSearch={handleSearch}
             placeholder="ค้นหาสินค้าของคุณ..."
           />
-        </div>
+        </div> */}
         {/* Content */}
         <div className="flex-1">
           <h1 className="text-lg font-medium text-gray-600 mb-4">
@@ -203,7 +204,8 @@ const SellerPage: React.FC = () => {
                         {Number(p.productPrice).toLocaleString(undefined, {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
-                        })} บาท
+                        })}{" "}
+                        บาท
                       </td>
                       <td className="px-4 py-2">{p.quantity}</td>
                       <td className="px-4 py-2">

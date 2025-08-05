@@ -119,6 +119,7 @@ const Admin: React.FC = () => {
             onChange={setSearchKeyword}
             onSearch={handleSearch}
             placeholder="ค้นหาสินค้าและชื่อของคนขาย..."
+            userRole={"admin"}
           />
         </div>
         {/* Mobile SearchBar */}
@@ -155,7 +156,7 @@ const Admin: React.FC = () => {
                   <tr
                     key={p.id}
                     className={`border-t ${
-                      !p.isActive ? "bg-gray-100 opacity-60" : ""
+                      p.isActive ? "" : "bg-gray-100 text-gray-400 opacity-70"
                     }`}
                   >
                     <td className="p-2 text-center">{index + 1}</td>
