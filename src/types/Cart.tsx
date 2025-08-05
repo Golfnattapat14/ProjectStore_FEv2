@@ -9,6 +9,7 @@ export interface UserCart {
   filePath?: string;
   Createby: string;
   createByName?: string;
+  productStock: number;
 }
 
 

@@ -29,6 +29,21 @@ const BuyerPage: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    const handleFocus = () => {
+      setLoading(true);
+      getProducts()
+        .then((data) => {
+          setProducts(data);
+          setError("");
+        })
+        .catch((err) => setError(err.message || "เกิดข้อผิดพลาด"))
+        .finally(() => setLoading(false));
+    };
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, []);
+
   const getProductTypeName = (type: number) => {
     switch (type) {
       case 1:
@@ -60,11 +75,16 @@ const BuyerPage: React.FC = () => {
       const qty = quantityToAdd[productId] ?? 1;
       await addToCart(productId, qty);
       toast.success("เพิ่มสินค้าในตะกร้าเรียบร้อย");
-      // reset quantity after add if you want
       setQuantityToAdd((prev) => ({ ...prev, [productId]: 1 }));
+      // ดึงข้อมูลสินค้าใหม่หลังเพิ่มตะกร้า
+      setLoading(true);
+      const data = await getProducts();
+      setProducts(data);
+      setLoading(false);
     } catch (error) {
       console.error(error);
       toast.error("เพิ่มสินค้าในตะกร้าไม่สำเร็จ");
+      setLoading(false);
     } finally {
       setAddingToCartId(null);
     }

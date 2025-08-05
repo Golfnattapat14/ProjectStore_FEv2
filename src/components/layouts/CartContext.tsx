@@ -46,6 +46,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
+  useEffect(() => {
+    const handlePopState = () => {
+      if (token) refreshCart();
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [token]);
+
   const addToCart = async (productId: string, quantity = 1) => {
     try {
       await apiAddToCart(productId, quantity);

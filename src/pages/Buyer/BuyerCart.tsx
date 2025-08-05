@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { UserCart } from "@/types/Cart";
-import { getCartItems, removeCartItem } from "@/api/Buyer";
+import { getCartItems, removeCartItem, updateCartItem } from "@/api/Buyer";
 import { toast } from "react-toastify";
 
 const BuyerCart: React.FC = () => {
@@ -9,7 +9,7 @@ const BuyerCart: React.FC = () => {
   const [error, setError] = useState("");
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-
+  
   const getProductTypeName = (type: number) => {
     switch (type) {
       case 1:
@@ -57,8 +57,32 @@ const BuyerCart: React.FC = () => {
     }
   };
 
+  const handleUpdateQuantity = async (cartItemId: string, newQty: number) => {
+    try {
+      await updateCartItem(cartItemId, newQty);
+      setCart((prev) =>
+        prev.map((item) =>
+          item.id === cartItemId ? { ...item, quantity: newQty } : item
+        )
+      );
+    } catch (err: any) {
+      toast.error(err.message || "อัปเดตจำนวนสินค้าไม่สำเร็จ");
+    }
+  };
+  
+
   useEffect(() => {
     fetchCart();
+  }, []);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchCart();
+    };
+    window.addEventListener("focus", handleFocus);
+    // เรียก fetchCart ครั้งแรกด้วย
+    handleFocus();
+    return () => window.removeEventListener("focus", handleFocus);
   }, []);
 
   const groupedCart = useMemo(() => {
@@ -194,6 +218,9 @@ const BuyerCart: React.FC = () => {
                             <p className="text-sm text-gray-500 mt-1">
                               ประเภท: {getProductTypeName(item.productType)}
                             </p>
+                            <div className="text-xs text-gray-400 mt-1">
+                              {`เหลือในสต็อก: ${item.productStock} ชิ้น`}
+                            </div>
                           </div>
                           <div className="flex items-center justify-between mt-2">
                             <p className="text-red-500 font-bold text-xl">
@@ -213,6 +240,30 @@ const BuyerCart: React.FC = () => {
                                 {removingId === item.id ? "กำลังลบ..." : "ลบ"}
                               </button>
                             </div>
+                          </div>
+                          {/* Quantity Controls */}
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                              disabled={item.quantity <= 1}
+                              className="w-8 h-8 bg-gray-200 rounded-l text-lg font-bold"
+                            >-</button>
+                            <input
+                              type="number"
+                              min={1}
+                              value={item.quantity}
+                              onChange={e => {
+                                let val = parseInt(e.target.value);
+                                if (isNaN(val) || val < 1) val = 1;
+                                handleUpdateQuantity(item.id, val);
+                              }}
+                              className="w-12 text-center border-t border-b"
+                            />
+                            <button
+                              onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                              disabled={item.quantity >= item.productStock}
+                              className="w-8 h-8 bg-gray-200 rounded-r text-lg font-bold"
+                            >+</button>
                           </div>
                         </div>
                       </li>

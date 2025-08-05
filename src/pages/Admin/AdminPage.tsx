@@ -122,14 +122,14 @@ const Admin: React.FC = () => {
           />
         </div>
         {/* Mobile SearchBar */}
-        <div className="block md:hidden mb-4 w-full">
+        {/* <div className="block md:hidden mb-4 w-full">
           <SearchBar
             value={searchKeyword}
             onChange={setSearchKeyword}
             onSearch={handleSearch}
             placeholder="ค้นหาสินค้าและชื่อของคนขาย..."
           />
-        </div>
+        </div> */}
         {/* Content */}
         <div className="flex-1">
           <h3 className="text-xl font-semibold mb-4">ข้อมูลสินค้า</h3>

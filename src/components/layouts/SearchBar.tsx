@@ -136,14 +136,14 @@ export const SearchBar = ({
           onKeyDown={handleKeyDown}
           className="w-full"
         />
-        <Input
+        {/* <Input
           type="text"
           placeholder="ค้นหาชื่อคนขาย..."
           value={sellerName}
           onChange={(e) => setSellerName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && triggerSearch()}
           className="w-full"
-        />
+        /> */}
         <div className="flex gap-2">
           <button
             onClick={triggerSearch}
@@ -229,7 +229,7 @@ export const SearchBar = ({
       </div>
 
       {/* Active Status Checkbox */}
-      <div>
+      {/* <div>
         <label className="inline-flex items-center space-x-2 cursor-pointer">
           <input
             type="checkbox"
@@ -239,7 +239,7 @@ export const SearchBar = ({
           />
           <span className="text-sm text-gray-700">แสดงเฉพาะสินค้าที่เปิดใช้งาน</span>
         </label>
-      </div>
+      </div> */}
     </aside>
   );
 };
