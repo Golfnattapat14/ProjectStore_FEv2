@@ -78,11 +78,16 @@ const SellerPage: React.FC = () => {
         const matchMax =
           filters.priceMax == null || p.productPrice <= filters.priceMax;
         const matchCategory =
-          filters.category == null || p.productType === filters.category;
+          !filters.category ||
+          filters.category.length === 0 ||
+          (p.productType !== undefined &&
+            filters.category.includes(p.productType));
+
         const matchDate =
-          !filters.releaseDate ||
-          new Date(p.createDate).toISOString().split("T")[0] ===
-            filters.releaseDate;
+          (!filters.releaseDateFrom ||
+            new Date(p.createDate) >= new Date(filters.releaseDateFrom)) &&
+          (!filters.releaseDateTo ||
+            new Date(p.createDate) <= new Date(filters.releaseDateTo));
 
         const matchStatus =
           filters.isActive === undefined || p.isActive === filters.isActive;

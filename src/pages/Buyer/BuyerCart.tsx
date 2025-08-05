@@ -8,6 +8,22 @@ const BuyerCart: React.FC = () => {
   const [error, setError] = useState("");
   const [removingId, setRemovingId] = useState<string | null>(null);
 
+
+   const getProductTypeName = (type: number) => {
+  switch (type) {
+    case 1:
+      return "อาหาร";
+    case 2:
+      return "เครื่องใช้";
+    case 3:
+      return "เครื่องดื่ม";
+    case 4:
+      return "ของเล่น";
+    default:
+      return "อื่น ๆ";
+  }
+};
+
   const fetchCart = async () => {
     try {
       setLoading(true);
@@ -56,31 +72,58 @@ const BuyerCart: React.FC = () => {
       ) : (
         <>
           <ul className="space-y-4 mb-4">
-            {cart.map((item) => (
-              <li
-                key={item.id}
-                className="flex justify-between items-center border-b pb-2"
-              >
-                <div>
-                  <p className="font-semibold">{item.productName}</p>
-                  <p className="text-sm text-gray-500">
-                    {item.productPrice} บาท × {item.quantity}
-                  </p>
-                </div>
-                <button
-                  onClick={() => handleRemove(item.id)}
-                  disabled={removingId === item.id}
-                  className={`text-red-500 hover:underline ${
-                    removingId === item.id
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
-                  }`}
-                >
-                  {removingId === item.id ? "กำลังลบ..." : "ลบ"}
-                </button>
-              </li>
-            ))}
-          </ul>
+  {cart.map((item) => (
+    <li
+      key={item.id}
+      className="flex items-center border-b pb-4 gap-4"
+    >
+      <div className="w-20 h-20 flex-shrink-0">
+        {item.filePath ? (
+          <img
+            src={
+              item.filePath.includes("dropbox.com")
+                ? item.filePath.replace("?dl=0", "?raw=1")
+                : item.filePath
+            }
+            alt={item.productName}
+            className="w-20 h-20 object-cover rounded"
+          />
+        ) : (
+          <div className="w-20 h-20 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded">
+            No Image
+          </div>
+        )}
+      </div>
+
+      <div className="flex-grow">
+        <p className="font-semibold text-base">{item.productName}</p>
+        <p className="text-sm text-gray-600">
+          ราคา: {item.productPrice} บาท × {item.quantity}
+        </p>
+        <p className="text-sm text-gray-600">
+          ประเภท: {getProductTypeName(item.productType)}
+        </p>
+        <p className="text-sm text-gray-600">
+          ผู้ขาย: {item.createByName}
+        </p>
+        <p className="text-sm text-gray-600">
+          วันที่วางจำหน่าย: {new Date(item.createDate).toLocaleDateString()}
+        </p>
+      </div>
+
+      <button
+        onClick={() => handleRemove(item.id)}
+        disabled={removingId === item.id}
+        className={`text-red-500 hover:underline ${
+          removingId === item.id ? "opacity-50 cursor-not-allowed" : ""
+        }`}
+      >
+        {removingId === item.id ? "กำลังลบ..." : "ลบ"}
+      </button>
+    </li>
+  ))}
+</ul>
+
           <div className="text-right font-semibold text-lg">
             รวมทั้งหมด: {totalPrice} บาท
           </div>

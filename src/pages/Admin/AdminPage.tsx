@@ -72,11 +72,16 @@ const Admin: React.FC = () => {
         const matchMax =
           filters.priceMax == null || p.productPrice <= filters.priceMax;
         const matchCategory =
-          filters.category == null || p.productType === filters.category;
+          !filters.category ||
+          filters.category.length === 0 ||
+          (p.productType !== undefined &&
+            filters.category.includes(p.productType));
+
         const matchDate =
-          !filters.releaseDate ||
-          new Date(p.createDate).toISOString().split("T")[0] ===
-            filters.releaseDate;
+          (!filters.releaseDateFrom ||
+            new Date(p.createDate) >= new Date(filters.releaseDateFrom)) &&
+          (!filters.releaseDateTo ||
+            new Date(p.createDate) <= new Date(filters.releaseDateTo));
 
         const matchStatus =
           filters.isActive === undefined || p.isActive === filters.isActive;
@@ -115,7 +120,7 @@ const Admin: React.FC = () => {
           value={searchKeyword}
           onChange={setSearchKeyword}
           onSearch={handleSearch}
-          placeholder="ค้นหาสินค้าของคุณ..."
+          placeholder="ค้นหาสินค้าและชื่อของคนขาย..."
         />
         <table className="min-w-full table-auto border border-gray-200 rounded">
           <thead className="bg-gray-100">

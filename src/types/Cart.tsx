@@ -5,7 +5,12 @@ export interface UserCart {
   productPrice: number;
   quantity: number;
   createDate: string;
+  productType: number;
+  filePath?: string;
+  Createby: string;
+  createByName?: string;
 }
+
 
 
 export interface AddToCartRequest {

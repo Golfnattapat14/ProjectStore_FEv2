@@ -60,7 +60,7 @@ export const NavbarComponent = () => {
   const buyerLinks: NavigationItem[] = [
     { name: "เลือกซื้อสินค้า", path: "/buyer" },
     { name: "ตะกร้าของคุณ", path: "/buyerCart" },
-    { name: "สถานะการสั่งซื้อ", path: "/buyer" },
+    { name: "สถานะการสั่งซื้อ", path: "/buyerStatus" }, 
   ];
 
   const adminLinks: NavigationItem[] = [
