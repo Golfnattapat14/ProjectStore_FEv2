@@ -6,23 +6,30 @@ import type { ProductRequest, ProductResponse } from "../types/product";
 const BASE = "http://localhost:5260/api/";
 
 // ดึงสินค้าทั้งหมดของ Seller นั้นๆ
-export async function getProductsSeller(): Promise<ProductResponse[]> {
+export async function getProductsSeller(
+  keyword?: string,
+  page: number = 1,
+  pageSize: number = 10
+) {
   const headers = getAuthHeadersJSON();
-  if (!headers.Authorization) throw new Error("Token not found, please login");
-
-  const response = await fetch(`${BASE}products/all`, {
-    method: "GET",
-    headers,
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
   });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(
-      errorData.message || "ไม่สามารถโหลดสินค้าสำหรับ Seller ได้"
-    );
+  if (keyword) {
+    params.append("keyword", keyword);
   }
 
-  return response.json();
+  const url = keyword
+    ? `${BASE}products/search?${params.toString()}`
+    : `${BASE}products/all?${params.toString()}`;
+
+  const res = await fetch(url, { method: "GET", headers });
+
+  if (!res.ok) throw new Error("โหลดสินค้า (seller) ล้มเหลว");
+
+  return res.json();
 }
 
 // เพิ่มสินค้า

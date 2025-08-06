@@ -11,6 +11,9 @@ const SellerPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
 
   const loadProducts = () => {
     setLoading(true);
@@ -24,10 +27,13 @@ const SellerPage: React.FC = () => {
   };
 
   useEffect(() => {
-    getProductsSeller()
-      .then(setProducts)
+    getProductsSeller(searchKeyword, currentPage, pageSize)
+      .then((data) => {
+        setProducts(data.items); // หรือ data.products แล้วแต่ backend
+        setTotalPages(data.totalPages);
+      })
       .catch((err) => toast.error(err.message));
-  }, []);
+  }, [searchKeyword, currentPage, pageSize]);
 
   const getProductTypeName = (type: number) => {
     switch (type) {
@@ -64,7 +70,8 @@ const SellerPage: React.FC = () => {
     try {
       setLoading(true);
       const all = await getProductsSeller();
-      const filtered = all.filter((p) => {
+
+      const filtered = all.items.filter((p: any) => {
         const kw = filters.keyword?.toLowerCase() || "";
         const matchKeyword =
           !kw ||
@@ -113,6 +120,11 @@ const SellerPage: React.FC = () => {
     }
   };
 
+  const pageSizeOptions = [
+    { label: "5 รายการ", value: 5 },
+    { label: "10 รายการ", value: 10 },
+    { label: "20 รายการ", value: 20 },
+  ];
   return (
     <div className="min-h-screen bg-[#f5f5f5] pb-20">
       <main className="max-w-7xl mx-auto mt-6 px-4 flex gap-6">
@@ -126,15 +138,7 @@ const SellerPage: React.FC = () => {
             userRole={"seller"}
           />
         </div>
-        {/* Mobile SearchBar
-        <div className="block md:hidden mb-4 w-full">
-          <SearchBar
-            value={searchKeyword}
-            onChange={setSearchKeyword}
-            onSearch={handleSearch}
-            placeholder="ค้นหาสินค้าของคุณ..."
-          />
-        </div> */}
+
         {/* Content */}
         <div className="flex-1">
           <h1 className="text-lg font-medium text-gray-600 mb-4">
@@ -243,6 +247,48 @@ const SellerPage: React.FC = () => {
                 )}
               </tbody>
             </table>
+          </div>
+          {/* Pagination Controls */}
+          <div className="flex justify-between items-center mt-6">
+            <div>
+              <label className="mr-2">แสดง:</label>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1); // รีหน้าเมื่อเปลี่ยน pageSize
+                }}
+                className="border rounded px-2 py-1"
+              >
+                {pageSizeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 border rounded disabled:opacity-50"
+              >
+                ก่อนหน้า
+              </button>
+              <span className="px-2 py-1">
+                หน้า {currentPage} จาก {totalPages}
+              </span>
+              <button
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(p + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 border rounded disabled:opacity-50"
+              >
+                ถัดไป
+              </button>
+            </div>
           </div>
         </div>
       </main>

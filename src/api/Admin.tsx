@@ -5,16 +5,30 @@ import { User,UpdateUserRequest,UserResponse } from "@/types/adminDashborad";
 const BASE = "http://localhost:5260/api/";
 
 
-export async function getProducts(): Promise<ProductResponse[]> {
-  try {
-    const headers = getAuthHeadersJSON();
-    const res = await fetch(`${BASE}admin/all_product`, { method: "GET", headers });
-    if (!res.ok) throw new Error("โหลดสินค้า (Admin) ล้มเหลว");
-    return await res.json();
-  } catch (err) {
-    console.error("เกิดข้อผิดพลาดในการโหลดสินค้า:", err);
-    throw err;
+export async function getProducts(
+  keyword?: string,
+  page: number = 1,
+  pageSize: number = 10
+) {
+  const headers = getAuthHeadersJSON();
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+
+  if (keyword) {
+    params.append("keyword", keyword);
   }
+
+  const url = keyword
+    ? `${BASE}products/search?${params.toString()}`
+    : `${BASE}admin/all_products?${params.toString()}`;
+
+  const res = await fetch(url, { method: "GET", headers });
+
+  if (!res.ok) throw new Error("โหลดสินค้า (admin) ล้มเหลว");
+
+  return res.json();
 }
 
 export async function getUserById(id: string): Promise<UserResponse> {
