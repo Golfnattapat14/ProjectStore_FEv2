@@ -102,6 +102,7 @@ const AdminAddProduct: React.FC = () => {
           id="productName"
           type="text"
           name="ProductName"
+          maxLength={30}
           value={product.ProductName}
           onChange={handleChange}
           aria-required="true"

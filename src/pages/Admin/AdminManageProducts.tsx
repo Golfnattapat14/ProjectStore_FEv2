@@ -167,6 +167,7 @@ const handleChange = (
             id="productName"
             type="text"
             name="ProductName"
+            maxLength={30}
             value={product.ProductName ?? ""}
             onChange={handleChange}
             aria-required="true"
@@ -176,7 +177,7 @@ const handleChange = (
         </label>
 
         <label htmlFor="productPrice" className="block mb-4">
-          <span className="block mb-1 font-medium">ราคา:</span>
+        <span className="block mb-1 font-medium">ราคา: {Number(product.ProductPrice).toFixed(2)} บาท</span>
           <input
             id="productPrice"
             type="number"
@@ -184,6 +185,7 @@ const handleChange = (
             value={product.ProductPrice ?? 0}
             onChange={handleChange}
             min={0}
+            step="0.01"
             aria-required="true"
             disabled={saving}
             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"

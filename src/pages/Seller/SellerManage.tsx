@@ -18,6 +18,13 @@ const SellerManage: React.FC = () => {
     FilePath: null,
   });
 
+  const productTypes = [
+    { label: "อาหาร", value: 1 },
+    { label: "เครื่องใช้", value: 2 },
+    { label: "เครื่องดื่ม", value: 3 },
+    { label: "ของเล่น", value: 4 },
+    { label: "อื่นๆ", value: 5 },
+  ];
   const [message, setMessage] = useState("");
   const [loading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -140,14 +147,6 @@ const SellerManage: React.FC = () => {
     }
   };
 
-  const productTypes = [
-    { label: "อาหาร", value: 1 },
-    { label: "เครื่องใช้", value: 2 },
-    { label: "เครื่องดื่ม", value: 3 },
-    { label: "ของเล่น", value: 4 },
-    { label: "อื่นๆ", value: 5 },
-  ];
-
   if (loading)
     return (
       <p className="text-center mt-6 text-gray-700">กำลังโหลดข้อมูลสินค้า...</p>
@@ -174,6 +173,7 @@ const SellerManage: React.FC = () => {
             id="productName"
             type="text"
             name="ProductName"
+            maxLength={30}
             value={product.ProductName ?? ""}
             onChange={handleChange}
             aria-required="true"
@@ -183,7 +183,7 @@ const SellerManage: React.FC = () => {
         </label>
 
         <label htmlFor="productPrice" className="block mb-4">
-          <span className="block mb-1 font-medium">ราคา:</span>
+        <span className="block mb-1 font-medium">ราคา: {Number(product.ProductPrice).toFixed(2)} บาท</span>
           <input
             id="productPrice"
             type="number"
@@ -227,6 +227,7 @@ const SellerManage: React.FC = () => {
             value={product.Quantity ?? 0}
             onChange={handleChange}
             min={0}
+            step="0.01"
             aria-required="true"
             disabled={saving}
             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
