@@ -20,31 +20,18 @@ const BuyerPage: React.FC = () => {
 
   const [searchKeyword, setSearchKeyword] = useState("");
 
-  useEffect(() => {
-    setLoading(true);
-    getProducts()
-      .then((data) => {
-        setProducts(data);
-        setError("");
-      })
-      .catch((err) => setError(err.message || "เกิดข้อผิดพลาด"))
-      .finally(() => setLoading(false));
-  }, []);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
-    const handleFocus = () => {
-      setLoading(true);
-      getProducts()
-        .then((data) => {
-          setProducts(data);
-          setError("");
-        })
-        .catch((err) => setError(err.message || "เกิดข้อผิดพลาด"))
-        .finally(() => setLoading(false));
-    };
-    window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
-  }, []);
+    getProducts(searchKeyword, currentPage, pageSize)
+      .then((data) => {
+        setProducts(data.items); // หรือ data.products แล้วแต่ backend
+        setTotalPages(data.totalPages);
+      })
+      .catch((err) => toast.error(err.message));
+  }, [searchKeyword, currentPage, pageSize]);
 
   const getProductTypeName = (type: number) => {
     switch (type) {
@@ -78,10 +65,12 @@ const BuyerPage: React.FC = () => {
       await addToCart(productId, qty);
       toast.success("เพิ่มสินค้าในตะกร้าเรียบร้อย");
       setQuantityToAdd((prev) => ({ ...prev, [productId]: 1 }));
-      // ดึงข้อมูลสินค้าใหม่หลังเพิ่มตะกร้า
+
+      // ✅ โหลดข้อมูลใหม่ โดยยังอยู่ใน context ของหน้าเดิม
       setLoading(true);
-      const data = await getProducts();
-      setProducts(data);
+      const data = await getProducts(searchKeyword, currentPage, pageSize);
+      setProducts(data.items);
+      setTotalPages(data.totalPages);
       setLoading(false);
     } catch (error) {
       console.error(error);
@@ -96,7 +85,8 @@ const BuyerPage: React.FC = () => {
     try {
       setLoading(true);
       const all = await getProducts();
-      const filtered = all.filter((p: any) => {
+
+      const filtered = all.items.filter((p: any) => {
         const kw = filters.keyword?.toLowerCase() || "";
         const matchKeyword =
           !kw ||
@@ -145,6 +135,12 @@ const BuyerPage: React.FC = () => {
     }
   };
 
+  const pageSizeOptions = [
+    { label: "5 รายการ", value: 5 },
+    { label: "10 รายการ", value: 10 },
+    { label: "20 รายการ", value: 20 },
+  ];
+
   return (
     <div className="min-h-screen bg-[#f5f5f5] pb-20">
       {/* Sticky Top Bar */}
@@ -170,15 +166,6 @@ const BuyerPage: React.FC = () => {
             placeholder="ค้นหาสินค้าและชื่อของคนขาย..."
           />
         </div>
-        {/* Mobile SearchBar (แสดงเฉพาะจอเล็ก)
-        <div className="block md:hidden mb-4 w-full">
-          <SearchBar
-            value={searchKeyword}
-            onChange={setSearchKeyword}
-            onSearch={handleSearch}
-            placeholder="ค้นหาสินค้าและชื่อของคนขาย..."
-          />
-        </div> */}
 
         {/* Content */}
         <div className="flex-1">
@@ -203,12 +190,6 @@ const BuyerPage: React.FC = () => {
                     className="bg-white border border-orange-100 rounded-xl shadow-sm hover:shadow-lg transition-shadow flex flex-col h-full cursor-pointer group"
                     title={p.productName}
                   >
-                    {/* Badge ตัวอย่าง */}
-                    {/* {p.quantity > 10 && (
-                    <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full z-10 shadow">
-                      ขายดี
-                    </span>
-                  )} */}
                     <div className="relative pb-[100%] overflow-hidden rounded-t-xl">
                       {p.filePath ? (
                         <img
@@ -241,13 +222,14 @@ const BuyerPage: React.FC = () => {
                         {new Date(p.createDate).toLocaleDateString("th-TH")}
                       </p>
                       <p className="text-xs text-gray-500 mb-2">
-                        ประเภทสินค้า : {getProductTypeName(p.productType ?? 0)} 
+                        ประเภทสินค้า : {getProductTypeName(p.productType ?? 0)}
                       </p>
                       <p className="text-xs text-gray-500 mb-2">
                         คงเหลือ:{" "}
                         {p.quantity > 0
                           ? p.quantity.toLocaleString()
-                          : "หมดสต็อก"} ชิ้น
+                          : "หมดสต็อก"}{" "}
+                        ชิ้น
                       </p>
                       <div className="mt-auto flex flex-col gap-2">
                         <div className="flex flex-col items-center gap-2">
@@ -306,6 +288,48 @@ const BuyerPage: React.FC = () => {
                     ไม่พบสินค้า
                   </p>
                 )}
+          </div>
+          {/* Pagination Controls */}
+          <div className="flex justify-between items-center mt-6">
+            <div>
+              <label className="mr-2">แสดง:</label>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1); // รีหน้าเมื่อเปลี่ยน pageSize
+                }}
+                className="border rounded px-2 py-1"
+              >
+                {pageSizeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 border rounded disabled:opacity-50"
+              >
+                ก่อนหน้า
+              </button>
+              <span className="px-2 py-1">
+                หน้า {currentPage} จาก {totalPages}
+              </span>
+              <button
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(p + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 border rounded disabled:opacity-50"
+              >
+                ถัดไป
+              </button>
+            </div>
           </div>
         </div>
       </main>

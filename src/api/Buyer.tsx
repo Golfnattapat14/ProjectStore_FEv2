@@ -2,16 +2,32 @@ import { getAuthHeadersJSON } from "./Token";
 
 const BASE = "http://localhost:5260/api/";
 
-export async function getProducts(keyword?: string) {
+export async function getProducts(
+  keyword?: string,
+  page: number = 1,
+  pageSize: number = 10
+) {
   const headers = getAuthHeadersJSON();
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+
+  if (keyword) {
+    params.append("keyword", keyword);
+  }
+
   const url = keyword
-    ? `${BASE}buyer/search?keyword=${encodeURIComponent(keyword)}`
-    : `${BASE}buyer/all`;
+    ? `${BASE}products/search?${params.toString()}`
+    : `${BASE}buyer/all?${params.toString()}`;
 
   const res = await fetch(url, { method: "GET", headers });
+
   if (!res.ok) throw new Error("โหลดสินค้า (Buyer) ล้มเหลว");
+
   return res.json();
 }
+
 
 
 
