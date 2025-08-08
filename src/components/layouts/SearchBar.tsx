@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import * as Slider from "@radix-ui/react-slider";
+import { useLocation } from "react-router-dom";
 
 const productTypes = [
   { label: "อาหาร", value: 1 },
@@ -50,6 +51,8 @@ export const SearchBar = ({
   const [releaseDateTo, setReleaseDateTo] = useState("");
   const [isActive, setIsActive] = useState<boolean | undefined>(undefined);
 
+  const location = useLocation();
+  const currentPath = location.pathname;
   // Debounce keyword + sellerName before search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -246,7 +249,7 @@ export const SearchBar = ({
       </div>
 
       {/* Active Status Selection */}
-      {(userRole === "seller" || userRole === "admin") && (
+      {(userRole === "seller" || userRole === "admin") &&  currentPath !== "/admin" && (
         <div>
           <span className="block text-sm font-medium text-gray-700 mb-2">
             สถานะสินค้า
