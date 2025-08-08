@@ -26,7 +26,7 @@ interface SearchBarProps {
   onChange: (val: string) => void;
   onSearch?: (filters: SearchBarData) => void;
   placeholder?: string;
-  userRole?: string; 
+  userRole?: string;
 }
 
 const minPrice = 0;
@@ -245,35 +245,46 @@ export const SearchBar = ({
         </label>
       </div>
 
-      {/* Active Status Checkbox */}
+      {/* Active Status Selection */}
       {(userRole === "seller" || userRole === "admin") && (
-  <>
-    <div>
-      <label className="inline-flex items-center space-x-2 cursor-pointer">
-        <input
-          type="checkbox"
-          className="form-checkbox accent-orange-500"
-          checked={isActive === true}
-          onChange={() => setIsActive(isActive === true ? undefined : true)}
-        />
-        <span className="text-sm text-gray-700">สินค้าที่เปิดใช้งาน</span>
-      </label>
-    </div>
-
-    <div>
-      <label className="inline-flex items-center space-x-2 cursor-pointer">
-        <input
-          type="checkbox"
-          className="form-checkbox accent-orange-500"
-          checked={isActive === false}
-          onChange={() => setIsActive(isActive === false ? undefined : false)}
-        />
-        <span className="text-sm text-gray-700">สินค้าที่ปิดใช้งาน</span>
-      </label>
-    </div>
-  </>
-)}
-
+        <div>
+          <span className="block text-sm font-medium text-gray-700 mb-2">
+            สถานะการใช้งาน
+          </span>
+          <div className="flex flex-col space-y-2">
+            <label className="inline-flex items-center space-x-2 cursor-pointer">
+              <input
+                type="radio"
+                name="activeStatus"
+                className="form-radio accent-orange-500"
+                checked={isActive === undefined}
+                onChange={() => setIsActive(undefined)}
+              />
+              <span className="text-sm text-gray-700">ทั้งหมด</span>
+            </label>
+            <label className="inline-flex items-center space-x-2 cursor-pointer">
+              <input
+                type="radio"
+                name="activeStatus"
+                className="form-radio accent-orange-500"
+                checked={isActive === true}
+                onChange={() => setIsActive(true)}
+              />
+              <span className="text-sm text-gray-700">เปิดใช้งาน</span>
+            </label>
+            <label className="inline-flex items-center space-x-2 cursor-pointer">
+              <input
+                type="radio"
+                name="activeStatus"
+                className="form-radio accent-orange-500"
+                checked={isActive === false}
+                onChange={() => setIsActive(false)}
+              />
+              <span className="text-sm text-gray-700">ปิดใช้งาน</span>
+            </label>
+          </div>
+        </div>
+      )}
     </aside>
   );
 };
