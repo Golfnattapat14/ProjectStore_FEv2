@@ -249,7 +249,7 @@ export const SearchBar = ({
       {(userRole === "seller" || userRole === "admin") && (
         <div>
           <span className="block text-sm font-medium text-gray-700 mb-2">
-            สถานะการใช้งาน
+            สถานะสินค้า
           </span>
           <div className="flex flex-col space-y-2">
             <label className="inline-flex items-center space-x-2 cursor-pointer">
