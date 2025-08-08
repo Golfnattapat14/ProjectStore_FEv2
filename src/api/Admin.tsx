@@ -31,6 +31,32 @@ export async function getProducts(
   return res.json();
 }
 
+export async function getProductsAdmin(
+  keyword?: string,
+  page: number = 1,
+  pageSize: number = 10
+) {
+  const headers = getAuthHeadersJSON();
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+
+  if (keyword) {
+    params.append("keyword", keyword);
+  }
+
+  const url = keyword
+    ? `${BASE}products/search?${params.toString()}`
+    : `${BASE}products/all?${params.toString()}`;
+
+  const res = await fetch(url, { method: "GET", headers });
+
+  if (!res.ok) throw new Error("โหลดสินค้า (admin) ล้มเหลว");
+
+  return res.json();
+}
+
 export async function getUserById(id: string): Promise<UserResponse> {
   const res = await fetch(`${BASE}admin/user/${id}`, {
     method: "GET",
