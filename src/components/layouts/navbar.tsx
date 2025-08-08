@@ -77,7 +77,7 @@ export const NavbarComponent = () => {
         {/* โลโก้ */}
         <div className="flex lg:flex-1 text-xl font-bold text-gray-500">
           <div className="bg-gradient-to-r from-red-500 via-violet-500 to-sky-500 bg-clip-text text-transparent font-bold text-xl hover:scale-110">
-            Store Shope
+            <Link to="/">อำนวย Shop</Link>
           </div>
         </div>
 

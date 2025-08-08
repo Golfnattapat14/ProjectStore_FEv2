@@ -1,5 +1,4 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,11 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 type RoleType = "Buyer" | "Seller";
+
+const roles = [
+  { label: "ผู้ขาย", value: "Seller" },
+  { label: "ผู้ซื้อ", value: "Buyer" },
+];
 
 export const Register = () => {
   const [username, setUsername] = useState("");
@@ -42,8 +46,8 @@ export const Register = () => {
     const dataToSend = { username, password, role };
     try {
       const result = await registerUser(dataToSend);
-      toast.success("Register Success! User ID: " + result.id);
-   
+      toast.success("Register Success! Welcome " + result.username);
+
       navigate("/");
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -53,6 +57,7 @@ export const Register = () => {
       }
     }
   };
+
   return (
     <div className="flex bg-white w-full h-screen justify-center items-center">
       <div className="w-[850px] h-max bg-[#F8F9FF] shadow-lg px-20 py-16 rounded-lg flex flex-col items-center">
@@ -65,64 +70,49 @@ export const Register = () => {
             />
 
             <div className="w-full">
-              <span className="font-semibold text-sm text-gray-400">
-                Username
-              </span>
+              <span className="font-semibold text-sm text-gray-400">Username</span>
               <Input
                 id="username"
                 name="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className={`w-full, ${
-                  showError && !password ? "border-2 border-red-400" : ""
-                }`}
+                className={`w-full ${showError && !username ? "border-2 border-red-400" : ""}`}
               />
-              {showError && !password && (
-                <p className="text-xs text-red-400 my-1">
-                  This field is required
-                </p>
+              {showError && !username && (
+                <p className="text-xs text-red-400 my-1">This field is required</p>
               )}
             </div>
+
             <div className="w-full">
-              <span className="font-semibold text-sm text-gray-400">
-                Password
-              </span>
+              <span className="font-semibold text-sm text-gray-400">Password</span>
               <Input
                 id="password"
                 name="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={`w-full, ${
-                  showError && !password ? "border-2 border-red-400" : ""
-                }`}
+                className={`w-full ${showError && !password ? "border-2 border-red-400" : ""}`}
               />
               {showError && !password && (
-                <p className="text-xs text-red-400 my-1">
-                  This field is required
-                </p>
+                <p className="text-xs text-red-400 my-1">This field is required</p>
               )}
             </div>
+
             <div className="w-full">
-              <span className="font-semibold text-sm text-gray-400">
-                Confirm Password
-              </span>
+              <span className="font-semibold text-sm text-gray-400">Confirm Password</span>
               <Input
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className={`w-full, ${
-                  showError && !confirmPassword ? "border-2 border-red-400" : ""
-                }`}
+                className={`w-full ${showError && !confirmPassword ? "border-2 border-red-400" : ""}`}
               />
               {showError && !confirmPassword && (
-                <p className="text-xs text-red-400 my-1">
-                  This field is required
-                </p>
+                <p className="text-xs text-red-400 my-1">This field is required</p>
               )}
             </div>
+
             <div className="w-full">
               <span className="font-semibold text-sm text-gray-400">Role</span>
               <Select
@@ -130,30 +120,25 @@ export const Register = () => {
                 onValueChange={(value) => setRole(value as RoleType)}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select Priority" />
+                  <SelectValue placeholder="Select Role" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {roles.map((item, index) =>{
-                      console.log(item)
-                      console.log(index)
-                      return <SelectItem value={item.value}>{item.label}</SelectItem>
-                    })}
-                    {/* <SelectItem value="Buyer">Buyer</SelectItem>
-                    <SelectItem value="Seller">Seller</SelectItem> */}
+                    {roles.map((item, index) => (
+                      <SelectItem key={index} value={item.value}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              {showError && !role && (
-                <p className="text-xs text-red-400 my-1">
-                  This field is required
-                </p>
-              )}
             </div>
           </div>
+
           <Button type="submit" className="w-full">
             Register
           </Button>
+
           <p className="text-xs text-center">
             Already have an account?{" "}
             <span
@@ -168,14 +153,3 @@ export const Register = () => {
     </div>
   );
 };
-
-const roles = [
-  {
-    label: "ผู้ขาย",
-    value: "buyer"
-  },
-  {
-    label: "ผู้ซื้อ",
-    value: "seller"
-  },
-]

@@ -146,9 +146,9 @@ const BuyerPage: React.FC = () => {
       {/* Sticky Top Bar */}
       <div className="sticky top-0 z-20 bg-white shadow-md border-b border-orange-200">
         <div className="max-w-7xl mx-auto flex items-center px-4 py-3 gap-4">
-          <h2 className="text-2xl font-bold text-orange-500 tracking-wide">
-            Store Shope
-          </h2>
+          {/* <h2 className="text-2xl font-bold text-orange-500 tracking-wide">
+            อำนวย Shop
+          </h2> */}
           <div className="flex-1" />
           <div className="relative ml-4">
             <CartIcon count={totalCount} />

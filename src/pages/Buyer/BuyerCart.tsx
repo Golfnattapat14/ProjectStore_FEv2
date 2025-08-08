@@ -9,7 +9,7 @@ const BuyerCart: React.FC = () => {
   const [error, setError] = useState("");
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  
+
   const getProductTypeName = (type: number) => {
     switch (type) {
       case 1:
@@ -69,7 +69,6 @@ const BuyerCart: React.FC = () => {
       toast.error(err.message || "อัปเดตจำนวนสินค้าไม่สำเร็จ");
     }
   };
-  
 
   useEffect(() => {
     fetchCart();
@@ -145,11 +144,14 @@ const BuyerCart: React.FC = () => {
     }, 0);
   }, [cart, selectedItems]);
 
-  const isAllSelected = cart.length > 0 && cart.every(item => selectedItems.has(item.id));
+  const isAllSelected =
+    cart.length > 0 && cart.every((item) => selectedItems.has(item.id));
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6 bg-gray-100 min-h-screen">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">ตะกร้าสินค้าของฉัน</h2>
+      <h2 className="text-2xl font-bold mb-6 text-gray-800">
+        ตะกร้าสินค้าของฉัน
+      </h2>
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="flex-grow">
           {loading ? (
@@ -163,15 +165,55 @@ const BuyerCart: React.FC = () => {
           ) : (
             <div className="bg-white rounded-lg shadow-sm">
               {/* Select All Header */}
-              <div className="p-4 border-b flex items-center gap-4">
-                <input
-                  type="checkbox"
-                  className="form-checkbox h-5 w-5 text-orange-500 rounded focus:ring-0"
-                  checked={isAllSelected}
-                  onChange={handleSelectAll}
-                />
-                <span className="font-semibold text-gray-700">เลือกสินค้าทั้งหมด ({cart.length})</span>
+              <div className="p-4 border-b flex items-center gap-4 justify-between">
+                <div className="flex items-center gap-4">
+                  <input
+                    type="checkbox"
+                    className="form-checkbox h-5 w-5 text-orange-500 rounded focus:ring-0"
+                    checked={isAllSelected}
+                    onChange={handleSelectAll}
+                  />
+                  <span className="font-semibold text-gray-700">
+                    เลือกสินค้าทั้งหมด ({cart.length})
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={selectedItems.size === 0}
+                  onClick={async () => {
+                    if (
+                      !confirm(
+                        `ลบสินค้าที่เลือกทั้งหมด (${selectedItems.size} รายการ)?`
+                      )
+                    )
+                      return;
+
+                    try {
+                      // ลบทีละรายการแบบรอให้เสร็จทีละตัว (ปรับได้ตาม API)
+                      for (const id of selectedItems) {
+                        await removeCartItem(id);
+                      }
+                      // อัปเดต state
+                      setCart((prev) =>
+                        prev.filter((item) => !selectedItems.has(item.id))
+                      );
+                      setSelectedItems(new Set());
+                      toast.success("ลบสินค้าที่เลือกทั้งหมดเรียบร้อยแล้ว");
+                    } catch (error: any) {
+                      toast.error(error.message || "ลบสินค้าทั้งหมดไม่สำเร็จ");
+                    }
+                  }}
+                  className={`px-3 py-1 rounded text-white font-semibold transition ${
+                    selectedItems.size === 0
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-red-500 hover:bg-red-600"
+                  }`}
+                >
+                  ลบทั้งหมด ({selectedItems.size})
+                </button>
               </div>
+
               {/* --- */}
               {Object.entries(groupedCart).map(([storeName, items]) => (
                 <div key={storeName} className="border-b last:border-b-0">
@@ -179,7 +221,9 @@ const BuyerCart: React.FC = () => {
                     <input
                       type="checkbox"
                       className="form-checkbox h-5 w-5 text-orange-500 rounded focus:ring-0"
-                      checked={items.every((item) => selectedItems.has(item.id))}
+                      checked={items.every((item) =>
+                        selectedItems.has(item.id)
+                      )}
                       onChange={() => handleSelectStore(storeName)}
                     />
                     <span className="font-bold text-gray-800">{storeName}</span>
@@ -224,10 +268,12 @@ const BuyerCart: React.FC = () => {
                           </div>
                           <div className="flex items-center justify-between mt-2">
                             <p className="text-red-500 font-bold text-xl">
-                              {(item.productPrice).toLocaleString()} บาท
+                              {item.productPrice.toLocaleString()} บาท
                             </p>
                             <div className="flex items-center gap-4">
-                              <span className="text-gray-600">x{item.quantity}</span>
+                              <span className="text-gray-600">
+                                x{item.quantity}
+                              </span>
                               <button
                                 onClick={() => handleRemove(item.id)}
                                 disabled={removingId === item.id}
@@ -244,15 +290,19 @@ const BuyerCart: React.FC = () => {
                           {/* Quantity Controls */}
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                              onClick={() =>
+                                handleUpdateQuantity(item.id, item.quantity - 1)
+                              }
                               disabled={item.quantity <= 1}
                               className="w-8 h-8 bg-gray-200 rounded-l text-lg font-bold"
-                            >-</button>
+                            >
+                              -
+                            </button>
                             <input
                               type="number"
                               min={1}
                               value={item.quantity}
-                              onChange={e => {
+                              onChange={(e) => {
                                 let val = parseInt(e.target.value);
                                 if (isNaN(val) || val < 1) val = 1;
                                 handleUpdateQuantity(item.id, val);
@@ -260,10 +310,14 @@ const BuyerCart: React.FC = () => {
                               className="w-12 text-center border-t border-b"
                             />
                             <button
-                              onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                              onClick={() =>
+                                handleUpdateQuantity(item.id, item.quantity + 1)
+                              }
                               disabled={item.quantity >= item.productStock}
                               className="w-8 h-8 bg-gray-200 rounded-r text-lg font-bold"
-                            >+</button>
+                            >
+                              +
+                            </button>
                           </div>
                         </div>
                       </li>
@@ -277,9 +331,13 @@ const BuyerCart: React.FC = () => {
         {/* Cart Summary and Checkout */}
         <div className="w-full lg:w-96">
           <div className="bg-white rounded-lg shadow-sm p-6 sticky top-4">
-            <h3 className="text-xl font-bold mb-4 text-gray-800">สรุปยอดชำระ</h3>
+            <h3 className="text-xl font-bold mb-4 text-gray-800">
+              สรุปยอดชำระ
+            </h3>
             <div className="flex justify-between items-center mb-2">
-              <p className="text-gray-600">สินค้าที่เลือก ({selectedItems.size} ชิ้น)</p>
+              <p className="text-gray-600">
+                สินค้าที่เลือก ({selectedItems.size} ชิ้น)
+              </p>
               <p className="font-semibold text-gray-800">
                 {selectedTotalPrice.toLocaleString()} บาท
               </p>
@@ -299,7 +357,9 @@ const BuyerCart: React.FC = () => {
               }`}
               onClick={() =>
                 alert(
-                  `ระบบสั่งซื้อยังไม่พร้อมใช้งาน\nจำนวนสินค้าที่เลือก: ${selectedItems.size}\nยอดรวม: ${selectedTotalPrice.toLocaleString()} บาท`
+                  `ระบบสั่งซื้อยังไม่พร้อมใช้งาน\nจำนวนสินค้าที่เลือก: ${
+                    selectedItems.size
+                  }\nยอดรวม: ${selectedTotalPrice.toLocaleString()} บาท`
                 )
               }
             >
