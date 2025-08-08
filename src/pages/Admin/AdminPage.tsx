@@ -159,14 +159,14 @@ const Admin: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {products.map((p, index) => (
+                {products.map((p) => (
                   <tr
                     key={p.id}
                     className={`border-t ${
                       p.isActive ? "" : "bg-gray-100 text-gray-400 opacity-70"
                     }`}
                   >
-                    <td className="p-2 text-center">{index + 1}</td>
+                    <td className="p-2 text-center">{p.index}</td>
                     <td className="px-4 py-2">
                       {p.filePath ? (
                         <img

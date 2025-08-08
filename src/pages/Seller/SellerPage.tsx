@@ -177,7 +177,7 @@ const SellerPage: React.FC = () => {
                         p.isActive ? "" : "bg-gray-100 text-gray-400"
                       }`}
                     >
-                      <td className="px-4 py-2">{index + 1}</td>
+                      <td className="px-4 py-2">{p.index}</td>
                       <td className="px-4 py-2">
                         {p.filePath ? (
                           <img

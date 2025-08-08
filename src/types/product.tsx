@@ -12,6 +12,7 @@ export interface ProductResponse {
   isActive?: boolean;
   createdByName: string;
   filePath?: string;
+  index?: number;
 }
 
 export interface ProductRequest {
@@ -24,3 +25,4 @@ export interface ProductRequest {
   IsActive?: boolean;
   FilePath? :File | null;
 }
+
