@@ -21,7 +21,7 @@ export const ErrorPage = () => {
           <div className="mt-10 flex justify-center">
             <div
               className="text-lg text-gray-200 font-semibold p-2 border-2 rounded-xl cursor-pointer hover:text-sky-500"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/')}
             >
               back to home
             </div>
