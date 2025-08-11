@@ -1,16 +1,16 @@
 import React, { useState, useEffect, type ChangeEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {  updateProduct,deleteProductFile } from "@/api/Admin";
-import { ProductRequest,ProductResponse} from "@/types/product";
+import { updateProduct, deleteProductFile } from "@/api/Admin";
+import { ProductRequest, ProductResponse } from "@/types/product";
 import { getAuthHeadersJSON } from "@/api/Token";
 import { productTypes } from "@/constants/productTypes";
-
+import { toast } from "react-toastify";
 
 const AdminManageProducts: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-    const [filePath, setFilePath] = useState<string | undefined>("");
-  
+  const [filePath, setFilePath] = useState<string | undefined>("");
+
   const [product, setProduct] = useState<Partial<ProductRequest>>({
     ProductName: "",
     ProductPrice: 0,
@@ -31,8 +31,8 @@ const AdminManageProducts: React.FC = () => {
     }
 
     fetch(`http://localhost:5260/api/products/${id}`, {
-        headers: getAuthHeadersJSON(),
-      })
+      headers: getAuthHeadersJSON(),
+    })
       .then((res) => {
         if (!res.ok) {
           if (res.status === 404) {
@@ -57,7 +57,7 @@ const AdminManageProducts: React.FC = () => {
       .catch((err) => setMessage(err.message || "โหลดข้อมูลไม่สำเร็จ"));
   }, [id]);
 
-const handleChange = (
+  const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value, type, checked, files } = e.target as HTMLInputElement;
@@ -88,9 +88,9 @@ const handleChange = (
 
   const handleSave = async (e?: React.MouseEvent) => {
     e?.preventDefault();
-  
+
     if (!id) return;
-  
+
     if (
       !product.ProductName ||
       (product.ProductPrice ?? 0) <= 0 ||
@@ -98,57 +98,64 @@ const handleChange = (
       product.ProductType! < 1 ||
       product.ProductType! > 5
     ) {
-      setMessage(
+      toast.warning(
         "กรุณากรอกข้อมูลให้ถูกต้อง และประเภทสินค้าต้องอยู่ระหว่าง 1 ถึง 5"
       );
       return;
     }
-  
+
     const confirmSave = window.confirm("คุณต้องการบันทึกการแก้ไขนี้หรือไม่?");
-    if (!confirmSave) return; // ถ้ากดยกเลิก หยุดการทำงาน
-  
+    if (!confirmSave) return;
+
     try {
       setSaving(true);
       setMessage("กำลังบันทึก...");
-  
+
       await updateProduct(id, product as ProductRequest);
-  
-      setMessage("บันทึกเรียบร้อยแล้ว");
+
+      toast.success("บันทึกเรียบร้อยแล้ว");
       setTimeout(() => navigate("/admin"), 1500);
     } catch (err) {
-      setMessage("เกิดข้อผิดพลาดในการบันทึก");
+      toast.error("เกิดข้อผิดพลาดในการบันทึก");
     } finally {
       setSaving(false);
     }
   };
 
- const handleDeleteFile = async () => {
-   if (!id) return;
- 
-   const confirmDelete = window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรูปภาพนี้?");
-   if (!confirmDelete) return; // ถ้ากดยกเลิก ให้หยุด
- 
-   try {
-     setMessage("กำลังลบรูปภาพ...");
-     await deleteProductFile(id);
-     setFilePath("");
-     setMessage("ลบรูปภาพเรียบร้อยแล้ว");
-     alert("ลบรูปภาพเรียบร้อยแล้ว");
-   } catch (err) {
-     setMessage("ไม่สามารถลบรูปภาพได้");
-     alert("ไม่สามารถลบรูปภาพได้");
-   }
- };
+  const handleDeleteFile = async () => {
+    if (!id) return;
 
+    const confirmDelete = window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรูปภาพนี้?");
+    if (!confirmDelete) return;
 
-  if (loading) return <p className="text-center mt-6 text-gray-700">กำลังโหลดข้อมูลสินค้า...</p>;
+    try {
+      setMessage("กำลังลบรูปภาพ...");
+      await deleteProductFile(id);
+      setFilePath("");
+      setMessage("");
+      toast.success("ลบรูปภาพเรียบร้อยแล้ว");
+    } catch (err) {
+      toast.error("ไม่สามารถลบรูปภาพได้");
+    }
+  };
+
+  if (loading)
+    return (
+      <p className="text-center mt-6 text-gray-700">
+        กำลังโหลดข้อมูลสินค้า...
+      </p>
+    );
 
   return (
     <div className="max-w-lg mx-auto p-6 bg-white shadow-md rounded-md mt-10">
       <h2 className="text-2xl font-semibold mb-6 text-center">แก้ไขสินค้า</h2>
 
       {message && (
-        <p className={`mb-4 text-center ${message.includes("ผิดพลาด") ? "text-red-600" : "text-green-600"}`}>
+        <p
+          className={`mb-4 text-center ${
+            message.includes("ผิดพลาด") ? "text-red-600" : "text-green-600"
+          }`}
+        >
           {message}
         </p>
       )}
@@ -170,7 +177,9 @@ const handleChange = (
         </label>
 
         <label htmlFor="productPrice" className="block mb-4">
-        <span className="block mb-1 font-medium">ราคา: {Number(product.ProductPrice).toFixed(2)} บาท</span>
+          <span className="block mb-1 font-medium">
+            ราคา: {Number(product.ProductPrice).toFixed(2)} บาท
+          </span>
           <input
             id="productPrice"
             type="number"
@@ -185,7 +194,7 @@ const handleChange = (
           />
         </label>
 
-       <label htmlFor="productType" className="block mb-4">
+        <label htmlFor="productType" className="block mb-4">
           <span className="block mb-1 font-medium">ประเภทสินค้า:</span>
           <select
             id="productType"
@@ -234,7 +243,7 @@ const handleChange = (
           <span>เปิดใช้งาน</span>
         </label>
 
-{filePath && (
+        {filePath && (
           <div className="mb-4 text-center">
             <img
               src={filePath}
@@ -251,33 +260,36 @@ const handleChange = (
             </button>
           </div>
         )}
-       
-       <div className="mb-4">
-    <label htmlFor="filePath" className="block mb-1 font-medium">อัปโหลดรูปภาพใหม่:</label>
-    <input
-      type="file"
-      id="filePath"
-      name="FilePath"
-      accept="image/*"
-      disabled={saving}
-      className="w-full"
-      onChange={(e) => {
-        const file = e.target.files?.[0];
-        if (file) {
-          setProduct((prev) => ({ ...prev, FilePath: file }));
-          setFilePath(""); // ล้าง URL รูปเก่า เพราะมีรูปใหม่ที่ยังไม่อัปโหลด
-        }
-      }}
-    />
-  </div>
 
+        <div className="mb-4">
+          <label htmlFor="filePath" className="block mb-1 font-medium">
+            อัปโหลดรูปภาพใหม่:
+          </label>
+          <input
+            type="file"
+            id="filePath"
+            name="FilePath"
+            accept="image/*"
+            disabled={saving}
+            className="w-full"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setProduct((prev) => ({ ...prev, FilePath: file }));
+                setFilePath("");
+              }
+            }}
+          />
+        </div>
 
         <div className="flex justify-center gap-4">
           <button
             onClick={handleSave}
             disabled={saving}
             className={`px-6 py-2 rounded-md text-white font-semibold ${
-              saving ? "bg-blue-300 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+              saving
+                ? "bg-blue-300 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
             {saving ? "กำลังบันทึก..." : "บันทึก"}
@@ -296,4 +308,3 @@ const handleChange = (
 };
 
 export default AdminManageProducts;
-

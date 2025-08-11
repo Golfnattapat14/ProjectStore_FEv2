@@ -4,6 +4,9 @@ import { addNewProduct } from "@/api/Seller";
 import { ProductRequest } from "@/types/product";
 import { productTypes } from "@/constants/productTypes";
 
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 const AdminAddProduct: React.FC = () => {
   const navigate = useNavigate();
 
@@ -19,7 +22,6 @@ const AdminAddProduct: React.FC = () => {
     FilePath: null,
   });
 
-  const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
 
   const handleChange = (
@@ -62,7 +64,7 @@ const AdminAddProduct: React.FC = () => {
       product.ProductType < 1 ||
       product.ProductType > 5
     ) {
-      setMessage(
+      toast.error(
         "กรุณากรอกข้อมูลให้ถูกต้อง และประเภทสินค้าต้องอยู่ระหว่าง 1 ถึง 5"
       );
       return;
@@ -70,157 +72,164 @@ const AdminAddProduct: React.FC = () => {
 
     try {
       setSaving(true);
-      setMessage("กำลังบันทึก...");
+      toast.info("กำลังบันทึก...");
 
       await addNewProduct(product);
 
-      setMessage("เพิ่มสินค้าเรียบร้อยแล้ว");
+      toast.success("เพิ่มสินค้าเรียบร้อยแล้ว");
       setTimeout(() => navigate("/admin"), 1500);
     } catch (err) {
-      setMessage("เกิดข้อผิดพลาดในการบันทึก");
+      toast.error("เกิดข้อผิดพลาดในการบันทึก");
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="max-w-lg mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold mb-6 text-center">
-        เพิ่มสินค้าใหม่
-      </h2>
+    <>
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
 
-      <label htmlFor="productName" className="block mb-4">
-        <span className="block mb-1 font-medium">ชื่อสินค้า:</span>
-        <input
-          id="productName"
-          type="text"
-          name="ProductName"
-          maxLength={30}
-          value={product.ProductName}
-          onChange={handleChange}
-          aria-required="true"
-          disabled={saving}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-        />
-      </label>
+      <div className="max-w-lg mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+        <h2 className="text-2xl font-semibold mb-6 text-center">
+          เพิ่มสินค้าใหม่
+        </h2>
 
-      <label htmlFor="productPrice" className="block mb-4">
-        <span className="block mb-1 font-medium">
-          ราคา: {Number(product.ProductPrice).toFixed(2)} บาท
-        </span>
-        <input
-          id="productPrice"
-          type="number"
-          name="ProductPrice"
-          value={product.ProductPrice}
-          onChange={handleChange}
-          min={0}
-          step="0.01"
-          aria-required="true"
-          disabled={saving}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-        />
-      </label>
+        <label htmlFor="productName" className="block mb-4">
+          <span className="block mb-1 font-medium">ชื่อสินค้า:</span>
+          <input
+            id="productName"
+            type="text"
+            name="ProductName"
+            maxLength={30}
+            value={product.ProductName}
+            onChange={handleChange}
+            aria-required="true"
+            disabled={saving}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+          />
+        </label>
 
-      <label htmlFor="productType" className="block mb-4">
-        <span className="block mb-1 font-medium">ประเภทสินค้า:</span>
-        <select
-          id="productType"
-          name="ProductType"
-          value={product.ProductType ?? 0}
-          onChange={handleChange}
-          disabled={saving}
-          className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-        >
-          <option value={0} disabled>
-            -- กรุณาเลือกประเภทสินค้า --
-          </option>
-          {productTypes.map((type) => (
-            <option key={type.value} value={type.value}>
-              {type.label}
+        <label htmlFor="productPrice" className="block mb-4">
+          <span className="block mb-1 font-medium">
+            ราคา: {Number(product.ProductPrice).toFixed(2)} บาท
+          </span>
+          <input
+            id="productPrice"
+            type="number"
+            name="ProductPrice"
+            value={product.ProductPrice}
+            onChange={handleChange}
+            min={0}
+            step="0.01"
+            aria-required="true"
+            disabled={saving}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+          />
+        </label>
+
+        <label htmlFor="productType" className="block mb-4">
+          <span className="block mb-1 font-medium">ประเภทสินค้า:</span>
+          <select
+            id="productType"
+            name="ProductType"
+            value={product.ProductType ?? 0}
+            onChange={handleChange}
+            disabled={saving}
+            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+          >
+            <option value={0} disabled>
+              -- กรุณาเลือกประเภทสินค้า --
             </option>
-          ))}
-        </select>
-      </label>
+            {productTypes.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </select>
+        </label>
 
-      <label htmlFor="quantity" className="block mb-4">
-        <span className="block mb-1 font-medium">จำนวน:</span>
-        <input
-          id="quantity"
-          type="number"
-          name="Quantity"
-          value={product.Quantity}
-          onChange={handleChange}
-          min={0}
-          aria-required="true"
-          disabled={saving}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-        />
-      </label>
+        <label htmlFor="quantity" className="block mb-4">
+          <span className="block mb-1 font-medium">จำนวน:</span>
+          <input
+            id="quantity"
+            type="number"
+            name="Quantity"
+            value={product.Quantity}
+            onChange={handleChange}
+            min={0}
+            aria-required="true"
+            disabled={saving}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+          />
+        </label>
 
-      {/* เพิ่ม input ไฟล์ */}
-      <label htmlFor="filePath" className="block mb-6">
-        <span className="block mb-1 font-medium">รูปภาพสินค้า:</span>
-        <input
-          id="filePath"
-          type="file"
-          name="FilePath"
-          onChange={handleChange}
-          disabled={saving}
-          accept="image/*"
-          className="w-full"
-        />
-        {product.FilePath && typeof product.FilePath !== "string" && (
-          <p className="mt-2 text-sm text-gray-600">
-            ไฟล์ที่เลือก: {(product.FilePath as File).name}
-          </p>
-        )}
-      </label>
+        <label htmlFor="filePath" className="block mb-6">
+          <span className="block mb-1 font-medium">รูปภาพสินค้า:</span>
+          <input
+            id="filePath"
+            type="file"
+            name="FilePath"
+            onChange={handleChange}
+            disabled={saving}
+            accept="image/*"
+            className="w-full"
+          />
+          {product.FilePath && typeof product.FilePath !== "string" && (
+            <p className="mt-2 text-sm text-gray-600">
+              ไฟล์ที่เลือก: {(product.FilePath as File).name}
+            </p>
+          )}
+        </label>
 
-      <label
-        htmlFor="isActive"
-        className="flex items-center mb-6 cursor-pointer select-none"
-      >
-        <input
-          id="isActive"
-          type="checkbox"
-          name="IsActive"
-          checked={product.IsActive}
-          onChange={handleChange}
-          disabled={saving}
-          className="mr-2 w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-        />
-        <span>เปิดใช้งาน</span>
-      </label>
-
-      <div className="flex justify-center gap-4">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className={`px-6 py-2 rounded-md text-white font-semibold ${
-            saving
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
+        <label
+          htmlFor="isActive"
+          className="flex items-center mb-6 cursor-pointer select-none"
         >
-          {saving ? "กำลังบันทึก..." : "เพิ่มสินค้า"}
-        </button>
+          <input
+            id="isActive"
+            type="checkbox"
+            name="IsActive"
+            checked={product.IsActive}
+            onChange={handleChange}
+            disabled={saving}
+            className="mr-2 w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+          />
+          <span>เปิดใช้งาน</span>
+        </label>
 
-        <button
-          onClick={() => navigate("/seller")}
-          disabled={saving}
-          className="px-6 py-2 rounded-md border border-gray-400 hover:bg-gray-100 disabled:opacity-50"
-        >
-          ยกเลิก
-        </button>
+        <div className="flex justify-center gap-4">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className={`px-6 py-2 rounded-md text-white font-semibold ${
+              saving
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            {saving ? "กำลังบันทึก..." : "เพิ่มสินค้า"}
+          </button>
+
+          <button
+            onClick={() => navigate("/seller")}
+            disabled={saving}
+            className="px-6 py-2 rounded-md border border-gray-400 hover:bg-gray-100 disabled:opacity-50"
+          >
+            ยกเลิก
+          </button>
+        </div>
       </div>
-
-      {message && (
-        <p className="mt-4 text-center text-red-600 font-medium select-none">
-          {message}
-        </p>
-      )}
-    </div>
+    </>
   );
 };
 

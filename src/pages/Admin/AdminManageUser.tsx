@@ -1,7 +1,8 @@
 import React, { useState, useEffect, type ChangeEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { UpdateUserRequest,UserResponse } from "@/types/adminDashborad";
+import { UpdateUserRequest, UserResponse } from "@/types/adminDashborad";
 import { updateUser, getUserById } from "@/api/Admin";
+import { toast } from "react-toastify";
 
 const AdminManageUser: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,75 +14,71 @@ const AdminManageUser: React.FC = () => {
     isDeleted: false,
   });
 
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  
 
   useEffect(() => {
-  if (!id) {
-    setMessage("ไม่พบรหัสผู้ใช้");
-    return;
-  }
+    if (!id) {
+      toast.error("ไม่พบรหัสผู้ใช้");
+      return;
+    }
 
-  setLoading(true);
-  getUserById(id)
-    .then((data: UserResponse) => {
-      setUser({
-        username: data.username,
-        role: data.role,
-        isDeleted: data.isDeleted ?? false,
-      });
-      setMessage("");
-    })
-    .catch((err) => setMessage(err.message || "โหลดข้อมูลไม่สำเร็จ"))
-    .finally(() => setLoading(false));
-}, [id]);
-
+    setLoading(true);
+    getUserById(id)
+      .then((data: UserResponse) => {
+        setUser({
+          username: data.username,
+          role: data.role,
+          isDeleted: data.isDeleted ?? false,
+        });
+      })
+      .catch((err) => toast.error(err.message || "โหลดข้อมูลไม่สำเร็จ"))
+      .finally(() => setLoading(false));
+  }, [id]);
 
   const handleChange = (
-  e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
-) => {
-  const target = e.target;
-  const { name } = target;
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const target = e.target;
+    const { name } = target;
 
-  if (target instanceof HTMLInputElement) {
-    const { type, checked, value } = target;
-    setUser((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  } else if (target instanceof HTMLSelectElement) {
-    setUser((prev) => ({
-      ...prev,
-      [name]: target.value,
-    }));
-  }
-};
-
+    if (target instanceof HTMLInputElement) {
+      const { type, checked, value } = target;
+      setUser((prev) => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      }));
+    } else if (target instanceof HTMLSelectElement) {
+      setUser((prev) => ({
+        ...prev,
+        [name]: target.value,
+      }));
+    }
+  };
 
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-
+    e.preventDefault();
     if (!id) return;
 
     if (!user.username || !user.role) {
-      setMessage("กรุณากรอกชื่อผู้ใช้และบทบาทให้ครบ");
+      toast.error("กรุณากรอกชื่อผู้ใช้และบทบาทให้ครบ");
       return;
     }
 
     try {
       setSaving(true);
-      setMessage("กำลังบันทึก...");
+      toast.loading("กำลังบันทึก...");
       await updateUser(id, {
         username: user.username ?? "",
         role: user.role ?? "",
         isDeleted: user.isDeleted ?? false,
       });
-      setMessage("บันทึกเรียบร้อยแล้ว");
+      toast.dismiss(); // ปิด toast loading
+      toast.success("บันทึกเรียบร้อยแล้ว");
       setTimeout(() => navigate("/adminManage"), 1500);
     } catch {
-      setMessage("เกิดข้อผิดพลาดในการบันทึก");
+      toast.dismiss();
+      toast.error("เกิดข้อผิดพลาดในการบันทึก");
     } finally {
       setSaving(false);
     }
@@ -99,16 +96,6 @@ const AdminManageUser: React.FC = () => {
       <h2 className="text-2xl font-semibold mb-6 text-center text-gray-700">
         แก้ไขข้อมูลผู้ใช้
       </h2>
-
-      {message && (
-        <p
-          className={`mb-4 text-center ${
-            message.includes("ผิดพลาด") ? "text-red-500" : "text-green-600"
-          }`}
-        >
-          {message}
-        </p>
-      )}
 
       <form
         onSubmit={handleSave}
@@ -152,26 +139,34 @@ const AdminManageUser: React.FC = () => {
             className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">-- เลือกบทบาท --</option>
-            {/* <option value="admin">Admin</option> */}
             <option value="Buyer">Buyer</option>
             <option value="Seller">Seller</option>
-            {/* เพิ่มบทบาทอื่น ๆ ตามต้องการ */}
           </select>
         </div>
 
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="isDeleted"
-            name="isDeleted"
-            checked={user.isDeleted ?? false}
-            onChange={handleChange}
-            disabled={saving}
-            className="h-5 w-5 text-red-600 rounded border-gray-300 focus:ring-red-500"
-          />
-          <label htmlFor="isDeleted" className="text-gray-700 font-medium">
-            ปิดการใช้งานผู้ใช้นี้
-          </label>
+        <div className="flex items-center gap-3">
+          <span className="text-gray-700 font-medium">
+            {user.isDeleted ? "เปิดการใช้งาน" : "ปิดการใช้งาน"}
+          </span>
+
+          <button
+            type="button"
+            onClick={() =>
+              setUser((prev) => ({
+                ...prev,
+                isDeleted: !prev.isDeleted, // กดแล้วกลับค่าปิด/เปิด
+              }))
+            }
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+              !user.isDeleted ? "bg-green-500" : "bg-gray-300"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                !user.isDeleted ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
         </div>
 
         <div className="flex justify-center gap-4 mt-6">

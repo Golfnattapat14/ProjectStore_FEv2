@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { getUsers, updateUser, deleteUser } from "@/api/Admin";
 import { User, UpdateUserRequest } from "@/types/adminDashborad";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const AdminManage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -33,8 +34,13 @@ const AdminManage: React.FC = () => {
           u.id === user.id ? { ...u, isDeleted: !u.isDeleted } : u
         )
       );
+      toast.success(
+        !user.isDeleted
+          ? "ปิดการใช้งานผู้ใช้เรียบร้อย"
+          : "เปิดการใช้งานผู้ใช้เรียบร้อย"
+      );
     } catch (error) {
-      alert("ไม่สามารถอัปเดตสถานะได้");
+      toast.error("ไม่สามารถอัปเดตสถานะได้");
     }
   };
 
@@ -46,8 +52,9 @@ const AdminManage: React.FC = () => {
       await deleteUser(id);
       const updatedUsers = await getUsers();
       setUsers(updatedUsers);
+      toast.success("ลบผู้ใช้เรียบร้อยแล้ว");
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     }
   };
 
