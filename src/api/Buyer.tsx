@@ -5,7 +5,15 @@ const BASE = "http://localhost:5260/api/";
 export async function getProducts(
   keyword?: string,
   page: number = 1,
-  pageSize: number = 10
+  pageSize: number = 10,
+  filters?: {
+    productTypes?: number[];      // ตัวเลข เช่น [1, 2]
+    minPrice?: number;
+    maxPrice?: number;
+    releaseDateFrom?: string;     // YYYY-MM-DD
+    releaseDateTo?: string;       // YYYY-MM-DD
+    isActive?: boolean;
+  }
 ) {
   const headers = getAuthHeadersJSON();
   const params = new URLSearchParams({
@@ -13,17 +21,25 @@ export async function getProducts(
     pageSize: String(pageSize),
   });
 
-  if (keyword) {
-    params.append("keyword", keyword);
+  if (keyword) params.append("keyword", keyword);
+
+  if (filters) {
+    if (filters.productTypes?.length) {
+      filters.productTypes.forEach((type) => {
+        params.append("productTypes", String(type));
+      });
+    }
+    if (filters.minPrice != null) params.append("minPrice", String(filters.minPrice));
+    if (filters.maxPrice != null) params.append("maxPrice", String(filters.maxPrice));
+    if (filters.releaseDateFrom) params.append("releaseDateFrom", filters.releaseDateFrom);
+    if (filters.releaseDateTo) params.append("releaseDateTo", filters.releaseDateTo);
+    if (filters.isActive != null) params.append("isActive", String(filters.isActive));
   }
 
-  const url = keyword
-    ? `${BASE}products/search?${params.toString()}`
-    : `${BASE}buyer/all?${params.toString()}`;
-
+  const url = `${BASE}products/all?${params.toString()}`;
   const res = await fetch(url, { method: "GET", headers });
 
-  if (!res.ok) throw new Error("โหลดสินค้า (Buyer) ล้มเหลว");
+  if (!res.ok) throw new Error("โหลดสินค้า (seller) ล้มเหลว");
 
   return res.json();
 }

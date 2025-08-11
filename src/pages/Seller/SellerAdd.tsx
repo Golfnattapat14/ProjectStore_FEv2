@@ -2,6 +2,7 @@ import React, { useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { addNewProduct } from "@/api/Seller";
 import { ProductRequest } from "@/types/product";
+import { productTypes } from "@/constants/productTypes";
 
 const SellerAdd: React.FC = () => {
   const navigate = useNavigate();
@@ -83,13 +84,6 @@ const SellerAdd: React.FC = () => {
     }
   };
 
-  const productTypes = [
-    { label: "อาหาร", value: 1 },
-    { label: "เครื่องใช้", value: 2 },
-    { label: "เครื่องดื่ม", value: 3 },
-    { label: "ของเล่น", value: 4 },
-    { label: "อื่นๆ", value: 5 },
-  ];
 
   return (
     <div className="max-w-lg mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">

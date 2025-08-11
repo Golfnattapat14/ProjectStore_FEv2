@@ -3,23 +3,44 @@ import { useNavigate } from "react-router-dom";
 import { ProductResponse } from "@/types/product";
 import { getProductsSeller, deleteProduct } from "@/api/Seller";
 import { toast } from "react-toastify";
-import { SearchBar, SearchBarData } from "@/components/layouts/SearchBar";
+import { getProductTypeName } from "@/constants/productTypes";
+import FilterSearch from "@/components/layouts/SearchBar";
 
 const SellerPage: React.FC = () => {
   const [products, setProducts] = useState<ProductResponse[]>([]);
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [selectedTypes, setSelectedTypes] = useState<number[]>([]);
+  const [minPrice, setMinPrice] = useState<number | null>(null);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
+  const [isActive, setIsActive] = useState<boolean | null>(null);
+  const [releaseDateFrom, setReleaseDateFrom] = useState<string>("");
+  const [releaseDateTo, setReleaseDateTo] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
 
-  const loadProducts = () => {
+  const navigate = useNavigate();
+
+  const loadProducts = (
+    keywordParam = searchKeyword,
+    pageParam = currentPage,
+    pageSizeParam = pageSize,
+    filtersParam = {
+      productTypes: selectedTypes.length > 0 ? selectedTypes : undefined,
+      minPrice: minPrice === null ? undefined : minPrice,
+      maxPrice: maxPrice === null ? undefined : maxPrice,
+      releaseDateFrom: releaseDateFrom || undefined,
+      releaseDateTo: releaseDateTo || undefined,
+      isActive: isActive === null ? undefined : isActive,
+    }
+  ) => {
     setLoading(true);
-    getProductsSeller()
+    getProductsSeller(keywordParam, pageParam, pageSizeParam, filtersParam)
       .then((data) => {
-        setProducts(data);
+        setProducts(data.items ?? []);
+        setTotalPages(data.totalPages ?? 0);
         setError("");
       })
       .catch((err) => setError(err.message || "เกิดข้อผิดพลาด"))
@@ -27,269 +48,239 @@ const SellerPage: React.FC = () => {
   };
 
   useEffect(() => {
-    getProductsSeller(searchKeyword, currentPage, pageSize)
-      .then((data) => {
-        setProducts(data.items); // หรือ data.products แล้วแต่ backend
-        setTotalPages(data.totalPages);
-      })
-      .catch((err) => toast.error(err.message));
-  }, [searchKeyword, currentPage, pageSize]);
-
-  const getProductTypeName = (type: number) => {
-    switch (type) {
-      case 1:
-        return "อาหาร";
-      case 2:
-        return "เครื่องใช้";
-      case 3:
-        return "เครื่องดื่ม";
-      case 4:
-        return "ของเล่น";
-      default:
-        return "อื่น ๆ";
-    }
-  };
+    loadProducts();
+  }, [
+    searchKeyword,
+    selectedTypes,
+    minPrice,
+    maxPrice,
+    isActive,
+    releaseDateFrom,
+    releaseDateTo,
+    currentPage,
+    pageSize,
+  ]);
 
   const handleDelete = async (id: string) => {
-    const confirmDelete = window.confirm("คุณแน่ใจว่าจะลบสินค้านี้?");
-    if (!confirmDelete) return;
+    if (!window.confirm("คุณแน่ใจว่าจะลบสินค้านี้?")) return;
 
     try {
       await deleteProduct(id);
+      toast.success("ลบสินค้าสำเร็จ");
       loadProducts();
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        alert(err.message);
-      } else {
-        alert(String(err));
-      }
-    }
-  };
-
-  const handleSearch = async (filters: SearchBarData) => {
-    try {
-      setLoading(true);
-      const all = await getProductsSeller();
-
-      const filtered = all.items.filter((p: any) => {
-        const kw = filters.keyword?.toLowerCase() || "";
-        const matchKeyword =
-          !kw ||
-          p.productName.toLowerCase().includes(kw) ||
-          (p.createdByName?.toLowerCase().includes(kw) ?? false);
-
-        const matchMin =
-          filters.priceMin == null || p.productPrice >= filters.priceMin;
-        const matchMax =
-          filters.priceMax == null || p.productPrice <= filters.priceMax;
-        const matchCategory =
-          !filters.category ||
-          filters.category.length === 0 ||
-          (p.productType !== undefined &&
-            filters.category.includes(p.productType));
-
-        const matchDate =
-          (!filters.releaseDateFrom ||
-            new Date(p.createDate) >= new Date(filters.releaseDateFrom)) &&
-          (!filters.releaseDateTo ||
-            new Date(p.createDate) <= new Date(filters.releaseDateTo));
-
-        const matchStatus =
-          filters.isActive === undefined || p.isActive === filters.isActive;
-        const matchSeller =
-          !filters.sellerName ||
-          p.createdByName
-            .toLowerCase()
-            .includes(filters.sellerName.toLowerCase());
-        return (
-          matchKeyword &&
-          matchMin &&
-          matchMax &&
-          matchCategory &&
-          matchDate &&
-          matchStatus &&
-          matchSeller
-        );
-      });
-
-      setProducts(filtered);
     } catch (err: any) {
-      toast.error(err.message || "ค้นหาไม่สำเร็จ");
-    } finally {
-      setLoading(false);
+      toast.error(err.message || "ลบสินค้าไม่สำเร็จ");
     }
   };
 
-  const pageSizeOptions = [
-    { label: "5 รายการ", value: 5 },
-    { label: "10 รายการ", value: 10 },
-    { label: "20 รายการ", value: 20 },
-  ];
   return (
     <div className="min-h-screen bg-[#f5f5f5] pb-20">
-      <main className="max-w-7xl mx-auto mt-6 px-4 flex gap-6">
-        {/* Sidebar SearchBar */}
-        <div className="hidden md:block flex-shrink-0">
-          <SearchBar
-            value={searchKeyword}
-            onChange={setSearchKeyword}
-            onSearch={handleSearch}
-            placeholder="ค้นหาสินค้าของคุณ..."
-            userRole={"seller"}
-          />
-        </div>
+      <main className="max-w-7xl mx-auto mt-6 px-4">
+        <h1 className="text-lg font-medium text-gray-600 mb-4">
+          จัดการสินค้าของคุณ
+        </h1>
 
-        {/* Content */}
-        <div className="flex-1">
-          <h1 className="text-lg font-medium text-gray-600 mb-4">
-            จัดการสินค้าของคุณ / ดูออเดอร์
-          </h1>
-          <div className="flex justify-end mb-4">
-            <button
-              onClick={() => navigate("/sellerAdd")}
-              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-            >
-              + เพิ่มสินค้าใหม่
-            </button>
-          </div>
-          <div className="overflow-auto rounded-md border border-gray-300 bg-white">
-            <table className="min-w-full text-sm text-gray-700">
-              <thead className="bg-gray-100 text-left font-semibold">
-                <tr>
-                  <th className="px-4 py-3">#</th>
-                  <th className="px-4 py-3">รูปภาพ</th>
-                  <th className="px-4 py-3">สินค้า</th>
-                  <th className="px-4 py-3">วันที่วางจำหน่าย</th>
-                  <th className="px-4 py-3">ประเภทสินค้า</th>
-                  <th className="px-4 py-3">ราคา</th>
-                  <th className="px-4 py-3">จำนวนสินค้า</th>
-                  <th className="px-4 py-3">แก้ไขสินค้า</th>
-                  <th className="px-4 py-3">ลบสินค้า</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.map((p, index) => {
-                  const key = p.id ?? `${p.productName}-${index}`;
-                  return (
-                    <tr
-                      key={key}
-                      className={`border-t ${
-                        p.isActive ? "" : "bg-gray-100 text-gray-400"
-                      }`}
-                    >
-                      <td className="px-4 py-2">{p.index}</td>
-                      <td className="px-4 py-2">
-                        {p.filePath ? (
-                          <img
-                            src={
-                              p.filePath.includes("dropbox.com")
-                                ? p.filePath.replace("?dl=0", "?raw=1")
-                                : p.filePath
-                            }
-                            alt={p.productName}
-                            className="w-20 h-20 object-cover rounded"
-                          />
-                        ) : (
-                          <div className="w-20 h-20 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded">
-                            No Image!
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-2">
-                        <span>{p.productName}</span>
-                      </td>
-                      <td className="px-4 py-2">
-                        {new Date(p.createDate).toLocaleDateString()}
-                      </td>
-                      <td className="px-4 py-2">
-                        {getProductTypeName(p.productType ?? 0)}
-                      </td>
-                      <td>
-                        {Number(p.productPrice).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}{" "}
-                        บาท
-                      </td>
-                      <td className="px-4 py-2">{p.quantity}</td>
-                      <td className="px-4 py-2">
-                        <button
-                          onClick={() =>
-                            p.id
-                              ? navigate(`/sellerManage/${p.id}`)
-                              : alert("ไม่พบรหัสสินค้านี้")
-                          }
-                          className="text-indigo-600 hover:underline"
-                        >
-                          แก้ไข
-                        </button>
-                      </td>
-                      <td className="px-4 py-2">
-                        <button
-                          onClick={() => p.id && handleDelete(p.id)}
-                          className="text-red-500 hover:underline"
-                        >
-                          ลบ
-                        </button>
-                      </td>
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Sidebar Filter */}
+          <aside className="lg:w-80">
+            <FilterSearch
+              keyword={searchKeyword}
+              setKeyword={setSearchKeyword}
+              selectedTypes={selectedTypes}
+              setSelectedTypes={setSelectedTypes}
+              minPrice={minPrice}
+              setMinPrice={setMinPrice}
+              maxPrice={maxPrice}
+              setMaxPrice={setMaxPrice}
+              isActive={isActive}
+              setIsActive={setIsActive}
+              releaseDateFrom={releaseDateFrom}
+              setReleaseDateFrom={setReleaseDateFrom}
+              releaseDateTo={releaseDateTo}
+              setReleaseDateTo={setReleaseDateTo}
+              onSearch={() => {
+                setCurrentPage(1);
+                loadProducts(searchKeyword, 1, pageSize, {
+                  productTypes:
+                    selectedTypes.length > 0 ? selectedTypes : undefined,
+                  minPrice: minPrice === null ? undefined : minPrice,
+                  maxPrice: maxPrice === null ? undefined : maxPrice,
+                  releaseDateFrom: releaseDateFrom || undefined,
+                  releaseDateTo: releaseDateTo || undefined,
+                  isActive: isActive === null ? undefined : isActive,
+                });
+              }}
+              onReset={() => {
+                setSearchKeyword("");
+                setSelectedTypes([]);
+                setMinPrice(null);
+                setMaxPrice(null);
+                setIsActive(null);
+                setReleaseDateFrom("");
+                setReleaseDateTo("");
+                setCurrentPage(1);
+                loadProducts("", 1, pageSize, {
+                  productTypes: undefined,
+                  minPrice: undefined,
+                  maxPrice: undefined,
+                  releaseDateFrom: undefined,
+                  releaseDateTo: undefined,
+                  isActive: undefined,
+                });
+              }}
+            />
+          </aside>
+
+          {/* Products Table + Pagination */}
+          <section className="flex-1 flex flex-col overflow-auto rounded-md border border-gray-300 bg-white">
+            {loading && (
+              <p className="text-center py-6 text-gray-500">กำลังโหลดข้อมูล...</p>
+            )}
+            {error && (
+              <p className="text-center py-6 text-red-600 font-semibold">{error}</p>
+            )}
+
+            {!loading && products.length === 0 && (
+              <p className="text-center py-20 text-gray-400 italic">
+                ไม่พบสินค้า
+              </p>
+            )}
+
+            {products.length > 0 && (
+              <>
+                <table className="min-w-full text-sm text-gray-700">
+                  <thead className="bg-gray-100 text-left font-semibold sticky top-0 z-10">
+                    <tr>
+                      <th className="px-4 py-3 whitespace-nowrap">#</th>
+                      <th className="px-4 py-3 whitespace-nowrap">รูปภาพ</th>
+                      <th className="px-4 py-3 whitespace-nowrap">สินค้า</th>
+                      <th className="px-4 py-3 whitespace-nowrap">วันที่วางจำหน่าย</th>
+                      <th className="px-4 py-3 whitespace-nowrap">ประเภทสินค้า</th>
+                      <th className="px-4 py-3 whitespace-nowrap">ราคา</th>
+                      <th className="px-4 py-3 whitespace-nowrap">จำนวนสินค้า</th>
+                      <th className="px-4 py-3 whitespace-nowrap">แก้ไขสินค้า</th>
+                      <th className="px-4 py-3 whitespace-nowrap">ลบสินค้า</th>
                     </tr>
-                  );
-                })}
-                {products.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={9}
-                      className="text-center py-6 text-gray-400 italic"
-                    >
-                      ไม่พบสินค้า
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          {/* Pagination Controls */}
-          <div className="flex justify-between items-center mt-6">
-            <div>
-              <label className="mr-2">แสดง:</label>
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setCurrentPage(1); // รีหน้าเมื่อเปลี่ยน pageSize
-                }}
-                className="border rounded px-2 py-1"
-              >
-                {pageSizeOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+                  </thead>
+                  <tbody>
+                    {products.map((p, index) => {
+                      const key = p.id ?? `${p.productName}-${index}`;
+                      return (
+                        <tr
+                          key={key}
+                          className={`border-t ${
+                            p.isActive ? "" : "bg-gray-100 text-gray-400"
+                          }`}
+                        >
+                          <td className="px-4 py-2 text-center">
+                            {(currentPage - 1) * pageSize + index + 1}
+                          </td>
+                          <td className="px-4 py-2">
+                            {p.filePath ? (
+                              <img
+                                src={
+                                  p.filePath.includes("dropbox.com")
+                                    ? p.filePath.replace("?dl=0", "?raw=1")
+                                    : p.filePath
+                                }
+                                alt={p.productName}
+                                className="w-20 h-20 object-cover rounded"
+                              />
+                            ) : (
+                              <div className="w-20 h-20 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded">
+                                No Image!
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-4 py-2">{p.productName}</td>
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            {p.createDate
+                              ? new Date(p.createDate).toLocaleDateString()
+                              : "-"}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            {getProductTypeName(p.productType ?? 0)}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            {Number(p.productPrice).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}{" "}
+                            บาท
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap">{p.quantity}</td>
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            <button
+                              onClick={() =>
+                                p.id
+                                  ? navigate(`/sellerManage/${p.id}`)
+                                  : alert("ไม่พบรหัสสินค้า")
+                              }
+                              className="text-indigo-600 hover:underline"
+                            >
+                              แก้ไข
+                            </button>
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            <button
+                              onClick={() => p.id && handleDelete(p.id)}
+                              className="text-red-500 hover:underline"
+                            >
+                              ลบ
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
 
-            <div className="flex gap-2">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1 border rounded disabled:opacity-50"
-              >
-                ก่อนหน้า
-              </button>
-              <span className="px-2 py-1">
-                หน้า {currentPage} จาก {totalPages}
-              </span>
-              <button
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(p + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
-                className="px-3 py-1 border rounded disabled:opacity-50"
-              >
-                ถัดไป
-              </button>
-            </div>
-          </div>
+                {/* Pagination Controls */}
+                <div className="flex flex-col sm:flex-row justify-between items-center mt-4 px-4 py-3 border-t border-gray-200 bg-gray-50 rounded-b-md gap-3">
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="pageSize" className="whitespace-nowrap">
+                      แสดง:
+                    </label>
+                    <select
+                      id="pageSize"
+                      value={pageSize}
+                      onChange={(e) => {
+                        setPageSize(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="border border-gray-300 rounded px-3 py-1"
+                    >
+                      {[5, 10, 20].map((size) => (
+                        <option key={size} value={size}>
+                          {size} รายการ
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="px-4 py-1 border rounded disabled:opacity-50"
+                    >
+                      ก่อนหน้า
+                    </button>
+                    <span>
+                      หน้า {currentPage} จาก {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="px-4 py-1 border rounded disabled:opacity-50"
+                    >
+                      ถัดไป
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </section>
         </div>
       </main>
     </div>

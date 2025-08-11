@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { deleteProductFile, updateProduct } from "@/api/Seller";
 import { ProductRequest, ProductResponse } from "@/types/product";
 import { getAuthHeadersJSON } from "@/api/Token";
+import { productTypes } from "@/constants/productTypes";
 
 const SellerManage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,13 +19,6 @@ const SellerManage: React.FC = () => {
     FilePath: null,
   });
 
-  const productTypes = [
-    { label: "อาหาร", value: 1 },
-    { label: "เครื่องใช้", value: 2 },
-    { label: "เครื่องดื่ม", value: 3 },
-    { label: "ของเล่น", value: 4 },
-    { label: "อื่นๆ", value: 5 },
-  ];
   const [message, setMessage] = useState("");
   const [loading] = useState(false);
   const [saving, setSaving] = useState(false);

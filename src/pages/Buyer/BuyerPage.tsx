@@ -4,7 +4,7 @@ import { ProductResponse } from "@/types/product";
 import { useCart } from "@/components/layouts/CartContext";
 import CartIcon from "@/components/layouts/CartIcon";
 import { toast } from "react-toastify";
-import { SearchBar, SearchBarData } from "@/components/layouts/SearchBar";
+import FilterSearch from "@/components/layouts/SearchBar";
 
 const BuyerPage: React.FC = () => {
   const [products, setProducts] = useState<ProductResponse[]>([]);
@@ -12,26 +12,56 @@ const BuyerPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [addingToCartId, setAddingToCartId] = useState<string | null>(null);
-  const [quantityToAdd, setQuantityToAdd] = useState<{ [id: string]: number }>(
-    {}
-  );
+  const [quantityToAdd, setQuantityToAdd] = useState<{ [id: string]: number }>({});
 
   const { addToCart, totalCount } = useCart();
-
-  const [searchKeyword, setSearchKeyword] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [selectedTypes, setSelectedTypes] = useState<number[]>([]);
+  const [minPrice, setMinPrice] = useState<number | null>(null);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
+  const [releaseDateFrom, setReleaseDateFrom] = useState<string>("");
+  const [releaseDateTo, setReleaseDateTo] = useState<string>("");
+
+  const loadProducts = (
+    keywordParam = searchKeyword,
+    pageParam = currentPage,
+    pageSizeParam = pageSize,
+    filtersParam = {
+      productTypes: selectedTypes.length > 0 ? selectedTypes : undefined,
+      minPrice: minPrice === null ? undefined : minPrice,
+      maxPrice: maxPrice === null ? undefined : maxPrice,
+      releaseDateFrom: releaseDateFrom || undefined,
+      releaseDateTo: releaseDateTo || undefined,
+    }
+  ) => {
+    setLoading(true);
+
+    getProducts(keywordParam, pageParam, pageSizeParam, filtersParam)
+      .then((data) => {
+        setProducts(data.items ?? []);
+        setTotalPages(data.totalPages ?? 0);
+        setError("");
+      })
+      .catch((err) => setError(err.message || "เกิดข้อผิดพลาด"))
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => {
-    getProducts(searchKeyword, currentPage, pageSize)
-      .then((data) => {
-        setProducts(data.items); // หรือ data.products แล้วแต่ backend
-        setTotalPages(data.totalPages);
-      })
-      .catch((err) => toast.error(err.message));
-  }, [searchKeyword, currentPage, pageSize]);
+    loadProducts();
+  }, [
+    searchKeyword,
+    selectedTypes,
+    minPrice,
+    maxPrice,
+    releaseDateFrom,
+    releaseDateTo,
+    currentPage,
+    pageSize,
+  ]);
 
   const getProductTypeName = (type: number) => {
     switch (type) {
@@ -66,7 +96,6 @@ const BuyerPage: React.FC = () => {
       toast.success("เพิ่มสินค้าในตะกร้าเรียบร้อย");
       setQuantityToAdd((prev) => ({ ...prev, [productId]: 1 }));
 
-      // ✅ โหลดข้อมูลใหม่ โดยยังอยู่ใน context ของหน้าเดิม
       setLoading(true);
       const data = await getProducts(searchKeyword, currentPage, pageSize);
       setProducts(data.items);
@@ -81,60 +110,6 @@ const BuyerPage: React.FC = () => {
     }
   };
 
-  const handleSearch = async (filters: SearchBarData) => {
-    try {
-      setLoading(true);
-      const all = await getProducts();
-
-      const filtered = all.items.filter((p: any) => {
-        const kw = filters.keyword?.toLowerCase() || "";
-        const matchKeyword =
-          !kw ||
-          p.productName.toLowerCase().includes(kw) ||
-          (p.createdByName?.toLowerCase().includes(kw) ?? false);
-
-        const matchMin =
-          filters.priceMin == null || p.productPrice >= filters.priceMin;
-        const matchMax =
-          filters.priceMax == null || p.productPrice <= filters.priceMax;
-        const matchCategory =
-          !filters.category ||
-          filters.category.length === 0 ||
-          (p.productType !== undefined &&
-            filters.category.includes(p.productType));
-
-        const matchDate =
-          (!filters.releaseDateFrom ||
-            new Date(p.createDate) >= new Date(filters.releaseDateFrom)) &&
-          (!filters.releaseDateTo ||
-            new Date(p.createDate) <= new Date(filters.releaseDateTo));
-
-        const matchStatus =
-          filters.isActive === undefined || p.isActive === filters.isActive;
-        const matchSeller =
-          !filters.sellerName ||
-          p.createdByName
-            .toLowerCase()
-            .includes(filters.sellerName.toLowerCase());
-        return (
-          matchKeyword &&
-          matchMin &&
-          matchMax &&
-          matchCategory &&
-          matchDate &&
-          matchStatus &&
-          matchSeller
-        );
-      });
-
-      setProducts(filtered);
-    } catch (err: any) {
-      toast.error(err.message || "ค้นหาไม่สำเร็จ");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const pageSizeOptions = [
     { label: "5 รายการ", value: 5 },
     { label: "10 รายการ", value: 10 },
@@ -146,6 +121,7 @@ const BuyerPage: React.FC = () => {
       {/* Sticky Top Bar */}
       <div className="sticky top-0 z-20 bg-white shadow-md border-b border-orange-200">
         <div className="max-w-7xl mx-auto flex items-center px-4 py-3 gap-4">
+          {/* ชื่อร้าน/โลโก้ สามารถเปิดใช้ได้ถ้าต้องการ */}
           {/* <h2 className="text-2xl font-bold text-orange-500 tracking-wide">
             อำนวย Shop
           </h2> */}
@@ -156,35 +132,70 @@ const BuyerPage: React.FC = () => {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto mt-6 px-4 flex gap-6">
-        {/* Sidebar SearchBar */}
-        <div className="hidden md:block flex-shrink-0">
-          <SearchBar
-            value={searchKeyword}
-            onChange={setSearchKeyword}
-            onSearch={handleSearch}
-            placeholder="ค้นหาสินค้าและชื่อของคนขาย..."
-          />
-        </div>
+      <main className="max-w-7xl mx-auto mt-6 px-4">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Filter Search Sidebar */}
+          <aside className="lg:w-80">
+            <FilterSearch
+              keyword={searchKeyword}
+              setKeyword={setSearchKeyword}
+              selectedTypes={selectedTypes}
+              setSelectedTypes={setSelectedTypes}
+              minPrice={minPrice}
+              setMinPrice={setMinPrice}
+              maxPrice={maxPrice}
+              setMaxPrice={setMaxPrice}
+              releaseDateFrom={releaseDateFrom}
+              setReleaseDateFrom={setReleaseDateFrom}
+              releaseDateTo={releaseDateTo}
+              setReleaseDateTo={setReleaseDateTo}
+              onSearch={() => {
+                setCurrentPage(1);
+                loadProducts(searchKeyword, 1, pageSize, {
+                  productTypes:
+                    selectedTypes.length > 0 ? selectedTypes : undefined,
+                  minPrice: minPrice === null ? undefined : minPrice,
+                  maxPrice: maxPrice === null ? undefined : maxPrice,
+                  releaseDateFrom: releaseDateFrom || undefined,
+                  releaseDateTo: releaseDateTo || undefined,
+                });
+              }}
+              onReset={() => {
+                setSearchKeyword("");
+                setSelectedTypes([]);
+                setMinPrice(null);
+                setMaxPrice(null);
+                setReleaseDateFrom("");
+                setReleaseDateTo("");
+                setCurrentPage(1);
+                loadProducts("", 1, pageSize, {
+                  productTypes: undefined,
+                  minPrice: undefined,
+                  maxPrice: undefined,
+                  releaseDateFrom: undefined,
+                  releaseDateTo: undefined,
+                });
+              }}
+            />
+          </aside>
 
-        {/* Content */}
-        <div className="flex-1">
-          {loading && (
-            <p className="text-gray-500 text-center py-20 text-lg">
-              กำลังโหลดข้อมูล...
-            </p>
-          )}
-          {error && (
-            <p className="text-red-500 text-center py-20 text-lg">{error}</p>
-          )}
-          {message && (
-            <p className="text-blue-600 text-center py-20 text-lg">{message}</p>
-          )}
+          {/* Products Grid */}
+          <section className="flex-1">
+            {loading && (
+              <p className="text-gray-500 text-center py-20 text-lg">
+                กำลังโหลดข้อมูล...
+              </p>
+            )}
+            {error && (
+              <p className="text-red-500 text-center py-20 text-lg">{error}</p>
+            )}
+            {message && (
+              <p className="text-blue-600 text-center py-20 text-lg">{message}</p>
+            )}
 
-          {/* Grid แสดงสินค้า */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {products.length > 0
-              ? products.map((p) => (
+            {products.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                {products.map((p) => (
                   <div
                     key={p.id}
                     className="bg-white border border-orange-100 rounded-xl shadow-sm hover:shadow-lg transition-shadow flex flex-col h-full cursor-pointer group"
@@ -226,9 +237,7 @@ const BuyerPage: React.FC = () => {
                       </p>
                       <p className="text-xs text-gray-500 mb-2">
                         คงเหลือ:{" "}
-                        {p.quantity > 0
-                          ? p.quantity.toLocaleString()
-                          : "หมดสต็อก"}{" "}
+                        {p.quantity > 0 ? p.quantity.toLocaleString() : "หมดสต็อก"}{" "}
                         ชิ้น
                       </p>
                       <div className="mt-auto flex flex-col gap-2">
@@ -257,9 +266,7 @@ const BuyerPage: React.FC = () => {
                               onClick={() =>
                                 handleQuantityChange(p.id, 1, p.quantity)
                               }
-                              disabled={
-                                (quantityToAdd[p.id] ?? 1) >= p.quantity
-                              }
+                              disabled={(quantityToAdd[p.id] ?? 1) >= p.quantity}
                               type="button"
                             >
                               +
@@ -275,62 +282,65 @@ const BuyerPage: React.FC = () => {
                           }}
                           className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed shadow"
                         >
-                          {addingToCartId === p.id
-                            ? "กำลังเพิ่ม..."
-                            : "ใส่ตะกร้า"}
+                          {addingToCartId === p.id ? "กำลังเพิ่ม..." : "ใส่ตะกร้า"}
                         </button>
                       </div>
                     </div>
                   </div>
-                ))
-              : !loading && (
-                  <p className="col-span-full text-center text-gray-400 text-lg py-20">
-                    ไม่พบสินค้า
-                  </p>
-                )}
-          </div>
-          {/* Pagination Controls */}
-          <div className="flex justify-between items-center mt-6">
-            <div>
-              <label className="mr-2">แสดง:</label>
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setCurrentPage(1); // รีหน้าเมื่อเปลี่ยน pageSize
-                }}
-                className="border rounded px-2 py-1"
-              >
-                {pageSizeOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
                 ))}
-              </select>
-            </div>
+              </div>
+            ) : (
+              !loading && (
+                <p className="text-center text-gray-400 text-lg py-20">
+                  ไม่พบสินค้า
+                </p>
+              )
+            )}
 
-            <div className="flex gap-2">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1 border rounded disabled:opacity-50"
-              >
-                ก่อนหน้า
-              </button>
-              <span className="px-2 py-1">
-                หน้า {currentPage} จาก {totalPages}
-              </span>
-              <button
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(p + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
-                className="px-3 py-1 border rounded disabled:opacity-50"
-              >
-                ถัดไป
-              </button>
+            {/* Pagination Controls */}
+            <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-3">
+              <div className="flex items-center gap-2">
+                <label htmlFor="pageSize" className="whitespace-nowrap">
+                  แสดง:
+                </label>
+                <select
+                  id="pageSize"
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="border border-gray-300 rounded px-3 py-1"
+                >
+                  {pageSizeOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-1 border rounded disabled:opacity-50"
+                >
+                  ก่อนหน้า
+                </button>
+                <span>
+                  หน้า {currentPage} จาก {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-1 border rounded disabled:opacity-50"
+                >
+                  ถัดไป
+                </button>
+              </div>
             </div>
-          </div>
+          </section>
         </div>
       </main>
     </div>

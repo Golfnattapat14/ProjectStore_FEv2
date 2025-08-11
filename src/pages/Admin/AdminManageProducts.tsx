@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {  updateProduct,deleteProductFile } from "@/api/Admin";
 import { ProductRequest,ProductResponse} from "@/types/product";
 import { getAuthHeadersJSON } from "@/api/Token";
+import { productTypes } from "@/constants/productTypes";
 
 
 const AdminManageProducts: React.FC = () => {
@@ -139,14 +140,6 @@ const handleChange = (
    }
  };
 
-
- const productTypes = [
-    { label: "อาหาร", value: 1 },
-    { label: "เครื่องใช้", value: 2 },
-    { label: "เครื่องดื่ม", value: 3 },
-    { label: "ของเล่น", value: 4 },
-    { label: "อื่นๆ", value: 5 },
-  ];
 
   if (loading) return <p className="text-center mt-6 text-gray-700">กำลังโหลดข้อมูลสินค้า...</p>;
 

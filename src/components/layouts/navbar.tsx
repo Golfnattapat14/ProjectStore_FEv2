@@ -65,7 +65,6 @@ export const NavbarComponent = () => {
 
   const adminLinks: NavigationItem[] = [
     { name: "จัดการสินค้า", path: "/admin" },
-    { name: "สินค้าของฉัน", path: "/adminProducts" },  
     { name: "จัดการผู้ใช้", path: "/adminManage" },
     { name: "เพิ่มสินค้า", path: "/adminAdd" },
   ];
