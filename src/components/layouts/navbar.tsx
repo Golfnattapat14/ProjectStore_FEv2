@@ -69,7 +69,16 @@ export const NavbarComponent = () => {
     { name: "เพิ่มสินค้า", path: "/adminAdd" },
   ];
 
+  const sellerLinks: NavigationItem[] = [
+    { name: "จัดการสินค้า", path: "/seller" },
+    { name: "เพิ่มสินค้า", path: "/sellerAdd" },
+  ];
+  
   const roleLinks = role === "buyer" ? buyerLinks : role === "admin" ? adminLinks : [];
+  if (role === "seller") {
+    roleLinks.push(...sellerLinks);
+  }
+
 
   return (
     <header className="bg-white border-b-2 border-gray-200 shadow sticky top-0 z-50">

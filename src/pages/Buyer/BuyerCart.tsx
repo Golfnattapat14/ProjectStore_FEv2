@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { UserCart } from "@/types/Cart";
 import { getCartItems, removeCartItem, updateCartItem } from "@/api/Buyer";
 import { toast } from "react-toastify";
+import { getProductTypeName } from "@/constants/productTypes";
 
 const BuyerCart: React.FC = () => {
   const [cart, setCart] = useState<UserCart[]>([]);
@@ -9,21 +10,6 @@ const BuyerCart: React.FC = () => {
   const [error, setError] = useState("");
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-
-  const getProductTypeName = (type: number) => {
-    switch (type) {
-      case 1:
-        return "อาหาร";
-      case 2:
-        return "เครื่องใช้";
-      case 3:
-        return "เครื่องดื่ม";
-      case 4:
-        return "ของเล่น";
-      default:
-        return "อื่น ๆ";
-    }
-  };
 
   const fetchCart = async () => {
     try {
