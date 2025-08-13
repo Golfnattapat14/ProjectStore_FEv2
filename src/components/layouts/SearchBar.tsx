@@ -1,5 +1,5 @@
 import { productTypes } from "@/constants/productTypes";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import "rc-slider/assets/index.css";
 import { Range } from "rc-slider";
 
@@ -40,10 +40,72 @@ export default function FilterSearch({
   onSearch,
   onReset,
 }: FilterSearchProps) {
+  // local state สำรองค่า
+  const [localKeyword, setLocalKeyword] = useState(keyword);
+  const [localSelectedTypes, setLocalSelectedTypes] = useState<number[]>(selectedTypes);
+  const [localMinPrice, setLocalMinPrice] = useState(minPrice ?? 0);
+  const [localMaxPrice, setLocalMaxPrice] = useState(maxPrice ?? 5000);
+  const [localIsActive, setLocalIsActive] = useState<boolean | null>(isActive ?? null);
+  const [localReleaseDateFrom, setLocalReleaseDateFrom] = useState(releaseDateFrom ?? "");
+  const [localReleaseDateTo, setLocalReleaseDateTo] = useState(releaseDateTo ?? "");
+
+  // sync local state เมื่อ props เปลี่ยน
+  useEffect(() => {
+    setLocalKeyword(keyword);
+  }, [keyword]);
+  useEffect(() => {
+    setLocalSelectedTypes(selectedTypes);
+  }, [selectedTypes]);
+  useEffect(() => {
+    setLocalMinPrice(minPrice ?? 0);
+  }, [minPrice]);
+  useEffect(() => {
+    setLocalMaxPrice(maxPrice ?? 5000);
+  }, [maxPrice]);
+  useEffect(() => {
+    setLocalIsActive(isActive ?? null);
+  }, [isActive]);
+  useEffect(() => {
+    setLocalReleaseDateFrom(releaseDateFrom ?? "");
+  }, [releaseDateFrom]);
+  useEffect(() => {
+    setLocalReleaseDateTo(releaseDateTo ?? "");
+  }, [releaseDateTo]);
+
+  // toggle local selected types
   const handleTypeToggle = (value: number) => {
-    setSelectedTypes((prev) =>
+    setLocalSelectedTypes((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
+  };
+
+  // กดค้นหา -> ค่อยอัปเดต parent state และเรียก onSearch
+  const handleSearchClick = () => {
+    if (localReleaseDateFrom && localReleaseDateTo && localReleaseDateTo < localReleaseDateFrom) {
+      alert("วันที่ 'ถึงวันที่' ต้องมากกว่าหรือเท่ากับ 'วันที่เริ่มวางขาย'");
+      return;
+    }
+    setKeyword(localKeyword);
+    setSelectedTypes(localSelectedTypes);
+    setMinPrice && setMinPrice(localMinPrice);
+    setMaxPrice && setMaxPrice(localMaxPrice);
+    setIsActive && setIsActive(localIsActive);
+    setReleaseDateFrom && setReleaseDateFrom(localReleaseDateFrom);
+    setReleaseDateTo && setReleaseDateTo(localReleaseDateTo);
+
+    onSearch();
+  };
+
+  // กดรีเซ็ต
+  const handleResetClick = () => {
+    setLocalKeyword("");
+    setLocalSelectedTypes([]);
+    setLocalMinPrice(0);
+    setLocalMaxPrice(5000);
+    setLocalIsActive(null);
+    setLocalReleaseDateFrom("");
+    setLocalReleaseDateTo("");
+    if (onReset) onReset();
   };
 
   return (
@@ -55,8 +117,8 @@ export default function FilterSearch({
         </label>
         <input
           type="text"
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
+          value={localKeyword}
+          onChange={(e) => setLocalKeyword(e.target.value)}
           placeholder="พิมพ์คำค้น..."
           className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
@@ -73,7 +135,7 @@ export default function FilterSearch({
             >
               <input
                 type="checkbox"
-                checked={selectedTypes.includes(type.value)}
+                checked={localSelectedTypes.includes(type.value)}
                 onChange={() => handleTypeToggle(type.value)}
                 className="form-checkbox h-5 w-5 text-blue-600"
               />
@@ -91,10 +153,10 @@ export default function FilterSearch({
             min={0}
             max={5000}
             step={100}
-            value={[minPrice ?? 0, maxPrice ?? 5000]}
+            value={[localMinPrice, localMaxPrice]}
             onChange={([min, max]: number[]) => {
-              setMinPrice(min);
-              setMaxPrice(max);
+              setLocalMinPrice(min);
+              setLocalMaxPrice(max);
             }}
             allowCross={false}
             trackStyle={[{ backgroundColor: "#2563eb", height: 6, borderRadius: 9999 }]}
@@ -123,8 +185,8 @@ export default function FilterSearch({
             railStyle={{ backgroundColor: "#e5e7eb", height: 6, borderRadius: 9999 }}
           />
           <div className="flex justify-between mt-2 text-sm text-gray-600">
-            <span>฿{minPrice ?? 0}</span>
-            <span>฿{maxPrice ?? 5000}</span>
+            <span>฿{localMinPrice}</span>
+            <span>฿{localMaxPrice}</span>
           </div>
         </div>
       )}
@@ -136,8 +198,16 @@ export default function FilterSearch({
             <label className="block mb-1 font-semibold text-gray-700">วันที่เริ่มวางขาย</label>
             <input
               type="date"
-              value={releaseDateFrom ?? ""}
-              onChange={(e) => setReleaseDateFrom(e.target.value)}
+              value={localReleaseDateFrom}
+              max={localReleaseDateTo || undefined}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (localReleaseDateTo && val > localReleaseDateTo) {
+                  alert("วันที่เริ่มวางขายต้องไม่มากกว่าถึงวันที่");
+                  return;
+                }
+                setLocalReleaseDateFrom(val);
+              }}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -145,8 +215,16 @@ export default function FilterSearch({
             <label className="block mb-1 font-semibold text-gray-700">ถึงวันที่</label>
             <input
               type="date"
-              value={releaseDateTo ?? ""}
-              onChange={(e) => setReleaseDateTo(e.target.value)}
+              value={localReleaseDateTo}
+              min={localReleaseDateFrom || undefined}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (localReleaseDateFrom && val < localReleaseDateFrom) {
+                  alert("ถึงวันที่ต้องไม่น้อยกว่าวันที่เริ่มวางขาย");
+                  return;
+                }
+                setLocalReleaseDateTo(val);
+              }}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -158,12 +236,11 @@ export default function FilterSearch({
         <div>
           <label className="block mb-1 font-semibold text-gray-700">สถานะสินค้า</label>
           <select
-            value={isActive === null ? "" : isActive ? "true" : "false"}
-            onChange={(e) =>
-              setIsActive(
-                e.target.value === "" ? null : e.target.value === "true"
-              )
-            }
+            value={localIsActive === null ? "" : localIsActive ? "true" : "false"}
+            onChange={(e) => {
+              const val = e.target.value;
+              setLocalIsActive(val === "" ? null : val === "true");
+            }}
             className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">ทั้งหมด</option>
@@ -177,14 +254,14 @@ export default function FilterSearch({
       <div className="flex justify-end gap-3 pt-2">
         {onReset && (
           <button
-            onClick={onReset}
+            onClick={handleResetClick}
             className="bg-gray-300 hover:bg-gray-400 text-black px-5 py-2 rounded-md transition"
           >
             รีเซ็ต
           </button>
         )}
         <button
-          onClick={onSearch}
+          onClick={handleSearchClick}
           className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md transition"
         >
           ค้นหา

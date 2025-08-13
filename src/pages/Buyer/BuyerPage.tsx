@@ -5,14 +5,16 @@ import { useCart } from "@/components/layouts/CartContext";
 import CartIcon from "@/components/layouts/CartIcon";
 import { toast } from "react-toastify";
 import FilterSearch from "@/components/layouts/SearchBar";
-
+import Pagination from "@/components/layouts/Pagination";
 const BuyerPage: React.FC = () => {
   const [products, setProducts] = useState<ProductResponse[]>([]);
   const [message] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [addingToCartId, setAddingToCartId] = useState<string | null>(null);
-  const [quantityToAdd, setQuantityToAdd] = useState<{ [id: string]: number }>({});
+  const [quantityToAdd, setQuantityToAdd] = useState<{ [id: string]: number }>(
+    {}
+  );
 
   const { addToCart, totalCount } = useCart();
 
@@ -109,13 +111,6 @@ const BuyerPage: React.FC = () => {
       setAddingToCartId(null);
     }
   };
-
-  const pageSizeOptions = [
-    { label: "5 รายการ", value: 5 },
-    { label: "10 รายการ", value: 10 },
-    { label: "20 รายการ", value: 20 },
-  ];
-
   return (
     <div className="min-h-screen bg-[#f5f5f5] pb-20">
       {/* Sticky Top Bar */}
@@ -190,7 +185,9 @@ const BuyerPage: React.FC = () => {
               <p className="text-red-500 text-center py-20 text-lg">{error}</p>
             )}
             {message && (
-              <p className="text-blue-600 text-center py-20 text-lg">{message}</p>
+              <p className="text-blue-600 text-center py-20 text-lg">
+                {message}
+              </p>
             )}
 
             {products.length > 0 ? (
@@ -237,7 +234,9 @@ const BuyerPage: React.FC = () => {
                       </p>
                       <p className="text-xs text-gray-500 mb-2">
                         คงเหลือ:{" "}
-                        {p.quantity > 0 ? p.quantity.toLocaleString() : "หมดสต็อก"}{" "}
+                        {p.quantity > 0
+                          ? p.quantity.toLocaleString()
+                          : "หมดสต็อก"}{" "}
                         ชิ้น
                       </p>
                       <div className="mt-auto flex flex-col gap-2">
@@ -266,7 +265,9 @@ const BuyerPage: React.FC = () => {
                               onClick={() =>
                                 handleQuantityChange(p.id, 1, p.quantity)
                               }
-                              disabled={(quantityToAdd[p.id] ?? 1) >= p.quantity}
+                              disabled={
+                                (quantityToAdd[p.id] ?? 1) >= p.quantity
+                              }
                               type="button"
                             >
                               +
@@ -282,7 +283,9 @@ const BuyerPage: React.FC = () => {
                           }}
                           className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed shadow"
                         >
-                          {addingToCartId === p.id ? "กำลังเพิ่ม..." : "ใส่ตะกร้า"}
+                          {addingToCartId === p.id
+                            ? "กำลังเพิ่ม..."
+                            : "ใส่ตะกร้า"}
                         </button>
                       </div>
                     </div>
@@ -296,50 +299,16 @@ const BuyerPage: React.FC = () => {
                 </p>
               )
             )}
-
-            {/* Pagination Controls */}
-            <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-3">
-              <div className="flex items-center gap-2">
-                <label htmlFor="pageSize" className="whitespace-nowrap">
-                  แสดง:
-                </label>
-                <select
-                  id="pageSize"
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                  className="border border-gray-300 rounded px-3 py-1"
-                >
-                  {pageSizeOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="px-4 py-1 border rounded disabled:opacity-50"
-                >
-                  ก่อนหน้า
-                </button>
-                <span>
-                  หน้า {currentPage} จาก {totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="px-4 py-1 border rounded disabled:opacity-50"
-                >
-                  ถัดไป
-                </button>
-              </div>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              onPageChange={(page) => setCurrentPage(page)}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+            />
           </section>
         </div>
       </main>

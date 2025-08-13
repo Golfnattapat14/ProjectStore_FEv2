@@ -5,6 +5,7 @@ import { getProductsSeller, deleteProduct } from "@/api/Seller";
 import { toast } from "react-toastify";
 import { getProductTypeName } from "@/constants/productTypes";
 import FilterSearch from "@/components/layouts/SearchBar";
+import Pagination from "@/components/layouts/Pagination";
 
 const SellerPage: React.FC = () => {
   const [products, setProducts] = useState<ProductResponse[]>([]);
@@ -154,19 +155,39 @@ const SellerPage: React.FC = () => {
               <>
                 <table className="min-w-full text-sm text-gray-700">
                   <thead className="bg-gray-100 text-left font-semibold sticky top-0 z-10">
-  <tr>
-    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">#</th>
-    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">รูปภาพ</th>
-    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">สินค้า</th>
-    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">วันที่วางจำหน่าย</th>
-    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">ประเภทสินค้า</th>
-    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">ราคา</th>
-    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">จำนวนสินค้า</th>
-    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">แก้ไข</th>
-    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">แก้ไขสินค้า</th>
-    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">ลบสินค้า</th>
-  </tr>
-</thead>
+                    <tr>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
+                        #
+                      </th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
+                        รูปภาพ
+                      </th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
+                        สินค้า
+                      </th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
+                        วันที่วางจำหน่าย
+                      </th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
+                        ประเภทสินค้า
+                      </th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
+                        ราคา
+                      </th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
+                        จำนวนสินค้า
+                      </th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
+                        แก้ไข
+                      </th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
+                        แก้ไขสินค้า
+                      </th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
+                        ลบสินค้า
+                      </th>
+                    </tr>
+                  </thead>
 
                   <tbody>
                     {products.map((p, index) => {
@@ -249,52 +270,16 @@ const SellerPage: React.FC = () => {
                     })}
                   </tbody>
                 </table>
-
-                {/* Pagination Controls */}
-                <div className="flex flex-col sm:flex-row justify-between items-center mt-4 px-4 py-3 border-t border-gray-200 bg-gray-50 rounded-b-md gap-3">
-                  <div className="flex items-center gap-2">
-                    <label htmlFor="pageSize" className="whitespace-nowrap">
-                      แสดง:
-                    </label>
-                    <select
-                      id="pageSize"
-                      value={pageSize}
-                      onChange={(e) => {
-                        setPageSize(Number(e.target.value));
-                        setCurrentPage(1);
-                      }}
-                      className="border border-gray-300 rounded px-3 py-1"
-                    >
-                      {[5, 10, 20].map((size) => (
-                        <option key={size} value={size}>
-                          {size} รายการ
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                      disabled={currentPage === 1}
-                      className="px-4 py-1 border rounded disabled:opacity-50"
-                    >
-                      ก่อนหน้า
-                    </button>
-                    <span>
-                      หน้า {currentPage} จาก {totalPages}
-                    </span>
-                    <button
-                      onClick={() =>
-                        setCurrentPage((p) => Math.min(p + 1, totalPages))
-                      }
-                      disabled={currentPage === totalPages}
-                      className="px-4 py-1 border rounded disabled:opacity-50"
-                    >
-                      ถัดไป
-                    </button>
-                  </div>
-                </div>
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  pageSize={pageSize}
+                  onPageChange={setCurrentPage}
+                  onPageSizeChange={(size) => {
+                    setPageSize(size);
+                    setCurrentPage(1);
+                  }}
+                />
               </>
             )}
           </section>

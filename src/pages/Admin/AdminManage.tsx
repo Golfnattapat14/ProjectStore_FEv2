@@ -86,29 +86,44 @@ const AdminManage: React.FC = () => {
               <tr
                 key={u.id}
                 className={`border-b border-gray-200 ${
-                  !u.isDeleted ? "bg-gray-100 opacity-60" : "bg-white"
+                  u.isDeleted ? "bg-gray-100 opacity-60" : "bg-white"
                 }`}
               >
                 <td className="py-2 px-4">{i + 1}</td>
                 <td className="py-2 px-4">{u.username}</td>
                 <td className="py-2 px-4 capitalize">{u.role}</td>
                 <td className="py-2 px-4">
-                  <label className="inline-flex items-center cursor-pointer">
+                  <label
+                    className="inline-flex items-center cursor-pointer select-none"
+                    title={u.isDeleted ? "ปิดใช้งาน" : "เปิดใช้งาน"}
+                  >
                     <input
                       type="checkbox"
+                      role="switch"
+                      aria-checked={!u.isDeleted}
                       className="sr-only peer"
-                      checked={!u.isDeleted}
+                      checked={!u.isDeleted} // checked = เปิดใช้งาน (isDeleted=false)
                       onChange={() => handleToggleActive(u)}
                     />
-                    <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-500 relative transition">
-                      <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition peer-checked:translate-x-5" />
-                    </div>
-                    <span
-                      className={`ml-3 font-semibold ${
-                        !u.isDeleted ? "text-red-600" : "text-green-600"
+                    <div
+                      className={`w-12 h-7 rounded-full relative transition-colors duration-300 ${
+                        !u.isDeleted ? "bg-green-500" : "bg-gray-400"
                       }`}
                     >
-                      {!u.isDeleted ? "Disabled" : "Enabled"}
+                      <div
+                        className={`absolute top-1 w-5 h-5 rounded-full shadow-md transition-transform duration-300 ${
+                          !u.isDeleted
+                            ? "bg-white translate-x-6"
+                            : "bg-white translate-x-1"
+                        }`}
+                      />
+                    </div>
+                    <span
+                      className={`ml-3 font-semibold select-none ${
+                        !u.isDeleted ? "text-green-600" : "text-gray-600"
+                      }`}
+                    >
+                      {!u.isDeleted ? "เปิดใช้งาน" : "ปิดใช้งาน"}
                     </span>
                   </label>
                 </td>
@@ -142,5 +157,4 @@ const AdminManage: React.FC = () => {
     </div>
   );
 };
-
 export default AdminManage;
