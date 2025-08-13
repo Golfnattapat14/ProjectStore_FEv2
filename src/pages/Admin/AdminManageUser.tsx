@@ -145,30 +145,29 @@ const AdminManageUser: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
-  <span className="text-gray-700 font-medium">
-    {!user.isDeleted ? "เปิดการใช้งาน" : "ปิดการใช้งาน"}
-  </span>
+          <span className="text-gray-700 font-medium">
+            {!user.isDeleted ? "เปิดการใช้งาน" : "ปิดการใช้งาน"}
+          </span>
 
-  <button
-    type="button"
-    onClick={() =>
-      setUser((prev) => ({
-        ...prev,
-        isDeleted: !prev.isDeleted,
-      }))
-    }
-    className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-      !user.isDeleted ? "bg-green-500" : "bg-gray-300"
-    }`}
-  >
-    <span
-      className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-        !user.isDeleted ? "translate-x-6" : "translate-x-1"
-      }`}
-    />
-  </button>
-</div>
-
+          <button
+            type="button"
+            onClick={() =>
+              setUser((prev) => ({
+                ...prev,
+                isDeleted: !prev.isDeleted,
+              }))
+            }
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+              !user.isDeleted ? "bg-green-500" : "bg-gray-300"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                !user.isDeleted ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
 
         <div className="flex justify-center gap-4 mt-6">
           <button
