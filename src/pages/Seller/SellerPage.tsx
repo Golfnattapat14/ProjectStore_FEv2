@@ -134,10 +134,14 @@ const SellerPage: React.FC = () => {
           {/* Products Table + Pagination */}
           <section className="flex-1 flex flex-col overflow-auto rounded-md border border-gray-300 bg-white">
             {loading && (
-              <p className="text-center py-6 text-gray-500">กำลังโหลดข้อมูล...</p>
+              <p className="text-center py-6 text-gray-500">
+                กำลังโหลดข้อมูล...
+              </p>
             )}
             {error && (
-              <p className="text-center py-6 text-red-600 font-semibold">{error}</p>
+              <p className="text-center py-6 text-red-600 font-semibold">
+                {error}
+              </p>
             )}
 
             {!loading && products.length === 0 && (
@@ -150,18 +154,20 @@ const SellerPage: React.FC = () => {
               <>
                 <table className="min-w-full text-sm text-gray-700">
                   <thead className="bg-gray-100 text-left font-semibold sticky top-0 z-10">
-                    <tr>
-                      <th className="px-4 py-3 whitespace-nowrap">#</th>
-                      <th className="px-4 py-3 whitespace-nowrap">รูปภาพ</th>
-                      <th className="px-4 py-3 whitespace-nowrap">สินค้า</th>
-                      <th className="px-4 py-3 whitespace-nowrap">วันที่วางจำหน่าย</th>
-                      <th className="px-4 py-3 whitespace-nowrap">ประเภทสินค้า</th>
-                      <th className="px-4 py-3 whitespace-nowrap">ราคา</th>
-                      <th className="px-4 py-3 whitespace-nowrap">จำนวนสินค้า</th>
-                      <th className="px-4 py-3 whitespace-nowrap">แก้ไขสินค้า</th>
-                      <th className="px-4 py-3 whitespace-nowrap">ลบสินค้า</th>
-                    </tr>
-                  </thead>
+  <tr>
+    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">#</th>
+    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">รูปภาพ</th>
+    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">สินค้า</th>
+    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">วันที่วางจำหน่าย</th>
+    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">ประเภทสินค้า</th>
+    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">ราคา</th>
+    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">จำนวนสินค้า</th>
+    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">แก้ไข</th>
+    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">แก้ไขสินค้า</th>
+    <th className="px-4 py-3 whitespace-nowrap text-center align-middle">ลบสินค้า</th>
+  </tr>
+</thead>
+
                   <tbody>
                     {products.map((p, index) => {
                       const key = p.id ?? `${p.productName}-${index}`;
@@ -208,26 +214,35 @@ const SellerPage: React.FC = () => {
                             })}{" "}
                             บาท
                           </td>
-                          <td className="px-4 py-2 whitespace-nowrap">{p.quantity}</td>
                           <td className="px-4 py-2 whitespace-nowrap">
-                            <button
-                              onClick={() =>
-                                p.id
-                                  ? navigate(`/sellerManage/${p.id}`)
-                                  : alert("ไม่พบรหัสสินค้า")
-                              }
-                              className="text-indigo-600 hover:underline"
-                            >
-                              แก้ไข
-                            </button>
+                            {p.quantity}
+                          </td>
+                          <td
+                            className={`px-4 py-2 font-semibold whitespace-nowrap ${
+                              p.isActive ? "text-green-600" : "text-red-600"
+                            }`}
+                          >
+                            {p.isActive ? "เปิดใช้งาน" : "ปิดใช้งาน"}
                           </td>
                           <td className="px-4 py-2 whitespace-nowrap">
-                            <button
-                              onClick={() => p.id && handleDelete(p.id)}
-                              className="text-red-500 hover:underline"
-                            >
-                              ลบ
-                            </button>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() =>
+                                  p.id
+                                    ? navigate(`/sellerManage/${p.id}`)
+                                    : toast.error("ไม่พบรหัสสินค้า")
+                                }
+                                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors"
+                              >
+                                แก้ไข
+                              </button>
+                              <button
+                                onClick={() => p.id && handleDelete(p.id)}
+                                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600 transition-colors"
+                              >
+                                ลบ
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -270,7 +285,9 @@ const SellerPage: React.FC = () => {
                       หน้า {currentPage} จาก {totalPages}
                     </span>
                     <button
-                      onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(p + 1, totalPages))
+                      }
                       disabled={currentPage === totalPages}
                       className="px-4 py-1 border rounded disabled:opacity-50"
                     >

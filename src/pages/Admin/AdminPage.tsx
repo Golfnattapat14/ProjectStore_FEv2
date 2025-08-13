@@ -20,6 +20,7 @@ const Admin: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
+
   const navigate = useNavigate();
 
   const loadProducts = (
@@ -60,7 +61,6 @@ const Admin: React.FC = () => {
     pageSize,
   ]);
 
-
   const handleDelete = async (id: string) => {
     if (!window.confirm("คุณแน่ใจว่าจะลบสินค้านี้?")) return;
     try {
@@ -72,21 +72,16 @@ const Admin: React.FC = () => {
     }
   };
 
-  const pageSizeOptions = [
-    { label: "5 รายการ", value: 5 },
-    { label: "10 รายการ", value: 10 },
-    { label: "20 รายการ", value: 20 },
-  ];
-
   return (
     <div className="min-h-screen bg-[#f5f5f5] pb-20">
       <main className="max-w-7xl mx-auto mt-6 px-4">
-        {/* Header */}
-        <h1 className="text-2xl font-bold mb-6 text-gray-800">จัดการสินค้า</h1>
+        <h1 className="text-lg font-medium text-gray-600 mb-4">
+          จัดการสินค้าทั้งหมด
+        </h1>
 
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left: Filter */}
-          <section className="lg:w-80">
+          {/* Sidebar Filter */}
+          <aside className="lg:w-80">
             <FilterSearch
               keyword={searchKeyword}
               setKeyword={setSearchKeyword}
@@ -133,143 +128,177 @@ const Admin: React.FC = () => {
                 });
               }}
             />
-          </section>
+          </aside>
 
-          {/* Right: Products List */}
-          <section className="flex-1 bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">ข้อมูลสินค้า</h2>
-
+          {/* Products Table + Pagination */}
+          <section className="flex-1 flex flex-col overflow-auto rounded-md border border-gray-300 bg-white">
             {loading && (
-              <p className="text-center text-gray-600 py-10">กำลังโหลดข้อมูลสินค้า...</p>
+              <p className="text-center py-6 text-gray-500">
+                กำลังโหลดข้อมูล...
+              </p>
             )}
             {error && (
-              <p className="text-center text-red-500 py-10">{error}</p>
+              <p className="text-center py-6 text-red-600 font-semibold">
+                {error}
+              </p>
             )}
 
-            {!loading && !error && products.length === 0 && (
-              <p className="text-center text-gray-500 py-10">ไม่พบข้อมูลสินค้า</p>
+            {!loading && products.length === 0 && (
+              <p className="text-center py-20 text-gray-400 italic">
+                ไม่พบสินค้า
+              </p>
             )}
 
             {products.length > 0 && (
-              <div className="overflow-x-auto rounded border border-gray-200">
-                <table className="min-w-full table-auto text-left text-gray-700">
-                  <thead className="bg-gray-100 border-b border-gray-300">
+              <>
+                <table className="min-w-full text-sm text-gray-700">
+                  <thead className="bg-gray-100 text-left font-semibold sticky top-0 z-10">
                     <tr>
-                      <th className="p-3 whitespace-nowrap">#</th>
-                      <th className="p-3 whitespace-nowrap">รูปภาพ</th>
-                      <th className="p-3 whitespace-nowrap">สินค้า</th>
-                      <th className="p-3 whitespace-nowrap">ผู้ขาย</th>
-                      <th className="p-3 whitespace-nowrap">วันที่วางจำหน่าย</th>
-                      <th className="p-3 whitespace-nowrap">ประเภท</th>
-                      <th className="p-3 whitespace-nowrap">ราคา</th>
-                      <th className="p-3 whitespace-nowrap">สถานะ</th>
-                      <th className="p-3 whitespace-nowrap">จัดการ</th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">#</th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">รูปภาพ</th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">สินค้า</th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">ผู้ขาย</th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
+                        วันที่วางจำหน่าย
+                      </th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
+                        ประเภทสินค้า
+                      </th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">ราคา</th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">สถานะ</th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">แก้ไข</th>
+                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">ลบ</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {products.map((p) => (
-                      <tr
-                        key={p.id}
-                        className={`border-b ${
-                          p.isActive ? "" : "bg-gray-50 text-gray-400 opacity-70"
-                        }`}
-                      >
-                        <td className="p-3">{p.index}</td>
-                        <td className="p-3">
-                          {p.filePath ? (
-                            <img
-                              src={
-                                p.filePath.includes("dropbox.com")
-                                  ? p.filePath.replace("?dl=0", "?raw=1")
-                                  : p.filePath
-                              }
-                              alt={p.productName}
-                              className="w-20 h-20 object-cover rounded"
-                            />
-                          ) : (
-                            <div className="w-20 h-20 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded">
-                              No Image
-                            </div>
-                          )}
-                        </td>
-                        <td className="p-3">{p.productName}</td>
-                        <td className="p-3">{p.createdByName}</td>
-                        <td className="p-3">
-                          {new Date(p.createDate).toLocaleDateString()}
-                        </td>
-                        <td className="p-3">{getProductTypeName(p.productType ?? 0)}</td>
-                        <td className="p-3">{p.productPrice} บาท</td>
-                        <td
-                          className={`p-3 font-semibold ${
-                            p.isActive ? "text-green-600" : "text-red-600"
+                    {products.map((p, index) => {
+                      const key = p.id ?? `${p.productName}-${index}`;
+                      return (
+                        <tr
+                          key={key}
+                          className={`border-t ${
+                            p.isActive ? "" : "bg-gray-100 text-gray-400"
                           }`}
                         >
-                          {p.isActive ? "เปิดใช้งาน" : "ปิดใช้งาน"}
-                        </td>
-                        <td className="p-3 space-x-2">
-                          <button
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
-                            onClick={() => navigate(`/adminManageProducts/${p.id}`)}
+                          <td className="px-4 py-2 text-center">
+                            {(currentPage - 1) * pageSize + index + 1}
+                          </td>
+                          <td className="px-4 py-2">
+                            {p.filePath ? (
+                              <img
+                                src={
+                                  p.filePath.includes("dropbox.com")
+                                    ? p.filePath.replace("?dl=0", "?raw=1")
+                                    : p.filePath
+                                }
+                                alt={p.productName}
+                                className="w-20 h-20 object-cover rounded"
+                              />
+                            ) : (
+                              <div className="w-20 h-20 bg-gray-200 flex items-center justify-center text-xs text-gray-500 rounded">
+                                No Image!
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-4 py-2">{p.productName}</td>
+                          <td className="px-4 py-2">
+                            {p.createdByName ?? "-"}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            {p.createDate
+                              ? new Date(p.createDate).toLocaleDateString()
+                              : "-"}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            {getProductTypeName(p.productType ?? 0)}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            {Number(p.productPrice).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}{" "}
+                            บาท
+                          </td>
+                          <td
+                            className={`px-4 py-2 font-semibold whitespace-nowrap ${
+                              p.isActive ? "text-green-600" : "text-red-600"
+                            }`}
                           >
-                            แก้ไข
-                          </button>
-                          <button
-                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
-                            onClick={() => handleDelete(p.id)}
-                          >
-                            ลบ
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                            {p.isActive ? "เปิดใช้งาน" : "ปิดใช้งาน"}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            <button
+                              onClick={() =>
+                                p.id
+                                  ? navigate(`/adminManageProducts/${p.id}`)
+                                  : toast.error("ไม่พบรหัสสินค้า")
+                              }
+                              className="px-3 py-1 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+                            >
+                              แก้ไข
+                            </button>
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            <button
+                              onClick={() => p.id && handleDelete(p.id)}
+                              className="px-3 py-1 text-sm bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
+                            >
+                              ลบ
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
-              </div>
+
+                {/* Pagination Controls */}
+                <div className="flex flex-col sm:flex-row justify-between items-center mt-4 px-4 py-3 border-t border-gray-200 bg-gray-50 rounded-b-md gap-3">
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="pageSize" className="whitespace-nowrap">
+                      แสดง:
+                    </label>
+                    <select
+                      id="pageSize"
+                      value={pageSize}
+                      onChange={(e) => {
+                        setPageSize(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="border border-gray-300 rounded px-3 py-1"
+                    >
+                      {[5, 10, 20].map((size) => (
+                        <option key={size} value={size}>
+                          {size} รายการ
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="px-4 py-1 border rounded disabled:opacity-50"
+                    >
+                      ก่อนหน้า
+                    </button>
+                    <span>
+                      หน้า {currentPage} จาก {totalPages}
+                    </span>
+                    <button
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(p + 1, totalPages))
+                      }
+                      disabled={currentPage === totalPages}
+                      className="px-4 py-1 border rounded disabled:opacity-50"
+                    >
+                      ถัดไป
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
-
-            {/* Pagination */}
-            <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-3">
-              <div className="flex items-center gap-2">
-                <label htmlFor="pageSize" className="whitespace-nowrap">
-                  แสดง:
-                </label>
-                <select
-                  id="pageSize"
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                  className="border border-gray-300 rounded px-3 py-1"
-                >
-                  {pageSizeOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="px-4 py-1 border rounded disabled:opacity-50"
-                >
-                  ก่อนหน้า
-                </button>
-                <span>
-                  หน้า {currentPage} จาก {totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="px-4 py-1 border rounded disabled:opacity-50"
-                >
-                  ถัดไป
-                </button>
-              </div>
-            </div>
           </section>
         </div>
       </main>
