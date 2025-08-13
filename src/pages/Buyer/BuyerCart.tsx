@@ -1,6 +1,12 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { UserCart } from "@/types/Cart";
-import { getCartItems, removeCartItem, updateCartItem } from "@/api/Buyer";
+import {
+  checkout,
+  CheckoutItem,
+  getCartItems,
+  removeCartItem,
+  updateCartItem,
+} from "@/api/Buyer";
 import { toast } from "react-toastify";
 import { getProductTypeName } from "@/constants/productTypes";
 
@@ -132,6 +138,42 @@ const BuyerCart: React.FC = () => {
 
   const isAllSelected =
     cart.length > 0 && cart.every((item) => selectedItems.has(item.id));
+
+ const handleCheckout = async () => {
+  if (selectedItems.size === 0) return;
+
+  if (
+    !confirm(`คุณต้องการสั่งซื้อสินค้าที่เลือก (${selectedItems.size} ชิ้น)?`)
+  )
+    return;
+
+  try {
+    const items: CheckoutItem[] = cart
+      .filter((item) => selectedItems.has(item.id))
+      .map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      }));
+
+    // ส่ง payload แบบ null สำหรับ Note และ ShippingAddress
+    const payload = {
+      items,
+      Note: "",
+      ShippingAddress: "",
+    };
+
+    const res = await checkout(payload);
+    toast.success(
+      `สร้างคำสั่งซื้อเรียบร้อย รหัส: ${res.orderId} ยอดรวม: ${res.totalAmount.toLocaleString()} บาท`
+    );
+
+    setSelectedItems(new Set());
+    fetchCart(); // รีเฟรชตะกร้า
+  } catch (err: any) {
+    toast.error(err.message || "สั่งซื้อไม่สำเร็จ");
+  }
+};
+
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6 bg-gray-100 min-h-screen">
@@ -341,13 +383,7 @@ const BuyerCart: React.FC = () => {
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-orange-500 hover:bg-orange-600"
               }`}
-              onClick={() =>
-                alert(
-                  `ระบบสั่งซื้อยังไม่พร้อมใช้งาน\nจำนวนสินค้าที่เลือก: ${
-                    selectedItems.size
-                  }\nยอดรวม: ${selectedTotalPrice.toLocaleString()} บาท`
-                )
-              }
+              onClick={handleCheckout} // <-- เปลี่ยนจาก alert เป็น handleCheckout
             >
               สั่งซื้อ
             </button>

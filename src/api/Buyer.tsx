@@ -2,16 +2,44 @@ import { getAuthHeadersJSON } from "./Token";
 
 const BASE = "http://localhost:5260/api/";
 
+export interface CheckoutItem {
+  productId: string;
+  quantity: number;
+}
+
+export interface CheckoutResponse {
+  orderId: string;
+  totalAmount: number;
+  message: string;
+}
+
+export interface BuyerOrder {
+  orderId: string;
+  status: number;
+  statusLabel: string;
+  sellerName: string | null;
+  sellerId: string | null;
+  buyerName: string;
+  buyerId: string;
+  productId: string;
+  productName: string;
+  productPrice: number | null;
+  productType: number;
+  productTypeLabel: string;
+  createDate: string;
+  filePath?: string | null;
+}
+
 export async function getProducts(
   keyword?: string,
   page: number = 1,
   pageSize: number = 10,
   filters?: {
-    productTypes?: number[];      // ตัวเลข เช่น [1, 2]
+    productTypes?: number[]; // ตัวเลข เช่น [1, 2]
     minPrice?: number;
     maxPrice?: number;
-    releaseDateFrom?: string;     // YYYY-MM-DD
-    releaseDateTo?: string;       // YYYY-MM-DD
+    releaseDateFrom?: string; // YYYY-MM-DD
+    releaseDateTo?: string; // YYYY-MM-DD
     isActive?: boolean;
   }
 ) {
@@ -29,11 +57,16 @@ export async function getProducts(
         params.append("productTypes", String(type));
       });
     }
-    if (filters.minPrice != null) params.append("minPrice", String(filters.minPrice));
-    if (filters.maxPrice != null) params.append("maxPrice", String(filters.maxPrice));
-    if (filters.releaseDateFrom) params.append("releaseDateFrom", filters.releaseDateFrom);
-    if (filters.releaseDateTo) params.append("releaseDateTo", filters.releaseDateTo);
-    if (filters.isActive != null) params.append("isActive", String(filters.isActive));
+    if (filters.minPrice != null)
+      params.append("minPrice", String(filters.minPrice));
+    if (filters.maxPrice != null)
+      params.append("maxPrice", String(filters.maxPrice));
+    if (filters.releaseDateFrom)
+      params.append("releaseDateFrom", filters.releaseDateFrom);
+    if (filters.releaseDateTo)
+      params.append("releaseDateTo", filters.releaseDateTo);
+    if (filters.isActive != null)
+      params.append("isActive", String(filters.isActive));
   }
 
   const url = `${BASE}products/all?${params.toString()}`;
@@ -43,9 +76,6 @@ export async function getProducts(
 
   return res.json();
 }
-
-
-
 
 export const getCartItems = async () => {
   const headers = getAuthHeadersJSON();
@@ -63,9 +93,11 @@ export const getCartItemCount = async (): Promise<number> => {
   return await res.json(); // ได้เป็นตัวเลข เช่น 3
 };
 
-
 export const addToCart = async (productId: string, quantity = 1) => {
-  const headers = { ...getAuthHeadersJSON(), "Content-Type": "application/json" };
+  const headers = {
+    ...getAuthHeadersJSON(),
+    "Content-Type": "application/json",
+  };
   const res = await fetch(`${BASE}buyer/cart`, {
     method: "POST",
     headers,
@@ -76,7 +108,10 @@ export const addToCart = async (productId: string, quantity = 1) => {
 };
 
 export const updateCartItem = async (cartItemId: string, quantity: number) => {
-  const headers = { ...getAuthHeadersJSON(), "Content-Type": "application/json" };
+  const headers = {
+    ...getAuthHeadersJSON(),
+    "Content-Type": "application/json",
+  };
   const res = await fetch(`${BASE}buyer/cart/${cartItemId}`, {
     method: "PUT",
     headers,
@@ -105,3 +140,84 @@ export const clearCart = async () => {
   if (!res.ok) throw new Error("ล้างตะกร้าไม่สำเร็จ");
   return res.json();
 };
+
+export const checkout = async (payload: {
+  items: CheckoutItem[];
+  Note: string | null;
+  ShippingAddress: string | null;
+}) => {
+  const headers = {
+    ...getAuthHeadersJSON(),
+    "Content-Type": "application/json",
+  };
+  const res = await fetch(`${BASE}buyer/checkout`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("สั่งซื้อไม่สำเร็จ");
+  return res.json();
+};
+
+// ดึง order ของผู้ใช้
+export const getBuyerOrders = async (): Promise<BuyerOrder[]> => {
+  const headers = getAuthHeadersJSON();
+  const res = await fetch(`${BASE}buyer/orders`, { headers });
+  if (!res.ok) throw new Error("โหลดคำสั่งซื้อไม่สำเร็จ");
+  const data: BuyerOrder[] = await res.json();
+
+  // map ให้ ProductPrice มีค่า default 0
+  return data.map((item) => ({
+    ...item,
+    productPrice: item.productPrice ?? 0,
+    sellerName: item.sellerName ?? "",
+    sellerId: item.sellerId ?? "",
+    productName: item.productName ?? "",
+    productTypeLabel: item.productTypeLabel ?? "",
+    filePath: item.filePath ?? "",
+  }));
+};
+
+export const getOrderDetail = async (orderId: string) => {
+  const headers = getAuthHeadersJSON();
+  const res = await fetch(`${BASE}buyer/orders/${orderId}`, { headers });
+  if (!res.ok) throw new Error("โหลดบิลไม่สำเร็จ");
+  const data = await res.json(); // ได้เป็น array ของสินค้า
+
+  // รวมเป็น object เดียว
+  const totalAmount = data.reduce((sum: number, i: any) => sum + (i.unitPrice ?? 0) * (i.quantity ?? 0), 0);
+  return {
+    Id: orderId,
+    Status: data[0]?.status ?? 0,
+    StatusLabel: data[0]?.statusLabel ?? "",
+    TotalAmount: totalAmount,
+    Items: data.map((i: any) => ({
+      ProductId: i.productId,
+      ProductName: i.productName,
+      UnitPrice: i.unitPrice,
+      Quantity: i.quantity
+    }))
+  };
+};
+
+
+export const payOrder = async (
+  orderId: string,
+  paidAmount: number,
+  paymentMethod: string
+) => {
+  const headers = { ...getAuthHeadersJSON(), "Content-Type": "application/json" };
+  const res = await fetch(`${BASE}buyer/payment`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ orderId, paidAmount, paymentMethod }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err?.message || "ชำระเงินไม่สำเร็จ");
+  }
+
+  return await res.json();
+};
+
