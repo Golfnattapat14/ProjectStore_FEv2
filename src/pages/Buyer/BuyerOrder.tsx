@@ -64,6 +64,10 @@ const BuyerOrder: React.FC = () => {
         <div className="flex flex-col gap-6">
           {Object.entries(groupedOrders).map(([orderId, items]) => {
             const sellerName = items[0].sellerName || "ร้านค้าไม่ระบุชื่อ";
+            const createDate = new Date(items[0].createDate);
+            const thaiDate = createDate.toLocaleString("th-TH", {
+              timeZone: "Asia/Bangkok",
+            });
             const statusLabel = items[0].statusLabel || "ไม่ระบุสถานะ";
             const totalPrice = items.reduce(
               (sum, i) => sum + (i.productPrice ?? 0),
@@ -71,12 +75,43 @@ const BuyerOrder: React.FC = () => {
             );
 
             return (
-              <div key={orderId} className="bg-white rounded-lg shadow-sm p-4">
+              <div
+                key={orderId}
+                className="bg-white rounded-lg shadow-sm p-4 flex flex-col gap-4"
+              >
                 {/* Header */}
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-bold text-lg">
-                    {sellerName} - รหัสคำสั่งซื้อ: {orderId}
-                  </h3>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
+                  <div className="flex flex-col">
+                    <h3 className="font-bold text-lg">
+                      รหัสคำสั่งซื้อ: {orderId}
+                    </h3>
+                    <span className="text-gray-600">
+                      จำหน่ายโดย : {sellerName}
+                    </span>
+                    <span className="text-gray-600">
+                      วันที่สั่งซื้อ:{" "}
+                      {new Date(items[0].createDate).toLocaleDateString(
+                        "th-TH",
+                        {
+                          timeZone: "Asia/Bangkok",
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        }
+                      )}{" "}
+                      เวลา:{" "}
+                      {new Date(items[0].createDate).toLocaleTimeString(
+                        "th-TH",
+                        {
+                          timeZone: "Asia/Bangkok",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                        }
+                      )}
+                    </span>
+                  </div>
+
                   <div className="flex items-center gap-2">
                     <span
                       className={`px-2 py-1 rounded text-sm font-semibold ${
@@ -93,7 +128,9 @@ const BuyerOrder: React.FC = () => {
                     {statusLabel === "รอจ่าย" && (
                       <button
                         className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
-                        onClick={() => navigate(`/buyer/buyerPayment/${orderId}`)}
+                        onClick={() =>
+                          navigate(`/buyer/buyerPayment/${orderId}`)
+                        }
                       >
                         ชำระเงิน
                       </button>

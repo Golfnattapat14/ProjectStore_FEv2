@@ -94,35 +94,47 @@ const BuyerPage: React.FC = () => {
     try {
       setAddingToCartId(productId);
       const qty = quantityToAdd[productId] ?? 1;
+
+      // เรียกฟังก์ชัน addToCart จาก context
       await addToCart(productId, qty);
+
       toast.success("เพิ่มสินค้าในตะกร้าเรียบร้อย");
+
+      // รีเซ็ตจำนวนสินค้าในฟิลด์
       setQuantityToAdd((prev) => ({ ...prev, [productId]: 1 }));
 
+      // รีเฟรชรายการสินค้า
       setLoading(true);
       const data = await getProducts(searchKeyword, currentPage, pageSize);
       setProducts(data.items);
       setTotalPages(data.totalPages);
       setLoading(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("เพิ่มสินค้าในตะกร้าไม่สำเร็จ");
+
+      // ตรวจสอบ error จาก backend
+      if (error?.response?.data?.message) {
+        toast.error(`เพิ่มสินค้าไม่สำเร็จ: ${error.response.data.message}`);
+      } else if (error?.message) {
+        toast.error(`เพิ่มสินค้าไม่สำเร็จ: ${error.message}`);
+      } else {
+        toast.error("เพิ่มสินค้าไม่สำเร็จ");
+      }
+
       setLoading(false);
     } finally {
       setAddingToCartId(null);
     }
   };
+
   return (
     <div className="min-h-screen bg-[#f5f5f5] pb-20">
       {/* Sticky Top Bar */}
       <div className="sticky top-0 z-20 bg-white shadow-md border-b border-orange-200">
         <div className="max-w-7xl mx-auto flex items-center px-4 py-3 gap-4">
-          {/* ชื่อร้าน/โลโก้ สามารถเปิดใช้ได้ถ้าต้องการ */}
-          {/* <h2 className="text-2xl font-bold text-orange-500 tracking-wide">
-            อำนวย Shop
-          </h2> */}
           <div className="flex-1" />
           <div className="relative ml-4">
-            <CartIcon count={totalCount} />
+            <CartIcon />
           </div>
         </div>
       </div>

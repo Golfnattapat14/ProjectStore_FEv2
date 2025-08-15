@@ -1,12 +1,11 @@
+// src/components/layouts/CartIcon.tsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useCart } from "./CartContext";
 
-type CartIconProps = {
-  count: number;
-};
-
-const CartIcon: React.FC<CartIconProps> = ({ count }) => {
+const CartIcon: React.FC = () => {
   const navigate = useNavigate();
+  const { totalCount } = useCart();
 
   return (
     <div
@@ -28,9 +27,9 @@ const CartIcon: React.FC<CartIconProps> = ({ count }) => {
             d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.3 5.2a1 1 0 001 1.2h12a1 1 0 001-1.2L17 13M7 13L5.4 5M17 13l1.6-6"
           />
         </svg>
-        {count > 0 && (
+        {totalCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center font-semibold">
-            {count}
+            {totalCount}
           </span>
         )}
       </div>

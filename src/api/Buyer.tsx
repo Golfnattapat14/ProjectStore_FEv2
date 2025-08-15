@@ -5,6 +5,13 @@ const BASE = "http://localhost:5260/api/";
 export interface CheckoutItem {
   productId: string;
   quantity: number;
+  unitPrice?: number;
+
+}
+
+export interface CheckoutRequest {
+  sellerId: string;       // รหัสร้านค้า
+  items: CheckoutItem[];  // รายการสินค้า
 }
 
 export interface CheckoutResponse {
@@ -14,13 +21,12 @@ export interface CheckoutResponse {
 }
 
 export interface BuyerOrder {
+  sellerName: string;
   orderId: string;
   status: number;
   statusLabel: string;
-  sellerName: string | null;
-  sellerId: string | null;
-  buyerName: string;
-  buyerId: string;
+  createByName: string | null;
+  createBy: string | null;
   productId: string;
   productName: string;
   productPrice: number | null;
@@ -35,11 +41,11 @@ export async function getProducts(
   page: number = 1,
   pageSize: number = 10,
   filters?: {
-    productTypes?: number[]; // ตัวเลข เช่น [1, 2]
+    productTypes?: number[];
     minPrice?: number;
     maxPrice?: number;
-    releaseDateFrom?: string; // YYYY-MM-DD
-    releaseDateTo?: string; // YYYY-MM-DD
+    releaseDateFrom?: string;
+    releaseDateTo?: string;
     isActive?: boolean;
   }
 ) {
@@ -51,23 +57,27 @@ export async function getProducts(
 
   if (keyword) params.append("keyword", keyword);
 
-  if (filters) {
-    if (filters.productTypes?.length) {
-      filters.productTypes.forEach((type) => {
-        params.append("productTypes", String(type));
-      });
-    }
-    if (filters.minPrice != null)
-      params.append("minPrice", String(filters.minPrice));
-    if (filters.maxPrice != null)
-      params.append("maxPrice", String(filters.maxPrice));
-    if (filters.releaseDateFrom)
-      params.append("releaseDateFrom", filters.releaseDateFrom);
-    if (filters.releaseDateTo)
-      params.append("releaseDateTo", filters.releaseDateTo);
-    if (filters.isActive != null)
-      params.append("isActive", String(filters.isActive));
+  if (!filters) filters = {};
+  
+  // บังคับให้ isActive = true สำหรับ buyer
+  if (filters.isActive == null) filters.isActive = true;
+
+  if (filters.productTypes?.length) {
+    filters.productTypes.forEach((type) => {
+      params.append("productTypes", String(type));
+    });
   }
+  if (filters.minPrice != null)
+    params.append("minPrice", String(filters.minPrice));
+  if (filters.maxPrice != null)
+    params.append("maxPrice", String(filters.maxPrice));
+  if (filters.releaseDateFrom)
+    params.append("releaseDateFrom", filters.releaseDateFrom);
+  if (filters.releaseDateTo)
+    params.append("releaseDateTo", filters.releaseDateTo);
+
+  if (filters.isActive != null)
+    params.append("isActive", String(filters.isActive)); // จะเป็น true เสมอ
 
   const url = `${BASE}products/all?${params.toString()}`;
   const res = await fetch(url, { method: "GET", headers });
@@ -76,6 +86,7 @@ export async function getProducts(
 
   return res.json();
 }
+
 
 export const getCartItems = async () => {
   const headers = getAuthHeadersJSON();
@@ -141,23 +152,26 @@ export const clearCart = async () => {
   return res.json();
 };
 
-export const checkout = async (payload: {
-  items: CheckoutItem[];
-  Note: string | null;
-  ShippingAddress: string | null;
-}) => {
+export const checkout = async (payload: CheckoutRequest[]) => {
   const headers = {
     ...getAuthHeadersJSON(),
     "Content-Type": "application/json",
   };
+
   const res = await fetch(`${BASE}buyer/checkout`, {
     method: "POST",
     headers,
-    body: JSON.stringify(payload),
+    body: JSON.stringify(payload), // ส่งเป็น array ของ CheckoutRequest
   });
-  if (!res.ok) throw new Error("สั่งซื้อไม่สำเร็จ");
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err?.message || "สั่งซื้อไม่สำเร็จ");
+  }
+
   return res.json();
 };
+
 
 // ดึง order ของผู้ใช้
 export const getBuyerOrders = async (): Promise<BuyerOrder[]> => {
@@ -170,8 +184,8 @@ export const getBuyerOrders = async (): Promise<BuyerOrder[]> => {
   return data.map((item) => ({
     ...item,
     productPrice: item.productPrice ?? 0,
-    sellerName: item.sellerName ?? "",
-    sellerId: item.sellerId ?? "",
+    createByName: item.createByName ?? "",
+    createBy: item.createBy ?? "",
     productName: item.productName ?? "",
     productTypeLabel: item.productTypeLabel ?? "",
     filePath: item.filePath ?? "",
@@ -185,7 +199,10 @@ export const getOrderDetail = async (orderId: string) => {
   const data = await res.json(); // ได้เป็น array ของสินค้า
 
   // รวมเป็น object เดียว
-  const totalAmount = data.reduce((sum: number, i: any) => sum + (i.unitPrice ?? 0) * (i.quantity ?? 0), 0);
+  const totalAmount = data.reduce(
+    (sum: number, i: any) => sum + (i.unitPrice ?? 0) * (i.quantity ?? 0),
+    0
+  );
   return {
     Id: orderId,
     Status: data[0]?.status ?? 0,
@@ -195,18 +212,20 @@ export const getOrderDetail = async (orderId: string) => {
       ProductId: i.productId,
       ProductName: i.productName,
       UnitPrice: i.unitPrice,
-      Quantity: i.quantity
-    }))
+      Quantity: i.quantity,
+    })),
   };
 };
-
 
 export const payOrder = async (
   orderId: string,
   paidAmount: number,
   paymentMethod: string
 ) => {
-  const headers = { ...getAuthHeadersJSON(), "Content-Type": "application/json" };
+  const headers = {
+    ...getAuthHeadersJSON(),
+    "Content-Type": "application/json",
+  };
   const res = await fetch(`${BASE}buyer/payment`, {
     method: "POST",
     headers,
@@ -220,4 +239,3 @@ export const payOrder = async (
 
   return await res.json();
 };
-

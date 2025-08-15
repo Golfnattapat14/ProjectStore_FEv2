@@ -1,9 +1,28 @@
+// src/contexts/CartContext.tsx
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { CartItem } from "@/types/UserCart";
 import { getCartItems, addToCart as apiAddToCart, removeCartItem, updateCartItem } from "@/api/Buyer";
 
+export interface CartProduct {
+  id: string;
+  productId: string;
+  productName: string;
+  productPrice: number;
+  quantity: number;
+  createDate: string;
+  productType: number;
+  filePath?: string;
+  createBy: string;
+  createByName: string;
+  productStock: number;
+}
+
+export interface CartStore {
+  sellerName: string;
+  items: CartProduct[];
+}
+
 interface CartContextProps {
-  cart: CartItem[];
+  cart: CartStore[];
   refreshCart: () => void;
   addToCart: (productId: string, quantity?: number) => void;
   removeFromCart: (cartId: string) => void;
@@ -14,8 +33,7 @@ interface CartContextProps {
 const CartContext = createContext<CartContextProps | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
+  const [cart, setCart] = useState<CartStore[]>([]);
 
   const refreshCart = async () => {
     try {
@@ -27,61 +45,29 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // รีเฟรชตะกร้าทุกครั้งที่ token เปลี่ยน (login/logout)
   useEffect(() => {
-    if (token) {
-      refreshCart();
-    } else {
-      setCart([]);
-    }
-  }, [token]);
-
-  // ฟัง event storage (ถ้า token เปลี่ยนในแท็บอื่น)
-  useEffect(() => {
-    const onStorage = () => {
-      const newToken = localStorage.getItem("token");
-      setToken(newToken);
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    refreshCart();
   }, []);
 
-  useEffect(() => {
-    const handlePopState = () => {
-      if (token) refreshCart();
-    };
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, [token]);
-
   const addToCart = async (productId: string, quantity = 1) => {
-    try {
-      await apiAddToCart(productId, quantity);
-      await refreshCart();
-    } catch (error) {
-      console.error("เพิ่มสินค้าในตะกร้าไม่สำเร็จ", error);
-    }
+    await apiAddToCart(productId, quantity);
+    await refreshCart();
   };
 
   const removeFromCart = async (cartId: string) => {
-    try {
-      await removeCartItem(cartId);
-      await refreshCart();
-    } catch (error) {
-      console.error("ลบสินค้าในตะกร้าไม่สำเร็จ", error);
-    }
+    await removeCartItem(cartId);
+    await refreshCart();
   };
 
   const updateCartQuantity = async (cartId: string, quantity: number) => {
-    try {
-      await updateCartItem(cartId, quantity);
-      await refreshCart();
-    } catch (error) {
-      console.error("อัปเดตจำนวนสินค้าไม่สำเร็จ", error);
-    }
+    await updateCartItem(cartId, quantity);
+    await refreshCart();
   };
 
-  const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const totalCount = cart.reduce(
+    (sum, store) => sum + store.items.reduce((s, item) => s + item.quantity, 0),
+    0
+  );
 
   return (
     <CartContext.Provider
