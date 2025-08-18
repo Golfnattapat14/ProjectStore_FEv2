@@ -192,6 +192,8 @@ export const getBuyerOrders = async (): Promise<BuyerOrder[]> => {
   }));
 };
 
+
+
 export const getOrderDetail = async (orderId: string) => {
   const headers = getAuthHeadersJSON();
   const res = await fetch(`${BASE}buyer/orders/${orderId}`, { headers });

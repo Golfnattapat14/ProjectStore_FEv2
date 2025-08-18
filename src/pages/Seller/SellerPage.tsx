@@ -64,7 +64,6 @@ const SellerPage: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("คุณแน่ใจว่าจะลบสินค้านี้?")) return;
-
     try {
       await deleteProduct(id);
       toast.success("ลบสินค้าสำเร็จ");
@@ -135,20 +134,13 @@ const SellerPage: React.FC = () => {
           {/* Products Table + Pagination */}
           <section className="flex-1 flex flex-col overflow-auto rounded-md border border-gray-300 bg-white">
             {loading && (
-              <p className="text-center py-6 text-gray-500">
-                กำลังโหลดข้อมูล...
-              </p>
+              <p className="text-center py-6 text-gray-500">กำลังโหลดข้อมูล...</p>
             )}
             {error && (
-              <p className="text-center py-6 text-red-600 font-semibold">
-                {error}
-              </p>
+              <p className="text-center py-6 text-red-600 font-semibold">{error}</p>
             )}
-
             {!loading && products.length === 0 && (
-              <p className="text-center py-20 text-gray-400 italic">
-                ไม่พบสินค้า
-              </p>
+              <p className="text-center py-20 text-gray-400 italic">ไม่พบสินค้า</p>
             )}
 
             {products.length > 0 && (
@@ -156,48 +148,24 @@ const SellerPage: React.FC = () => {
                 <table className="min-w-full text-sm text-gray-700">
                   <thead className="bg-gray-100 text-left font-semibold sticky top-0 z-10">
                     <tr>
-                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
-                        #
-                      </th>
-                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
-                        รูปภาพ
-                      </th>
-                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
-                        สินค้า
-                      </th>
-                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
-                        วันที่วางจำหน่าย
-                      </th>
-                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
-                        ประเภทสินค้า
-                      </th>
-                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
-                        ราคา
-                      </th>
-                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
-                        จำนวนสินค้า
-                      </th>
-                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
-                        แก้ไข
-                      </th>
-                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
-                        แก้ไขสินค้า
-                      </th>
-                      <th className="px-4 py-3 whitespace-nowrap text-center align-middle">
-                        ลบสินค้า
-                      </th>
+                      <th className="px-4 py-3 text-center">#</th>
+                      <th className="px-4 py-3 text-center">รูปภาพ</th>
+                      <th className="px-4 py-3 text-center">สินค้า</th>
+                      <th className="px-4 py-3 text-center">วันที่วางจำหน่าย</th>
+                      <th className="px-4 py-3 text-center">ประเภทสินค้า</th>
+                      <th className="px-4 py-3 text-center">ราคา</th>
+                      <th className="px-4 py-3 text-center">จำนวนสินค้า</th>
+                      <th className="px-4 py-3 text-center">สถานะ</th>
+                      <th className="px-4 py-3 text-center">จัดการสินค้า</th>
                     </tr>
                   </thead>
-
                   <tbody>
                     {products.map((p, index) => {
                       const key = p.id ?? `${p.productName}-${index}`;
                       return (
                         <tr
                           key={key}
-                          className={`border-t ${
-                            p.isActive ? "" : "bg-gray-100 text-gray-400"
-                          }`}
+                          className={`border-t ${p.isActive ? "" : "bg-gray-100 text-gray-400"}`}
                         >
                           <td className="px-4 py-2 text-center">
                             {(currentPage - 1) * pageSize + index + 1}
@@ -220,38 +188,27 @@ const SellerPage: React.FC = () => {
                             )}
                           </td>
                           <td className="px-4 py-2">{p.productName}</td>
-                          <td className="px-4 py-2 whitespace-nowrap">
-                            {p.createDate
-                              ? new Date(p.createDate).toLocaleDateString()
-                              : "-"}
+                          <td className="px-4 py-2 text-center">
+                            {p.createDate ? new Date(p.createDate).toLocaleDateString() : "-"}
                           </td>
-                          <td className="px-4 py-2 whitespace-nowrap">
+                          <td className="px-4 py-2 text-center">
                             {getProductTypeName(p.productType ?? 0)}
                           </td>
-                          <td className="px-4 py-2 whitespace-nowrap">
+                          <td className="px-4 py-2 text-center">
                             {Number(p.productPrice).toLocaleString(undefined, {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
-                            })}{" "}
-                            บาท
+                            })} บาท
                           </td>
-                          <td className="px-4 py-2 whitespace-nowrap">
-                            {p.quantity}
-                          </td>
-                          <td
-                            className={`px-4 py-2 font-semibold whitespace-nowrap ${
-                              p.isActive ? "text-green-600" : "text-red-600"
-                            }`}
-                          >
+                          <td className="px-4 py-2 text-center">{p.quantity ?? "-"}</td>
+                          <td className={`px-4 py-2 font-semibold text-center ${p.isActive ? "text-green-600" : "text-red-600"}`}>
                             {p.isActive ? "เปิดใช้งาน" : "ปิดใช้งาน"}
                           </td>
-                          <td className="px-4 py-2 whitespace-nowrap">
-                            <div className="flex gap-2">
+                          <td className="px-4 py-2 text-center">
+                            <div className="flex gap-2 justify-center">
                               <button
                                 onClick={() =>
-                                  p.id
-                                    ? navigate(`/sellerManage/${p.id}`)
-                                    : toast.error("ไม่พบรหัสสินค้า")
+                                  p.id ? navigate(`/sellerManage/${p.id}`) : toast.error("ไม่พบรหัสสินค้า")
                                 }
                                 className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors"
                               >
@@ -270,6 +227,7 @@ const SellerPage: React.FC = () => {
                     })}
                   </tbody>
                 </table>
+
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

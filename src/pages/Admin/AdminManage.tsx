@@ -39,14 +39,13 @@ const AdminManage: React.FC = () => {
           ? "ปิดการใช้งานผู้ใช้เรียบร้อย"
           : "เปิดการใช้งานผู้ใช้เรียบร้อย"
       );
-    } catch (error) {
+    } catch {
       toast.error("ไม่สามารถอัปเดตสถานะได้");
     }
   };
 
   const handleDeleteUsers = async (id: string) => {
-    const confirmDelete = window.confirm("คุณแน่ใจว่าจะลบผู้ใช้นี้ออกจากระบบ?");
-    if (!confirmDelete) return;
+    if (!window.confirm("คุณแน่ใจว่าจะลบผู้ใช้นี้ออกจากระบบ?")) return;
 
     try {
       await deleteUser(id);
@@ -60,16 +59,19 @@ const AdminManage: React.FC = () => {
 
   if (loadingUsers)
     return (
-      <p className="text-center text-gray-500">กำลังโหลดข้อมูลผู้ใช้...</p>
+      <p className="text-center text-gray-500 py-6">กำลังโหลดข้อมูลผู้ใช้...</p>
     );
   if (errorUsers)
-    return <p className="text-red-500 text-center">{errorUsers}</p>;
+    return (
+      <p className="text-red-500 text-center py-6">{errorUsers}</p>
+    );
 
   return (
     <div className="max-w-6xl mx-auto mt-10 p-6 bg-white rounded-lg shadow">
       <h2 className="text-2xl font-bold mb-6 text-center text-gray-700">
         ข้อมูลของ USER
       </h2>
+
       <div className="overflow-x-auto">
         <table className="min-w-full table-auto border border-gray-200 rounded-lg">
           <thead>
@@ -82,6 +84,14 @@ const AdminManage: React.FC = () => {
             </tr>
           </thead>
           <tbody className="text-gray-700 text-sm font-medium">
+            {users.length === 0 && (
+              <tr>
+                <td colSpan={5} className="text-center py-6 text-gray-400">
+                  ไม่พบข้อมูลผู้ใช้
+                </td>
+              </tr>
+            )}
+
             {users.map((u, i) => (
               <tr
                 key={u.id}
@@ -102,7 +112,7 @@ const AdminManage: React.FC = () => {
                       role="switch"
                       aria-checked={!u.isDeleted}
                       className="sr-only peer"
-                      checked={!u.isDeleted} // checked = เปิดใช้งาน (isDeleted=false)
+                      checked={!u.isDeleted}
                       onChange={() => handleToggleActive(u)}
                     />
                     <div
@@ -129,14 +139,13 @@ const AdminManage: React.FC = () => {
                 </td>
                 <td className="py-2 px-4 space-x-2">
                   <button
-                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
                     onClick={() => navigate(`/adminManageUser/${u.id}`)}
                   >
                     แก้ไข
                   </button>
-
                   <button
-                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
                     onClick={() => handleDeleteUsers(u.id)}
                   >
                     ลบผู้ใช้นี้
@@ -144,17 +153,11 @@ const AdminManage: React.FC = () => {
                 </td>
               </tr>
             ))}
-            {users.length === 0 && (
-              <tr>
-                <td colSpan={5} className="text-center py-4 text-gray-400">
-                  ไม่พบข้อมูลผู้ใช้
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
     </div>
   );
 };
+
 export default AdminManage;
