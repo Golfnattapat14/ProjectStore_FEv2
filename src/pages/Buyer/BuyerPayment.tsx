@@ -22,18 +22,19 @@ const BuyerPayment: React.FC = () => {
   };
 
   const handlePay = async () => {
-    if (!order) return;
-    try {
-      setPaying(true);
-      await payOrder(order.Id, order.TotalAmount, "PromptPay");
-      toast.success("ชำระเงินเรียบร้อยแล้ว");
-      fetchOrder(); // refresh
-    } catch (err: any) {
-      toast.error(err.message || "ชำระเงินไม่สำเร็จ");
-    } finally {
-      setPaying(false);
-    }
-  };
+  if (!order) return;
+  try {
+    setPaying(true);
+    await payOrder(order.Id, order.TotalAmount, "PromptPay"); // call API
+    toast.success("ชำระเงินเรียบร้อยแล้ว");
+    fetchOrder(); // refresh order หลังจ่าย
+  } catch (err: any) {
+    toast.error(err.message || "ชำระเงินไม่สำเร็จ");
+  } finally {
+    setPaying(false);
+  }
+};
+
 
   useEffect(() => {
     fetchOrder();

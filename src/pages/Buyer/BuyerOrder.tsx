@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import { getBuyerOrders, BuyerOrder as OrderType } from "@/api/Buyer";
 import { getProductTypeName } from "@/constants/productTypes";
 import { useNavigate } from "react-router-dom";
+import { formatThaiDateTime } from "@/lib/utils";
 
 const BuyerOrder: React.FC = () => {
   const [orders, setOrders] = useState<OrderType[]>([]);
@@ -64,10 +65,9 @@ const BuyerOrder: React.FC = () => {
         <div className="flex flex-col gap-6">
           {Object.entries(groupedOrders).map(([orderId, items]) => {
             const sellerName = items[0].sellerName || "ร้านค้าไม่ระบุชื่อ";
-            const createDate = new Date(items[0].createDate);
-            const thaiDate = createDate.toLocaleString("th-TH", {
-              timeZone: "Asia/Bangkok",
-            });
+            const { thaiDate, thaiTime } = formatThaiDateTime(
+              items[0].createDate
+            );
             const statusLabel = items[0].statusLabel || "ไม่ระบุสถานะ";
             const totalPrice = items.reduce(
               (sum, i) => sum + (i.productPrice ?? 0),
@@ -89,26 +89,7 @@ const BuyerOrder: React.FC = () => {
                       จำหน่ายโดย : {sellerName}
                     </span>
                     <span className="text-gray-600">
-                      วันที่สั่งซื้อ:{" "}
-                      {new Date(items[0].createDate).toLocaleDateString(
-                        "th-TH",
-                        {
-                          timeZone: "Asia/Bangkok",
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                        }
-                      )}{" "}
-                      เวลา:{" "}
-                      {new Date(items[0].createDate).toLocaleTimeString(
-                        "th-TH",
-                        {
-                          timeZone: "Asia/Bangkok",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          second: "2-digit",
-                        }
-                      )}
+                      วันที่สั่งซื้อ: {thaiDate} เวลา: {thaiTime}
                     </span>
                   </div>
 

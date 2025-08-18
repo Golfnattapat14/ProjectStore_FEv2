@@ -161,7 +161,7 @@ export const checkout = async (payload: CheckoutRequest[]) => {
   const res = await fetch(`${BASE}buyer/checkout`, {
     method: "POST",
     headers,
-    body: JSON.stringify(payload), // ส่งเป็น array ของ CheckoutRequest
+    body: JSON.stringify(payload), 
   });
 
   if (!res.ok) {

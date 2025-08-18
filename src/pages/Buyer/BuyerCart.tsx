@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { UserCart } from "@/types/Cart";
 import {
   checkout,
@@ -10,6 +10,7 @@ import {
 } from "@/api/Buyer";
 import { toast } from "react-toastify";
 import { getProductTypeName } from "@/constants/productTypes";
+import { useNavigate } from "react-router-dom";
 
 type CartStore = {
   sellerId: string;
@@ -23,6 +24,7 @@ const BuyerCart: React.FC = () => {
   const [error, setError] = useState("");
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const navigate = useNavigate();
 
   // ดึงข้อมูลตะกร้า
   const fetchCart = async () => {
@@ -124,18 +126,6 @@ const BuyerCart: React.FC = () => {
     }
   };
 
-  // ยอดรวม
-  // const selectedTotalPrice = useMemo(() => {
-  //   return cartData.reduce((sumStore, store) => {
-  //     const storeSum = store.items.reduce((sumItem, item) => {
-  //       if (selectedItems.has(item.id)) {
-  //         return sumItem + (item.productPrice ?? 0) * item.quantity;
-  //       }
-  //       return sumItem;
-  //     }, 0);
-  //     return sumStore + storeSum;
-  //   }, 0);
-  // }, [cartData, selectedItems]);
 
   const isAllSelected =
     cartData.length > 0 &&
@@ -160,7 +150,7 @@ const BuyerCart: React.FC = () => {
             .map((item) => ({
               productId: item.productId,
               quantity: item.quantity,
-              unitPrice: item.productPrice ?? 0, // แก้ undefined เป็น 0
+              unitPrice: item.productPrice ?? 0,
             }));
 
           if (!items.length) return null;
@@ -182,6 +172,7 @@ const BuyerCart: React.FC = () => {
 
       setSelectedItems(new Set());
       fetchCart();
+      navigate("/buyerOrder");
     } catch (err: any) {
       toast.error(err.message || "สั่งซื้อไม่สำเร็จ");
     }
@@ -273,7 +264,6 @@ const BuyerCart: React.FC = () => {
                     <span className="font-bold text-gray-800">
                       จำหน่ายโดย : {store.sellerName || "ร้านค้าไม่ระบุชื่อ"}
                     </span>
-                    
                   </div>
                   <ul className="divide-y divide-gray-200">
                     {store.items.map((item) => (
