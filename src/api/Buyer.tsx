@@ -1,3 +1,4 @@
+import { BuyerOrder } from "@/types/BuyerOrder";
 import { getAuthHeadersJSON } from "./Token";
 
 const BASE = "http://localhost:5260/api/";
@@ -18,22 +19,6 @@ export interface CheckoutResponse {
   orderId: string;
   totalAmount: number;
   message: string;
-}
-
-export interface BuyerOrder {
-  sellerName: string;
-  orderId: string;
-  status: number;
-  statusLabel: string;
-  createByName: string | null;
-  createBy: string | null;
-  productId: string;
-  productName: string;
-  productPrice: number | null;
-  productType: number;
-  productTypeLabel: string;
-  createDate: string;
-  filePath?: string | null;
 }
 
 export async function getProducts(
@@ -178,19 +163,26 @@ export const getBuyerOrders = async (): Promise<BuyerOrder[]> => {
   const headers = getAuthHeadersJSON();
   const res = await fetch(`${BASE}buyer/orders`, { headers });
   if (!res.ok) throw new Error("โหลดคำสั่งซื้อไม่สำเร็จ");
+
   const data: BuyerOrder[] = await res.json();
 
-  // map ให้ ProductPrice มีค่า default 0
-  return data.map((item) => ({
-    ...item,
-    productPrice: item.productPrice ?? 0,
-    createByName: item.createByName ?? "",
-    createBy: item.createBy ?? "",
-    productName: item.productName ?? "",
-    productTypeLabel: item.productTypeLabel ?? "",
-    filePath: item.filePath ?? "",
+  return (data ?? []).map((order) => ({
+    ...order,
+    sellers: (order.sellers ?? []).map((s) => ({
+      ...s,
+      sellerName: s.sellerName ?? "ร้านค้าไม่ระบุชื่อ",
+      items: (s.items ?? []).map((i) => ({
+        ...i,
+        unitPrice: i.unitPrice ?? 0,
+        productTypeLabel: i.productTypeLabel ?? "",
+        filePath: i.filePath ?? "",
+        quantity: i.quantity ?? 1, // ป้องกัน undefined
+      })),
+    })),
   }));
 };
+
+
 
 
 

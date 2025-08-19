@@ -22,19 +22,18 @@ const BuyerPayment: React.FC = () => {
   };
 
   const handlePay = async () => {
-  if (!order) return;
-  try {
-    setPaying(true);
-    await payOrder(order.Id, order.TotalAmount, "PromptPay"); // call API
-    toast.success("ชำระเงินเรียบร้อยแล้ว");
-    fetchOrder(); // refresh order หลังจ่าย
-  } catch (err: any) {
-    toast.error(err.message || "ชำระเงินไม่สำเร็จ");
-  } finally {
-    setPaying(false);
-  }
-};
-
+    if (!order) return;
+    try {
+      setPaying(true);
+      await payOrder(order.Id, order.TotalAmount, "PromptPay"); // call API
+      toast.success("ชำระเงินเรียบร้อยแล้ว");
+      fetchOrder(); // refresh order หลังจ่าย
+    } catch (err: any) {
+      toast.error(err.message || "ชำระเงินไม่สำเร็จ");
+    } finally {
+      setPaying(false);
+    }
+  };
 
   useEffect(() => {
     fetchOrder();
@@ -45,9 +44,7 @@ const BuyerPayment: React.FC = () => {
       <p className="text-gray-500 text-center py-10 text-lg">กำลังโหลดบิล...</p>
     );
   if (!order)
-    return (
-      <p className="text-red-500 text-center py-10 text-lg">ไม่พบบิล</p>
-    );
+    return <p className="text-red-500 text-center py-10 text-lg">ไม่พบบิล</p>;
 
   return (
     <div className="max-w-3xl mx-auto p-6 bg-gray-50 min-h-screen">
@@ -83,22 +80,24 @@ const BuyerPayment: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {order.Items && order.Items.length > 0 ? (
-                order.Items.map((item: any) => (
-                  <tr
-                    key={item.ProductId}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="p-3 border-b">{item.ProductName}</td>
-                    <td className="p-3 border-b">
-                      {(item.UnitPrice ?? 0).toLocaleString()} บาท
-                    </td>
-                    <td className="p-3 border-b">{item.Quantity}</td>
-                    <td className="p-3 border-b font-semibold text-gray-800">
-                      {((item.UnitPrice ?? 0) * (item.Quantity ?? 0)).toLocaleString()} บาท
-                    </td>
-                  </tr>
-                ))
+              {order.sellers?.length ? (
+                order.sellers.map((seller) =>
+                  seller.items.map((item) => (
+                    <tr
+                      key={item.productId}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="p-3 border-b">{item.productName}</td>
+                      <td className="p-3 border-b">
+                        {(item.unitPrice ?? 0).toLocaleString()} บาท
+                      </td>
+                      <td className="p-3 border-b">{item.quantity}</td>
+                      <td className="p-3 border-b font-semibold text-gray-800">
+                        {(item.unitPrice * item.quantity).toLocaleString()} บาท
+                      </td>
+                    </tr>
+                  ))
+                )
               ) : (
                 <tr>
                   <td colSpan={4} className="p-3 text-center text-gray-500">
