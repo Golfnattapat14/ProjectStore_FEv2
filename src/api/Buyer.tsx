@@ -7,12 +7,11 @@ export interface CheckoutItem {
   productId: string;
   quantity: number;
   unitPrice?: number;
-
 }
 
 export interface CheckoutRequest {
-  sellerId: string;       // รหัสร้านค้า
-  items: CheckoutItem[];  // รายการสินค้า
+  sellerId: string; // รหัสร้านค้า
+  items: CheckoutItem[]; // รายการสินค้า
 }
 
 export interface CheckoutResponse {
@@ -43,7 +42,7 @@ export async function getProducts(
   if (keyword) params.append("keyword", keyword);
 
   if (!filters) filters = {};
-  
+
   // บังคับให้ isActive = true สำหรับ buyer
   if (filters.isActive == null) filters.isActive = true;
 
@@ -71,7 +70,6 @@ export async function getProducts(
 
   return res.json();
 }
-
 
 export const getCartItems = async () => {
   const headers = getAuthHeadersJSON();
@@ -146,7 +144,7 @@ export const checkout = async (payload: CheckoutRequest[]) => {
   const res = await fetch(`${BASE}buyer/checkout`, {
     method: "POST",
     headers,
-    body: JSON.stringify(payload), 
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
@@ -156,7 +154,6 @@ export const checkout = async (payload: CheckoutRequest[]) => {
 
   return res.json();
 };
-
 
 // ดึง order ของผู้ใช้
 export const getBuyerOrders = async (): Promise<BuyerOrder[]> => {
@@ -182,34 +179,43 @@ export const getBuyerOrders = async (): Promise<BuyerOrder[]> => {
   }));
 };
 
-
-
-
-
 export const getOrderDetail = async (orderId: string) => {
   const headers = getAuthHeadersJSON();
   const res = await fetch(`${BASE}buyer/orders/${orderId}`, { headers });
   if (!res.ok) throw new Error("โหลดบิลไม่สำเร็จ");
-  const data = await res.json(); // ได้เป็น array ของสินค้า
 
-  // รวมเป็น object เดียว
-  const totalAmount = data.reduce(
-    (sum: number, i: any) => sum + (i.unitPrice ?? 0) * (i.quantity ?? 0),
-    0
-  );
+  const data = await res.json(); // array ของ seller
+
+  // map ออกมาแยกแต่ละร้าน
+  const sellers = data.map((seller: any) => {
+    const items = seller.items ?? [];
+    const totalAmount = items.reduce(
+      (sum: number, i: any) => sum + (i.unitPrice ?? 0) * (i.quantity ?? 0),
+      0
+    );
+
+    return {
+      SellerId: seller.sellerId,
+      SellerName: seller.sellerName,
+      SellerPhone: seller.sellerPhone,
+      Status: seller.status ?? 0,
+      StatusLabel: seller.statusLabel ?? "รอจ่าย",
+      TotalAmount: totalAmount,
+      Items: items.map((i: any) => ({
+        ProductId: i.productId,
+        ProductName: i.productName,
+        UnitPrice: i.unitPrice,
+        Quantity: i.quantity,
+      })),
+    };
+  });
+
   return {
-    Id: orderId,
-    Status: data[0]?.status ?? 0,
-    StatusLabel: data[0]?.statusLabel ?? "",
-    TotalAmount: totalAmount,
-    Items: data.map((i: any) => ({
-      ProductId: i.productId,
-      ProductName: i.productName,
-      UnitPrice: i.unitPrice,
-      Quantity: i.quantity,
-    })),
+    OrderId: orderId,
+    Sellers: sellers,
   };
 };
+
 
 export const payOrder = async (
   orderId: string,
@@ -220,6 +226,7 @@ export const payOrder = async (
     ...getAuthHeadersJSON(),
     "Content-Type": "application/json",
   };
+
   const res = await fetch(`${BASE}buyer/payment`, {
     method: "POST",
     headers,
