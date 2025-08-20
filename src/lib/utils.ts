@@ -24,3 +24,4 @@ export function formatThaiDateTime(dateStr: string | Date) {
 
   return { thaiDate, thaiTime };
 }
+

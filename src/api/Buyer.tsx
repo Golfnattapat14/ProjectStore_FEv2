@@ -240,3 +240,30 @@ export const payOrder = async (
 
   return await res.json();
 };
+
+export interface PaymentSlipPayload {
+  orderId: string;
+  paidAmount: number;
+  refCode: string;
+}
+
+export const payOrderWithSlip = async (payload: PaymentSlipPayload) => {
+  const headers = {
+    ...getAuthHeadersJSON(),
+    "Content-Type": "application/json",
+  };
+
+  const res = await fetch("http://localhost:5260/api/buyer/payment/slip", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err?.message || "ชำระเงินไม่สำเร็จ");
+  }
+
+  return res.json(); // จะได้ { message, orderId, slipData }
+};
+
