@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { getOrderDetail, payOrderWithSlip } from "@/api/Buyer";
 import PromptPay from "promptpay-qr";
 import QRCode from "react-qr-code";
+import jsQR from "jsqr";
 
 const BuyerPayment: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -17,8 +18,10 @@ const BuyerPayment: React.FC = () => {
   const [qrList, setQrList] = useState<any[]>([]);
   const [showQR, setShowQR] = useState(false);
 
-  const [slipCode, setSlipCode] = useState<{ [sellerId: string]: string }>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // โหลดบิล
   const fetchOrder = async () => {
     try {
       setLoading(true);
@@ -26,8 +29,7 @@ const BuyerPayment: React.FC = () => {
       setOrder(data);
       setAllItems(data.Sellers?.flatMap((s: any) => s.Items) || []);
       setTotalAmount(
-        data.Sellers?.reduce((sum: number, s: any) => sum + s.TotalAmount, 0) ??
-          0
+        data.Sellers?.reduce((sum: number, s: any) => sum + s.TotalAmount, 0) ?? 0
       );
     } catch (err: any) {
       toast.error(err.message || "โหลดบิลไม่สำเร็จ");
@@ -36,6 +38,7 @@ const BuyerPayment: React.FC = () => {
     }
   };
 
+  // สร้าง QR PromptPay
   const handlePay = async () => {
     if (!order?.Sellers?.length) return toast.error("ข้อมูลบิลไม่ครบ");
     try {
@@ -55,16 +58,45 @@ const BuyerPayment: React.FC = () => {
     }
   };
 
-  const handlePayWithSlip = async (seller: any) => {
+  // อัปโหลดสลิป + scan QR → ส่ง API อัตโนมัติ
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, seller: any) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result as string;
+      sessionStorage.setItem(`slipBase64_${seller.SellerId}`, base64);
+
+      const img = new Image();
+      img.src = base64;
+      img.onload = async () => {
+        const canvas = canvasRef.current!;
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, canvas.width, canvas.height);
+
+        if (code) {
+          toast.success(`สแกน QR สำเร็จ: ${code.data}`);
+          await handlePayWithSlip(seller, code.data);
+        } else {
+          toast.error("ไม่พบ QR code ในสลิป");
+        }
+      };
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // ส่งสลิป / refCode ไป API
+  const handlePayWithSlip = async (seller: any, refCode: string) => {
     const sellerId = seller.SellerId;
     const paidAmount = seller.TotalAmount;
-    const refCode = slipCode[sellerId];
-
-    if (!refCode) return toast.error("กรุณากรอกเลขสลิป");
 
     try {
       setPaying(true);
-
       const result = await payOrderWithSlip({
         orderId: order.OrderId,
         paidAmount,
@@ -73,7 +105,6 @@ const BuyerPayment: React.FC = () => {
 
       toast.success(result.message || "ชำระเงินสำเร็จ");
 
-      // อัปเดตสถานะร้านนี้เป็น ชำระแล้ว
       setOrder((prev: any) => ({
         ...prev,
         Sellers: prev.Sellers.map((s: any) =>
@@ -81,8 +112,7 @@ const BuyerPayment: React.FC = () => {
         ),
       }));
 
-      // ล้างรหัสสลิป
-      setSlipCode((prev) => ({ ...prev, [sellerId]: "" }));
+      sessionStorage.removeItem(`slipBase64_${sellerId}`);
     } catch (error: any) {
       toast.error(error.message || "ชำระเงินล้มเหลว");
     } finally {
@@ -100,9 +130,7 @@ const BuyerPayment: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-2xl font-bold mb-2">
-          บิลคำสั่งซื้อ #{order.OrderId}
-        </h2>
+        <h2 className="text-2xl font-bold mb-2">บิลคำสั่งซื้อ #{order.OrderId}</h2>
         <p className="text-gray-600 mb-4">
           สถานะ:{" "}
           <span
@@ -130,14 +158,10 @@ const BuyerPayment: React.FC = () => {
               {allItems.map((item: any, idx: number) => (
                 <tr key={idx} className="hover:bg-gray-50 transition-colors">
                   <td className="p-3 border-b">{item.ProductName}</td>
-                  <td className="p-3 border-b">
-                    {(item.UnitPrice ?? 0).toLocaleString()}
-                  </td>
+                  <td className="p-3 border-b">{(item.UnitPrice ?? 0).toLocaleString()}</td>
                   <td className="p-3 border-b">{item.Quantity}</td>
                   <td className="p-3 border-b font-semibold">
-                    {(
-                      (item.UnitPrice ?? 0) * (item.Quantity ?? 0)
-                    ).toLocaleString()}
+                    {(item.UnitPrice ?? 0) * (item.Quantity ?? 0).toLocaleString()}
                   </td>
                 </tr>
               ))}
@@ -163,7 +187,7 @@ const BuyerPayment: React.FC = () => {
         {showQR && qrList.length > 0 && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 overflow-y-auto">
             <div className="bg-white p-6 rounded shadow-lg text-center max-w-md w-full flex flex-col items-center">
-              <h3 className="text-lg font-bold mb-4">สแกนจ่ายหรือกรอกเลขสลิป</h3>
+              <h3 className="text-lg font-bold mb-4">สแกนจ่ายหรืออัปโหลดสลิป</h3>
 
               {qrList.map((q, idx) => {
                 const seller = order.Sellers[idx];
@@ -178,23 +202,12 @@ const BuyerPayment: React.FC = () => {
                     {seller.StatusLabel === "รอจ่าย" && (
                       <div className="mt-2 w-full flex flex-col items-center">
                         <input
-                          type="text"
-                          placeholder="กรอกเลขสลิป"
-                          value={slipCode[seller.SellerId] || ""}
-                          onChange={(e) =>
-                            setSlipCode((prev) => ({
-                              ...prev,
-                              [seller.SellerId]: e.target.value,
-                            }))
-                          }
+                          type="file"
+                          accept="image/*"
+                          ref={fileInputRef}
+                          onChange={(e) => handleFileChange(e, seller)}
                           className="border px-2 py-1 w-full rounded mb-2"
                         />
-                        <button
-                          onClick={() => handlePayWithSlip(seller)}
-                          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                        >
-                          ยืนยันชำระเงิน
-                        </button>
                       </div>
                     )}
 
@@ -213,6 +226,8 @@ const BuyerPayment: React.FC = () => {
               >
                 ปิด
               </button>
+
+              <canvas ref={canvasRef} style={{ display: "none" }} />
             </div>
           </div>
         )}
