@@ -126,7 +126,6 @@ const BuyerCart: React.FC = () => {
     }
   };
 
-
   const isAllSelected =
     cartData.length > 0 &&
     cartData
@@ -191,9 +190,20 @@ const BuyerCart: React.FC = () => {
           ) : error ? (
             <p className="text-red-500 mb-4 p-4 bg-white rounded-lg">{error}</p>
           ) : cartData.flatMap((s) => s.items).length === 0 ? (
-            <p className="text-gray-600 text-center py-10 text-lg bg-white rounded-lg">
-              ยังไม่มีสินค้าในตะกร้า
-            </p>
+            <div className="text-center py-10 bg-white rounded-lg">
+              <p className="text-gray-600 text-lg mb-4">
+                ยังไม่มีสินค้าในตะกร้า
+              </p>
+              <button
+                onClick={() => {
+                  navigate("/buyer");
+                  setTimeout(() => window.location.reload(), 100); // รีเฟรชเล็กน้อยหลัง navigate
+                }}
+                className="px-6 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition"
+              >
+                เลือกชมสินค้า
+              </button>
+            </div>
           ) : (
             <div className="bg-white rounded-lg shadow-sm">
               {/* Header เลือกทั้งหมด */}
