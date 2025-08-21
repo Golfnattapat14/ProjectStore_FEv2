@@ -5,6 +5,7 @@ import { getOrderDetail, payOrderWithSlip } from "@/api/Buyer";
 import PromptPay from "promptpay-qr";
 import QRCode from "react-qr-code";
 import jsQR from "jsqr";
+import { useNavigate } from "react-router-dom";
 
 const BuyerPayment: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -21,6 +22,8 @@ const BuyerPayment: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const navigate = useNavigate();
+
   // โหลดบิล
   const fetchOrder = async () => {
     try {
@@ -29,7 +32,8 @@ const BuyerPayment: React.FC = () => {
       setOrder(data);
       setAllItems(data.Sellers?.flatMap((s: any) => s.Items) || []);
       setTotalAmount(
-        data.Sellers?.reduce((sum: number, s: any) => sum + s.TotalAmount, 0) ?? 0
+        data.Sellers?.reduce((sum: number, s: any) => sum + s.TotalAmount, 0) ??
+          0
       );
     } catch (err: any) {
       toast.error(err.message || "โหลดบิลไม่สำเร็จ");
@@ -59,7 +63,10 @@ const BuyerPayment: React.FC = () => {
   };
 
   // อัปโหลดสลิป + scan QR → ส่ง API อัตโนมัติ
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, seller: any) => {
+  const handleFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    seller: any
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -91,6 +98,7 @@ const BuyerPayment: React.FC = () => {
   };
 
   // ส่งสลิป / refCode ไป API
+  // ส่งสลิป / refCode ไป API
   const handlePayWithSlip = async (seller: any, refCode: string) => {
     const sellerId = seller.SellerId;
     const paidAmount = seller.TotalAmount;
@@ -105,14 +113,12 @@ const BuyerPayment: React.FC = () => {
 
       toast.success(result.message || "ชำระเงินสำเร็จ");
 
-      setOrder((prev: any) => ({
-        ...prev,
-        Sellers: prev.Sellers.map((s: any) =>
-          s.SellerId === sellerId ? { ...s, StatusLabel: "ชำระแล้ว" } : s
-        ),
-      }));
-
+      // เคลียร์ sessionStorage ของ slip
       sessionStorage.removeItem(`slipBase64_${sellerId}`);
+
+      // เด้งไปหน้า buyerOrder และบังคับ reload
+      navigate("/buyerOrder");
+      window.location.reload();
     } catch (error: any) {
       toast.error(error.message || "ชำระเงินล้มเหลว");
     } finally {
@@ -130,7 +136,9 @@ const BuyerPayment: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-2xl font-bold mb-2">บิลคำสั่งซื้อ #{order.OrderId}</h2>
+        <h2 className="text-2xl font-bold mb-2">
+          บิลคำสั่งซื้อ #{order.OrderId}
+        </h2>
         <p className="text-gray-600 mb-4">
           สถานะ:{" "}
           <span
@@ -158,10 +166,13 @@ const BuyerPayment: React.FC = () => {
               {allItems.map((item: any, idx: number) => (
                 <tr key={idx} className="hover:bg-gray-50 transition-colors">
                   <td className="p-3 border-b">{item.ProductName}</td>
-                  <td className="p-3 border-b">{(item.UnitPrice ?? 0).toLocaleString()}</td>
+                  <td className="p-3 border-b">
+                    {(item.UnitPrice ?? 0).toLocaleString()}
+                  </td>
                   <td className="p-3 border-b">{item.Quantity}</td>
                   <td className="p-3 border-b font-semibold">
-                    {(item.UnitPrice ?? 0) * (item.Quantity ?? 0).toLocaleString()}
+                    {(item.UnitPrice ?? 0) *
+                      (item.Quantity ?? 0).toLocaleString()}
                   </td>
                 </tr>
               ))}
@@ -187,12 +198,17 @@ const BuyerPayment: React.FC = () => {
         {showQR && qrList.length > 0 && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 overflow-y-auto">
             <div className="bg-white p-6 rounded shadow-lg text-center max-w-md w-full flex flex-col items-center">
-              <h3 className="text-lg font-bold mb-4">สแกนจ่ายหรืออัปโหลดสลิป</h3>
+              <h3 className="text-lg font-bold mb-4">
+                สแกนจ่ายหรืออัปโหลดสลิป
+              </h3>
 
               {qrList.map((q, idx) => {
                 const seller = order.Sellers[idx];
                 return (
-                  <div key={idx} className="mb-6 flex flex-col items-center w-full">
+                  <div
+                    key={idx}
+                    className="mb-6 flex flex-col items-center w-full"
+                  >
                     <p className="font-semibold mb-2">{q.sellerName}</p>
                     <QRCode value={q.qrData} size={200} />
                     <p className="mt-2 text-gray-700">
