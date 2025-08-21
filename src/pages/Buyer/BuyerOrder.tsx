@@ -148,15 +148,15 @@ const BuyerOrder: React.FC = () => {
                 className="bg-white rounded-lg shadow-sm p-4 flex flex-col gap-4"
               >
                 {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-0">
+                  {/* ซ้าย: ชื่อร้าน + รหัสคำสั่งซื้อ + วันที่ */}
                   <div className="flex flex-col">
-                    {/* แสดงชื่อร้านด้านบน */}
                     {(order.sellers ?? []).map((seller) => (
                       <h2
                         key={seller.sellerId}
                         className="font-semibold text-lg text-gray-800 mb-1"
                       >
-                        ร้านค้าของ : {seller.sellerName}
+                        ร้านค้า: {seller.sellerName}
                       </h2>
                     ))}
 
@@ -168,7 +168,8 @@ const BuyerOrder: React.FC = () => {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  {/* ขวา: สถานะ + ปุ่ม */}
+                  <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0">
                     <span
                       className={`px-2 py-1 rounded text-sm font-semibold ${
                         order.statusLabel === "รอจ่าย"
@@ -259,7 +260,8 @@ const BuyerOrder: React.FC = () => {
                             </p>
                             {/* ใส่ mt-2 เพื่อเพิ่มระยะห่างกับบรรทัดบน */}
                             <p className="text-red-500 font-bold mt-2">
-                              ราคาหน่วยละ : {item.unitPrice.toLocaleString()} บาท
+                              ราคาหน่วยละ : {item.unitPrice.toLocaleString()}{" "}
+                              บาท
                             </p>
                           </div>
                         </li>
