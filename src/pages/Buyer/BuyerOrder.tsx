@@ -5,7 +5,6 @@ import { getProductTypeName } from "@/constants/productTypes";
 import { useNavigate } from "react-router-dom";
 import { formatThaiDateTime } from "@/lib/utils";
 
-
 interface BuyerOrderItem {
   productId: string;
   productName: string;
@@ -32,10 +31,13 @@ interface OrderType {
   sellers: SellerGroup[];
 }
 
+const tabs = ["รอจ่าย", "จ่ายแล้ว", "ยกเลิก"] as const;
+
 const BuyerOrder: React.FC = () => {
   const [orders, setOrders] = useState<OrderType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState<typeof tabs[number]>("รอจ่าย");
   const navigate = useNavigate();
 
   const fetchOrders = async () => {
@@ -92,11 +94,13 @@ const BuyerOrder: React.FC = () => {
     }
   };
 
-  
-
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  const filteredOrders = orders.filter(
+    (o) => o.statusLabel === activeTab
+  );
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6 bg-gray-100 min-h-screen">
@@ -104,17 +108,34 @@ const BuyerOrder: React.FC = () => {
         ประวัติคำสั่งซื้อของฉัน
       </h2>
 
+      {/* Tabs */}
+      <div className="flex gap-2 mb-4">
+        {tabs.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 rounded-t-lg font-semibold ${
+              activeTab === tab
+                ? "bg-white border-t border-l border-r border-gray-300"
+                : "bg-gray-200 text-gray-600"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <p className="text-gray-500">กำลังโหลด...</p>
       ) : error ? (
         <p className="text-red-500 mb-4 p-4 bg-white rounded-lg">{error}</p>
-      ) : orders.length === 0 ? (
+      ) : filteredOrders.length === 0 ? (
         <p className="text-gray-600 text-center py-10 text-lg bg-white rounded-lg">
-          ยังไม่มีคำสั่งซื้อ
+          ไม่มีคำสั่งซื้อในหมวดนี้
         </p>
       ) : (
         <div className="flex flex-col gap-6">
-          {orders.map((order) => {
+          {filteredOrders.map((order) => {
             const { thaiDate, thaiTime } = formatThaiDateTime(order.createDate);
             const totalPrice = order.sellers.reduce(
               (sum, seller) =>
@@ -144,7 +165,7 @@ const BuyerOrder: React.FC = () => {
                       className={`px-2 py-1 rounded text-sm font-semibold ${
                         order.statusLabel === "รอจ่าย"
                           ? "bg-yellow-100 text-yellow-800"
-                          : order.statusLabel === "ชำระเงินแล้ว"
+                          : order.statusLabel === "จ่ายแล้ว"
                           ? "bg-green-100 text-green-800"
                           : "bg-gray-100 text-gray-800"
                       }`}
@@ -173,7 +194,7 @@ const BuyerOrder: React.FC = () => {
                               try {
                                 await cancelOrder(order.orderId);
                                 toast.success("ยกเลิกคำสั่งซื้อเรียบร้อยแล้ว");
-                                fetchOrders(); // โหลดข้อมูลใหม่
+                                fetchOrders();
                               } catch (err: any) {
                                 toast.error(
                                   err.message || "ไม่สามารถยกเลิกคำสั่งซื้อได้"
