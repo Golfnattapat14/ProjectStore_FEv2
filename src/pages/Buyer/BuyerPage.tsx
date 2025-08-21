@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { getProducts } from "@/api/Buyer";
 import { ProductResponse } from "@/types/product";
 import { useCart } from "@/components/layouts/CartContext";
@@ -17,8 +17,12 @@ const BuyerPage: React.FC = () => {
   const [quantityToAdd, setQuantityToAdd] = useState<{ [id: string]: number }>(
     {}
   );
-
   const { addToCart } = useCart();
+  const cartIconRef = useRef<HTMLDivElement>(null);
+  const [flyItem, setFlyItem] = useState<{
+    img: string;
+    start: { top: number; left: number };
+  } | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -29,10 +33,6 @@ const BuyerPage: React.FC = () => {
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [releaseDateFrom, setReleaseDateFrom] = useState<string>("");
   const [releaseDateTo, setReleaseDateTo] = useState<string>("");
-  const [flyItem, setFlyItem] = useState<{ id: string; img: string } | null>(
-    null
-  );
-  
 
   const loadProducts = (
     keywordParam = searchKeyword,
@@ -80,22 +80,32 @@ const BuyerPage: React.FC = () => {
     });
   };
 
-  const handleAddToCart = async (productId: string, p: ProductResponse) => {
+  const handleAddToCart = async (
+    productId: string,
+    p: ProductResponse,
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => {
     try {
       setAddingToCartId(productId);
-      const qty = quantityToAdd[productId] ?? 1;
 
-      await addToCart(productId, qty);
-      if (p.filePath) {
+      // หาตำแหน่งของภาพสินค้า
+      const productEl = e.currentTarget.closest(".group") as HTMLElement;
+      if (productEl && p.filePath) {
+        const rect = productEl.getBoundingClientRect();
+        const scrollY = window.scrollY || window.pageYOffset;
+        const scrollX = window.scrollX || window.pageXOffset;
         setFlyItem({
-          id: productId,
           img: p.filePath.includes("dropbox.com")
             ? p.filePath.replace("?dl=0", "?raw=1")
             : p.filePath,
+          start: { top: rect.top + scrollY, left: rect.left + scrollX },
         });
       }
-      toast.success("เพิ่มสินค้าในตะกร้าเรียบร้อย");
 
+      const qty = quantityToAdd[productId] ?? 1;
+      await addToCart(productId, qty);
+
+      toast.success("เพิ่มสินค้าในตะกร้าเรียบร้อย");
       setQuantityToAdd((prev) => ({ ...prev, [productId]: 1 }));
 
       setLoading(true);
@@ -105,11 +115,7 @@ const BuyerPage: React.FC = () => {
       setLoading(false);
     } catch (error: any) {
       console.error(error);
-      toast.error(
-        error?.response?.data?.message ||
-          error?.message ||
-          "เพิ่มสินค้าไม่สำเร็จ"
-      );
+      toast.error(error?.message || "เพิ่มสินค้าไม่สำเร็จ");
       setLoading(false);
     } finally {
       setAddingToCartId(null);
@@ -117,14 +123,12 @@ const BuyerPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] pb-20">
+    <div className="min-h-screen bg-[#f5f5f5] pb-20 relative">
       {/* Sticky Top Bar */}
       <div className="sticky top-0 z-20 bg-white shadow-md border-b border-orange-200">
         <div className="max-w-7xl mx-auto flex items-center px-4 py-3 gap-4">
           <div className="flex-1" />
-          <div className="relative ml-4">
-            <CartIcon />
-          </div>
+          <CartIcon ref={cartIconRef} />
         </div>
       </div>
 
@@ -194,6 +198,7 @@ const BuyerPage: React.FC = () => {
                     style={{ animationDelay: `${0.05 * index}s` }}
                     title={p.productName}
                   >
+                    {/* Product Image & Info */}
                     <div className="relative pb-[100%] overflow-hidden rounded-t-xl">
                       {p.filePath ? (
                         <img
@@ -233,6 +238,7 @@ const BuyerPage: React.FC = () => {
                         ชิ้น
                       </p>
 
+                      {/* Add to Cart */}
                       <div className="mt-auto flex flex-col gap-2">
                         <div className="flex flex-col items-center gap-2">
                           <span className="text-base sm:text-lg font-semibold text-orange-500">
@@ -268,10 +274,7 @@ const BuyerPage: React.FC = () => {
                         </div>
                         <button
                           disabled={addingToCartId === p.id || p.quantity === 0}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddToCart(p.id, p); // ส่ง p ด้วย
-                          }}
+                          onClick={(e) => handleAddToCart(p.id, p, e)}
                           className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed shadow"
                         >
                           {addingToCartId === p.id
@@ -304,6 +307,35 @@ const BuyerPage: React.FC = () => {
           </section>
         </div>
       </main>
+
+      {/* Fly-to-Cart */}
+      {flyItem && cartIconRef.current && (
+        <img
+          src={flyItem.img}
+          className="fixed w-16 h-16 rounded-lg shadow-lg pointer-events-none z-50"
+          style={{
+            top: flyItem.start.top + "px",
+            left: flyItem.start.left + "px",
+            transition: "all 0.7s ease-in-out",
+          }}
+          ref={(el) => {
+            if (el) {
+              requestAnimationFrame(() => {
+                const cartRect = cartIconRef.current!.getBoundingClientRect();
+                const scrollY = window.scrollY || window.pageYOffset;
+                const scrollX = window.scrollX || window.pageXOffset;
+
+                el.style.top = cartRect.top + scrollY + "px";
+                el.style.left = cartRect.left + scrollX + "px";
+                el.style.width = "20px";
+                el.style.height = "20px";
+                el.style.opacity = "0.5";
+              });
+            }
+          }}
+          onTransitionEnd={() => setFlyItem(null)}
+        />
+      )}
 
       {/* Tailwind Animation */}
       <style>
