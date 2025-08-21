@@ -37,7 +37,7 @@ const BuyerOrder: React.FC = () => {
   const [orders, setOrders] = useState<OrderType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<typeof tabs[number]>("รอจ่าย");
+  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("รอจ่าย");
   const navigate = useNavigate();
 
   const fetchOrders = async () => {
@@ -98,9 +98,7 @@ const BuyerOrder: React.FC = () => {
     fetchOrders();
   }, []);
 
-  const filteredOrders = orders.filter(
-    (o) => o.statusLabel === activeTab
-  );
+  const filteredOrders = orders.filter((o) => o.statusLabel === activeTab);
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6 bg-gray-100 min-h-screen">
@@ -216,7 +214,11 @@ const BuyerOrder: React.FC = () => {
                     <h4 className="font-semibold mt-2">{seller.sellerName}</h4>
                     <ul className="divide-y divide-gray-200">
                       {(seller.items ?? []).map((item) => (
-                        <li key={item.productId} className="flex gap-4 py-4">
+                        <li
+                          key={item.productId}
+                          className="flex gap-4 py-4 items-center"
+                        >
+                          {/* รูปภาพ */}
                           <div className="w-20 h-20 flex-shrink-0 rounded overflow-hidden border border-gray-200">
                             {item.filePath ? (
                               <img
@@ -234,6 +236,8 @@ const BuyerOrder: React.FC = () => {
                               </div>
                             )}
                           </div>
+
+                          {/* รายละเอียด */}
                           <div className="flex-grow flex flex-col justify-between">
                             <p className="font-semibold text-gray-900 line-clamp-2">
                               {item.productName}
@@ -241,11 +245,12 @@ const BuyerOrder: React.FC = () => {
                             <p className="text-sm text-gray-500 mt-1">
                               ประเภท: {item.productTypeLabel}
                             </p>
-                            <p className="text-red-500 font-bold mt-1">
-                              {(
-                                item.unitPrice * item.quantity
-                              ).toLocaleString()}{" "}
-                              บาท
+                            <p className="text-sm text-gray-500 mt-1">
+                              จำนวน: {item.quantity} ชิ้น
+                            </p>
+                            {/* ใส่ mt-2 เพื่อเพิ่มระยะห่างกับบรรทัดบน */}
+                            <p className="text-red-500 font-bold mt-2">
+                              ราคาชิ้นละ: {item.unitPrice.toLocaleString()} บาท
                             </p>
                           </div>
                         </li>
