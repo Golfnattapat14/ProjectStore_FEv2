@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { getBuyerOrders } from "@/api/Buyer";
+import { cancelOrder, getBuyerOrders } from "@/api/Buyer";
 import { getProductTypeName } from "@/constants/productTypes";
 import { useNavigate } from "react-router-dom";
 import { formatThaiDateTime } from "@/lib/utils";
+
 
 interface BuyerOrderItem {
   productId: string;
@@ -45,38 +46,42 @@ const BuyerOrder: React.FC = () => {
       const data = await getBuyerOrders();
 
       // รวม orderId เดียวกันเป็น order เดียว
-      const mergedOrders: OrderType[] = data.reduce((acc: OrderType[], curr: any) => {
-        let order = acc.find(o => o.orderId === curr.orderId);
-        if (!order) {
-          order = {
-            orderId: curr.orderId,
-            status: curr.status,
-            statusLabel: curr.statusLabel ?? "ไม่ระบุสถานะ",
-            buyerName: curr.buyerName,
-            buyerId: curr.buyerId,
-            createDate: curr.createDate,
-            sellers: [],
-          };
-          acc.push(order);
-        }
+      const mergedOrders: OrderType[] = data.reduce(
+        (acc: OrderType[], curr: any) => {
+          let order = acc.find((o) => o.orderId === curr.orderId);
+          if (!order) {
+            order = {
+              orderId: curr.orderId,
+              status: curr.status,
+              statusLabel: curr.statusLabel ?? "ไม่ระบุสถานะ",
+              buyerName: curr.buyerName,
+              buyerId: curr.buyerId,
+              createDate: curr.createDate,
+              sellers: [],
+            };
+            acc.push(order);
+          }
 
-        // เพิ่ม seller ปัจจุบันเข้า order
-        order.sellers.push({
-          sellerId: curr.sellerId,
-          sellerName: curr.sellerName || "ร้านค้าไม่ระบุชื่อ",
-          items: (curr.items ?? []).map((i: any) => ({
-            productId: i.productId,
-            productName: i.productName,
-            unitPrice: i.unitPrice ?? 0,
-            quantity: i.quantity ?? 1,
-            productType: i.productType,
-            productTypeLabel: i.productTypeLabel ?? getProductTypeName(i.productType),
-            filePath: i.filePath ?? "",
-          })),
-        });
+          // เพิ่ม seller ปัจจุบันเข้า order
+          order.sellers.push({
+            sellerId: curr.sellerId,
+            sellerName: curr.sellerName || "ร้านค้าไม่ระบุชื่อ",
+            items: (curr.items ?? []).map((i: any) => ({
+              productId: i.productId,
+              productName: i.productName,
+              unitPrice: i.unitPrice ?? 0,
+              quantity: i.quantity ?? 1,
+              productType: i.productType,
+              productTypeLabel:
+                i.productTypeLabel ?? getProductTypeName(i.productType),
+              filePath: i.filePath ?? "",
+            })),
+          });
 
-        return acc;
-      }, []);
+          return acc;
+        },
+        []
+      );
 
       setOrders(mergedOrders);
     } catch (err: any) {
@@ -86,6 +91,8 @@ const BuyerOrder: React.FC = () => {
       setLoading(false);
     }
   };
+
+  
 
   useEffect(() => {
     fetchOrders();
@@ -146,14 +153,38 @@ const BuyerOrder: React.FC = () => {
                     </span>
 
                     {order.statusLabel === "รอจ่าย" && (
-                      <button
-                        className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
-                        onClick={() =>
-                          navigate(`/buyer/buyerPayment/${order.orderId}`)
-                        }
-                      >
-                        ชำระเงิน
-                      </button>
+                      <>
+                        <button
+                          className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
+                          onClick={() =>
+                            navigate(`/buyer/buyerPayment/${order.orderId}`)
+                          }
+                        >
+                          ชำระเงิน
+                        </button>
+                        <button
+                          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                          onClick={async () => {
+                            if (
+                              window.confirm(
+                                "คุณต้องการยกเลิกคำสั่งซื้อนี้หรือไม่?"
+                              )
+                            ) {
+                              try {
+                                await cancelOrder(order.orderId);
+                                toast.success("ยกเลิกคำสั่งซื้อเรียบร้อยแล้ว");
+                                fetchOrders(); // โหลดข้อมูลใหม่
+                              } catch (err: any) {
+                                toast.error(
+                                  err.message || "ไม่สามารถยกเลิกคำสั่งซื้อได้"
+                                );
+                              }
+                            }
+                          }}
+                        >
+                          ยกเลิก
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -190,7 +221,10 @@ const BuyerOrder: React.FC = () => {
                               ประเภท: {item.productTypeLabel}
                             </p>
                             <p className="text-red-500 font-bold mt-1">
-                              {(item.unitPrice * item.quantity).toLocaleString()} บาท
+                              {(
+                                item.unitPrice * item.quantity
+                              ).toLocaleString()}{" "}
+                              บาท
                             </p>
                           </div>
                         </li>

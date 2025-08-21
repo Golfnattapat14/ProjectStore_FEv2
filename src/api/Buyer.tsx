@@ -267,3 +267,12 @@ export const payOrderWithSlip = async (payload: PaymentSlipPayload) => {
   return res.json(); // จะได้ { message, orderId, slipData }
 };
 
+export const cancelOrder = async (orderId: string) => {
+  const res = await fetch(`${BASE}buyer/orders/${orderId}/cancel`, {
+    method: "POST",
+    headers: getAuthHeadersJSON(),
+  });
+
+  if (!res.ok) throw new Error("ไม่สามารถยกเลิกออเดอร์ได้");
+  return await res.json();
+};
