@@ -1,9 +1,9 @@
 // CartIcon.tsx
-import React, { forwardRef, useEffect, useState } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "./CartContext";
 
-const CartIcon = forwardRef<HTMLDivElement>((props, ref) => {
+const CartIcon = forwardRef<HTMLDivElement>((_props, ref) => {
   const navigate = useNavigate();
   const { totalCount } = useCart();
   const [animate, setAnimate] = useState(false);

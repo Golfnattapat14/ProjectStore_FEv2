@@ -199,7 +199,7 @@ const BuyerPayment: React.FC = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 overflow-y-auto">
             <div className="bg-white p-6 rounded shadow-lg text-center max-w-md w-full flex flex-col items-center">
               <h3 className="text-lg font-bold mb-4">
-                สแกนจ่ายหรืออัปโหลดสลิป
+                สแกนจ่ายและอัปโหลดสลิป
               </h3>
 
               {qrList.map((q, idx) => {
