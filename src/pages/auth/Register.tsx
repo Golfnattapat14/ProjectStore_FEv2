@@ -14,6 +14,7 @@ import Shop from "../../assets/Shop.png";
 import { registerUser } from "@/api/authApi";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useCart } from "@/components/layouts/CartContext";
 
 type RoleType = "Buyer" | "Seller";
 
@@ -26,35 +27,59 @@ export const Register = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState(""); // เพิ่มเบอร์
   const [role, setRole] = useState<RoleType>("Buyer");
-
   const [showError, setShowError] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
+  const { refreshCart } = useCart();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password || !confirmPassword || !role) {
+
+    if (!username || !password || !confirmPassword || !role || !phoneNumber) {
       setShowError(true);
+      toast.error("Please fill in all required fields");
       return;
     }
+
     if (password !== confirmPassword) {
       setShowError(true);
+      toast.error("Password and Confirm Password do not match");
       return;
     }
+
+    if (!/^\d+$/.test(phoneNumber)) {
+      setShowError(true);
+      toast.error("Phone number must contain digits only");
+      return;
+    }
+
     setShowError(false);
+    setLoading(true);
 
-    const dataToSend = { username, password, role };
     try {
+      const dataToSend = { username, password, role, phoneNumber }; // ส่งเบอร์ด้วย
       const result = await registerUser(dataToSend);
-      toast.success("Register Success! Welcome " + result.username);
 
-      navigate("/");
+      // สมมติ API ส่ง token กลับมาเหมือน login
+      localStorage.setItem("token", result.token);
+      localStorage.setItem("username", result.username);
+      localStorage.setItem("role", result.role.toLowerCase());
+
+      await refreshCart(); // โหลด cart ทันทีหลัง register
+
+      toast.success("Register Success! Welcome " + result.username);
+      navigate("/"); // หรือหน้า login/landing ตามต้องการ
     } catch (error: unknown) {
       if (error instanceof Error) {
         alert(error.message);
       } else {
         alert("Unexpected error occurred.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,10 +102,8 @@ export const Register = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className={`w-full ${showError && !username ? "border-2 border-red-400" : ""}`}
+                disabled={loading}
               />
-              {showError && !username && (
-                <p className="text-xs text-red-400 my-1">This field is required</p>
-              )}
             </div>
 
             <div className="w-full">
@@ -92,10 +115,8 @@ export const Register = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className={`w-full ${showError && !password ? "border-2 border-red-400" : ""}`}
+                disabled={loading}
               />
-              {showError && !password && (
-                <p className="text-xs text-red-400 my-1">This field is required</p>
-              )}
             </div>
 
             <div className="w-full">
@@ -107,10 +128,20 @@ export const Register = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className={`w-full ${showError && !confirmPassword ? "border-2 border-red-400" : ""}`}
+                disabled={loading}
               />
-              {showError && !confirmPassword && (
-                <p className="text-xs text-red-400 my-1">This field is required</p>
-              )}
+            </div>
+
+            <div className="w-full">
+              <span className="font-semibold text-sm text-gray-400">Phone Number</span>
+              <Input
+                id="phoneNumber"
+                name="phoneNumber"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                className={`w-full ${showError && !phoneNumber ? "border-2 border-red-400" : ""}`}
+                disabled={loading}
+              />
             </div>
 
             <div className="w-full">
@@ -118,6 +149,7 @@ export const Register = () => {
               <Select
                 value={role}
                 onValueChange={(value) => setRole(value as RoleType)}
+                disabled={loading}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Role" />
@@ -135,8 +167,8 @@ export const Register = () => {
             </div>
           </div>
 
-          <Button type="submit" className="w-full">
-            Register
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Loading..." : "Register"}
           </Button>
 
           <p className="text-xs text-center">

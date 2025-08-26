@@ -6,13 +6,15 @@ import Shop from "../../assets/Shop.png";
 import { loginUser } from "@/api/authApi";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useCart } from "@/components/layouts/CartContext";
 
 export const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showError, setShowError] = useState(false);
-  const [loading, setLoading] = useState(false);  // <-- เพิ่มตรงนี้
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { refreshCart } = useCart(); // <-- get refreshCart
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,19 +23,23 @@ export const Login = () => {
       return;
     }
     setShowError(false);
-    setLoading(true);  // เริ่มโหลด
+    setLoading(true);
 
     try {
       const formData = { username: username, password: password };
       const result = await loginUser(formData);
+
+      // เก็บ token และข้อมูล user
       localStorage.setItem("token", result.token);
       localStorage.setItem("username", result.username);
       localStorage.setItem("role", result.role.toLowerCase());
 
-      window.dispatchEvent(new Event("storage"));
+      // โหลด cart ทันทีหลัง login
+      await refreshCart();
 
       toast.success("Login success!");
 
+      // redirect ตาม role
       switch (result.role.toLowerCase()) {
         case "admin":
           navigate("/admin");
@@ -51,7 +57,7 @@ export const Login = () => {
     } catch (error: unknown) {
       alert(error instanceof Error ? error.message : "Login error occurred.");
     } finally {
-      setLoading(false); // โหลดเสร็จ
+      setLoading(false);
     }
   };
 
@@ -77,7 +83,7 @@ export const Login = () => {
                 className={`w-full, ${
                   showError && !username ? "border-2 border-red-400" : ""
                 }`}
-                disabled={loading} // ปิด input ตอนโหลด
+                disabled={loading}
               />
               {showError && !username && (
                 <p className="text-xs text-red-400 my-1">This field is required</p>
@@ -94,7 +100,7 @@ export const Login = () => {
                 className={`w-full, ${
                   showError && !password ? "border-2 border-red-400" : ""
                 }`}
-                disabled={loading} // ปิด input ตอนโหลด
+                disabled={loading}
               />
               {showError && !password && (
                 <p className="text-xs text-red-400 my-1">This field is required</p>

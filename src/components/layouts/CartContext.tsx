@@ -36,6 +36,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [cart, setCart] = useState<CartStore[]>([]);
 
   const refreshCart = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return; // ถ้ายังไม่ล็อกอิน → ไม่เรียก API
     try {
       const data = await getCartItems();
       setCart(Array.isArray(data) ? data : []);
@@ -46,20 +48,26 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    refreshCart();
+    refreshCart(); // โหลดตอน mount แต่ถ้ายังไม่มี token จะไม่เรียก
   }, []);
 
   const addToCart = async (productId: string, quantity = 1) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
     await apiAddToCart(productId, quantity);
     await refreshCart();
   };
 
   const removeFromCart = async (cartId: string) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
     await removeCartItem(cartId);
     await refreshCart();
   };
 
   const updateCartQuantity = async (cartId: string, quantity: number) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
     await updateCartItem(cartId, quantity);
     await refreshCart();
   };
