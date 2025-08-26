@@ -378,50 +378,45 @@ const BuyerCart: React.FC = () => {
         </div>
 
         {/* สรุปตะกร้า */}
-        <div className="w-full lg:w-96">
-          <div className="bg-white rounded-lg shadow-sm p-6 sticky top-4">
-            <h3 className="text-xl font-bold mb-4 text-gray-800">
-              สรุปยอดชำระ
-            </h3>
-            <div className="flex justify-between items-center mb-2">
-              <p className="text-gray-600">
-                สินค้าที่เลือก ({selectedItems.size} ชิ้น)
-              </p>
-              {/* <p className="font-semibold text-gray-800">
-                {selectedTotalPrice.toLocaleString()} บาท
-              </p> */}
-            </div>
-            <hr className="my-4" />
-            {/* <div className="flex justify-between items-center text-xl font-bold text-gray-900">
-              <p>รวมทั้งหมด</p>
-              <p>{selectedTotalPrice.toLocaleString()} บาท</p>
-            </div> */}
-            <div className="mb-4">
-              <label className="block text-gray-700 font-semibold mb-2">
-                ที่อยู่จัดส่ง
-              </label>
-              <textarea
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="w-full p-2 border rounded-lg"
-                rows={3}
-                placeholder="เช่น นายอำนวย แสงสุข
+        {cartData.flatMap((s) => s.items).length > 0 && (
+          <div className="w-full lg:w-96">
+            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-4">
+              <h3 className="text-xl font-bold mb-4 text-gray-800">
+                สรุปยอดชำระ
+              </h3>
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-gray-600">
+                  สินค้าที่เลือก ({selectedItems.size} ชิ้น)
+                </p>
+              </div>
+              <hr className="my-4" />
+              <div className="mb-4">
+                <label className="block text-gray-700 font-semibold mb-2">
+                  ที่อยู่จัดส่ง
+                </label>
+                <textarea
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="w-full p-2 border rounded-lg"
+                  rows={3}
+                  placeholder="เช่น นายอำนวย แสงสุข
 99/9 ถนนเพชรบุรี เขตราชเทวี กรุงเทพฯ 10400 เบอร์โทร 0812345678"
-              />
+                />
+              </div>
+              <button
+                disabled={selectedItems.size === 0}
+                className={`w-full mt-6 py-3 rounded-lg text-white font-bold transition ${
+                  selectedItems.size === 0
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-orange-500 hover:bg-orange-600"
+                }`}
+                onClick={handleCheckout}
+              >
+                สั่งซื้อ
+              </button>
             </div>
-            <button
-              disabled={selectedItems.size === 0}
-              className={`w-full mt-6 py-3 rounded-lg text-white font-bold transition ${
-                selectedItems.size === 0
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-orange-500 hover:bg-orange-600"
-              }`}
-              onClick={handleCheckout}
-            >
-              สั่งซื้อ
-            </button>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
