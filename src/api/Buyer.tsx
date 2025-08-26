@@ -3,6 +3,12 @@ import { getAuthHeadersJSON } from "./Token";
 
 const BASE = "http://localhost:5260/api/";
 
+export enum OrderStatus {
+  Pending = 1, // รอจ่าย
+  Paid = 2, // จ่ายแล้ว
+  Cancelled = 3, // ยกเลิก
+}
+
 export interface CheckoutItem {
   productId: string;
   quantity: number;
@@ -11,6 +17,7 @@ export interface CheckoutItem {
 
 export interface CheckoutRequest {
   sellerId: string; // รหัสร้านค้า
+  address: string; // ที่อยู่จัดส่ง
   items: CheckoutItem[]; // รายการสินค้า
 }
 
@@ -216,7 +223,6 @@ export const getOrderDetail = async (orderId: string) => {
   };
 };
 
-
 export const payOrder = async (
   orderId: string,
   paidAmount: number,
@@ -275,4 +281,22 @@ export const cancelOrder = async (orderId: string) => {
 
   if (!res.ok) throw new Error("ไม่สามารถยกเลิกออเดอร์ได้");
   return await res.json();
+};
+
+export const updateOrderAddress = async (orderId: string, address: string) => {
+  const res = await fetch(`${BASE}buyer/update-address/${orderId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+    body: JSON.stringify({ address }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.message || "ไม่สามารถอัปเดตที่อยู่ได้");
+  }
+
+  return res.json();
 };

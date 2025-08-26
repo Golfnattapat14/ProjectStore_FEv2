@@ -25,6 +25,7 @@ const BuyerCart: React.FC = () => {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
+  const [address, setAddress] = useState("");
 
   // ดึงข้อมูลตะกร้า
   const fetchCart = async () => {
@@ -156,6 +157,7 @@ const BuyerCart: React.FC = () => {
 
           return {
             sellerId: store.sellerId || "",
+            address: address,
             items,
           };
         })
@@ -394,6 +396,19 @@ const BuyerCart: React.FC = () => {
               <p>รวมทั้งหมด</p>
               <p>{selectedTotalPrice.toLocaleString()} บาท</p>
             </div> */}
+            <div className="mb-4">
+              <label className="block text-gray-700 font-semibold mb-2">
+                ที่อยู่จัดส่ง
+              </label>
+              <textarea
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="w-full p-2 border rounded-lg"
+                rows={3}
+                placeholder="เช่น นายอำนวย แสงสุข
+99/9 ถนนเพชรบุรี เขตราชเทวี กรุงเทพฯ 10400 เบอร์โทร 0812345678"
+              />
+            </div>
             <button
               disabled={selectedItems.size === 0}
               className={`w-full mt-6 py-3 rounded-lg text-white font-bold transition ${
