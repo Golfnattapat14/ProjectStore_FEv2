@@ -98,7 +98,6 @@ const BuyerPayment: React.FC = () => {
   };
 
   // ส่งสลิป / refCode ไป API
-  // ส่งสลิป / refCode ไป API
   const handlePayWithSlip = async (seller: any, refCode: string) => {
     const sellerId = seller.SellerId;
     const paidAmount = seller.TotalAmount;
