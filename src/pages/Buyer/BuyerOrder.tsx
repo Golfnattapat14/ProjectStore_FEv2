@@ -119,16 +119,19 @@ const BuyerOrder: React.FC = () => {
       </h2>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-4 border-b border-gray-300">
         {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-t-lg font-semibold ${
-              activeTab === tab
-                ? "bg-white border-t border-l border-r border-gray-300"
-                : "bg-gray-200 text-gray-600"
-            }`}
+            className={`
+        relative px-4 py-2 font-semibold transition
+        ${
+          activeTab === tab
+            ? "text-blue-600 after:content-[''] after:absolute after:-bottom-1 after:left-0 after:right-0 after:h-1 after:bg-blue-600"
+            : "text-gray-600 hover:text-blue-600"
+        }
+      `}
           >
             {tab}
           </button>
@@ -297,14 +300,14 @@ const BuyerOrder: React.FC = () => {
                       </h4>
 
                       {editingOrderId === order.orderId ? (
-                        <div className="flex flex-col md:flex-row gap-2">
-                          <input
-                            type="text"
-                            className="flex-1 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                        <div className="flex flex-col gap-2 md:gap-4">
+                          <textarea
+                            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 resize-none"
+                            rows={3}
                             value={tempAddress}
                             onChange={(e) => setTempAddress(e.target.value)}
                           />
-                          <div className="flex gap-2 mt-2 md:mt-0">
+                          <div className="flex gap-2">
                             <button
                               className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition text-sm"
                               onClick={async () => {
