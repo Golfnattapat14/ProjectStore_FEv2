@@ -134,8 +134,14 @@ const BuyerCart: React.FC = () => {
       .every((item) => selectedItems.has(item.id));
 
   // สั่งซื้อ
+  // สั่งซื้อ
   const handleCheckout = async () => {
     if (selectedItems.size === 0) return;
+
+    if (!address.trim()) {
+      toast.error("กรุณากรอกที่อยู่จัดส่ง");
+      return;
+    }
 
     if (
       !confirm(`คุณต้องการสั่งซื้อสินค้าที่เลือก (${selectedItems.size} ชิ้น)?`)
@@ -157,11 +163,11 @@ const BuyerCart: React.FC = () => {
 
           return {
             sellerId: store.sellerId || "",
-            address: address,
+            address: address.trim(), // ส่งที่อยู่หลัง trim
             items,
           };
         })
-        .filter((x): x is CheckoutRequest => x !== null); // Type guard
+        .filter((x): x is CheckoutRequest => x !== null);
 
       console.log("Checkout payload:", JSON.stringify(payload, null, 2));
 
@@ -172,6 +178,7 @@ const BuyerCart: React.FC = () => {
       );
 
       setSelectedItems(new Set());
+      setAddress(""); // reset ช่องที่อยู่
       fetchCart();
       navigate("/buyerOrder");
     } catch (err: any) {
