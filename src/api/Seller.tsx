@@ -176,3 +176,14 @@ export async function deleteProductFile(id: string): Promise<void> {
     throw new Error(errorData.error || "ไม่สามารถลบไฟล์ของสินค้าได้");
   }
 }
+
+export const shipOrder = async (orderId: string) => {
+  const res = await fetch(`${BASE}buyer/orders/${orderId}/ship`, {
+    method: "POST",
+    headers: getAuthHeadersJSON(),
+  });
+
+  if (!res.ok) throw new Error("อัปเดตสถานะไม่สำเร็จ");
+  return res.json();
+};
+

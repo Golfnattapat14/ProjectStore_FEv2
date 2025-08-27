@@ -72,6 +72,7 @@ export const NavbarComponent = () => {
   const sellerLinks: NavigationItem[] = [
     { name: "จัดการสินค้า", path: "/seller" },
     { name: "เพิ่มสินค้า", path: "/sellerAdd" },
+    { name: "สถานะการสั่งซื้อ", path: "/sellerOrder" },
   ];
   
   const roleLinks = role === "buyer" ? buyerLinks : role === "admin" ? adminLinks : [];

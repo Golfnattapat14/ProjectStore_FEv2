@@ -4,7 +4,7 @@ import { cancelOrder, getBuyerOrders, updateOrderAddress } from "@/api/Buyer";
 import { getProductTypeName } from "@/constants/productTypes";
 import { useNavigate } from "react-router-dom";
 import { formatThaiDateTime } from "@/lib/utils";
-import { OrderStatus } from "../../api/Buyer";
+import { OrderStatus } from "../../constants/productTypes";
 
 interface BuyerOrderItem {
   productId: string;

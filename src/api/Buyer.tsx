@@ -3,11 +3,6 @@ import { getAuthHeadersJSON } from "./Token";
 
 const BASE = "http://localhost:5260/api/";
 
-export enum OrderStatus {
-  Pending = 1, // รอจ่าย
-  Paid = 2, // จ่ายแล้ว
-  Cancelled = 3, // ยกเลิก
-}
 
 export interface CheckoutItem {
   productId: string;
