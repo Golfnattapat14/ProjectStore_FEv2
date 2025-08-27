@@ -134,7 +134,6 @@ const BuyerCart: React.FC = () => {
       .every((item) => selectedItems.has(item.id));
 
   // สั่งซื้อ
-  // สั่งซื้อ
   const handleCheckout = async () => {
     if (selectedItems.size === 0) return;
 
