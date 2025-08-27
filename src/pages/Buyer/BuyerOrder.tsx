@@ -1,10 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { cancelOrder, getBuyerOrders, updateOrderAddress } from "@/api/Buyer";
-import { getProductTypeName } from "@/constants/productTypes";
+import {
+  getBuyerOrders,
+  updateOrderStatus,
+  updateOrderAddress,
+  cancelOrder,
+} from "@/api/Buyer";
+import {
+  getProductTypeName,
+  orderStatusColors,
+} from "@/constants/productTypes";
 import { useNavigate } from "react-router-dom";
 import { formatThaiDateTime } from "@/lib/utils";
-import { OrderStatus } from "../../constants/productTypes";
 
 interface BuyerOrderItem {
   productId: string;
@@ -34,17 +41,22 @@ interface OrderType {
   sellers: SellerGroup[];
 }
 
-const tabs = ["รอจ่าย", "จ่ายแล้ว", "ยกเลิก"] as const;
+const tabs = [
+  "รอจ่าย",
+  "จ่ายแล้ว / รอจัดส่ง",
+  "กำลังจัดส่ง",
+  "จัดส่งสำเร็จ",
+  "ยกเลิก",
+] as const;
 
 const BuyerOrder: React.FC = () => {
   const [orders, setOrders] = useState<OrderType[]>([]);
-  const [, setAddressMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("รอจ่าย");
-  const navigate = useNavigate();
   const [editingOrderId, setEditingOrderId] = useState<string>("");
   const [tempAddress, setTempAddress] = useState<string>("");
+  const navigate = useNavigate();
 
   const fetchOrders = async () => {
     try {
@@ -53,7 +65,6 @@ const BuyerOrder: React.FC = () => {
 
       const data = await getBuyerOrders();
 
-      // รวม orderId เดียวกันเป็น order เดียว
       const mergedOrders: OrderType[] = data.reduce(
         (acc: OrderType[], curr: any) => {
           let order = acc.find((o) => o.orderId === curr.orderId);
@@ -93,11 +104,6 @@ const BuyerOrder: React.FC = () => {
       );
 
       setOrders(mergedOrders);
-
-      // กำหนด addressMap
-      const map: Record<string, string> = {};
-      mergedOrders.forEach((o) => (map[o.orderId] = o.address));
-      setAddressMap(map);
     } catch (err: any) {
       setError(err.message || "เกิดข้อผิดพลาด");
       toast.error(err.message || "เกิดข้อผิดพลาด");
@@ -110,7 +116,14 @@ const BuyerOrder: React.FC = () => {
     fetchOrders();
   }, []);
 
-  const filteredOrders = orders.filter((o) => o.statusLabel === activeTab);
+  const filteredOrders = orders.filter((o) => {
+    switch (activeTab) {
+      case "จ่ายแล้ว / รอจัดส่ง":
+        return o.statusLabel === "จ่ายแล้ว";
+      default:
+        return o.statusLabel === activeTab;
+    }
+  });
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6 bg-gray-100 min-h-screen">
@@ -119,19 +132,19 @@ const BuyerOrder: React.FC = () => {
       </h2>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-4 border-b border-gray-300">
+      <div className="flex gap-2 mb-4 border-b border-gray-300 flex-wrap">
         {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`
-        relative px-4 py-2 font-semibold transition
-        ${
-          activeTab === tab
-            ? "text-blue-600 after:content-[''] after:absolute after:-bottom-1 after:left-0 after:right-0 after:h-1 after:bg-blue-600"
-            : "text-gray-600 hover:text-blue-600"
-        }
-      `}
+              relative px-4 py-2 font-semibold transition
+              ${
+                activeTab === tab
+                  ? "text-blue-600 after:content-[''] after:absolute after:-bottom-1 after:left-0 after:right-0 after:h-1 after:bg-blue-600"
+                  : "text-gray-600 hover:text-blue-600"
+              }
+            `}
           >
             {tab}
           </button>
@@ -184,26 +197,24 @@ const BuyerOrder: React.FC = () => {
                   <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0">
                     <span
                       className={`px-2 py-1 rounded text-sm font-semibold ${
-                        order.statusLabel === "รอจ่าย"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : order.statusLabel === "จ่ายแล้ว"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-800"
+                        orderStatusColors[order.statusLabel] ||
+                        "bg-gray-100 text-gray-800"
                       }`}
                     >
                       {order.statusLabel}
                     </span>
 
+                    {/* ปุ่ม Action */}
                     {order.statusLabel === "รอจ่าย" && (
-                      <div className="flex flex-wrap gap-2 mt-2 md:mt-0">
-                        {/* ปุ่มชำระเงิน */}
+                      <div className="flex gap-2">
                         <button
-                          className="flex-1 md:flex-auto px-4 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition"
+                          className="px-4 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition"
                           onClick={() => {
-                            const confirmPayment = window.confirm(
-                              "กรุณาตรวจสอบรายการและที่อยู่ก่อนชำระเงิน\nคุณยืนยันที่จะชำระเงินหรือไม่?"
-                            );
-                            if (confirmPayment) {
+                            if (
+                              window.confirm(
+                                "กรุณาตรวจสอบรายการและที่อยู่ก่อนชำระเงิน\nคุณยืนยันที่จะชำระเงินหรือไม่?"
+                              )
+                            ) {
                               navigate(`/buyer/buyerPayment/${order.orderId}`);
                             }
                           }}
@@ -211,14 +222,11 @@ const BuyerOrder: React.FC = () => {
                           ชำระเงิน
                         </button>
 
-                        {/* ปุ่มยกเลิก */}
                         <button
-                          className="flex-1 md:flex-auto px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition"
+                          className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition"
                           onClick={async () => {
                             if (
-                              window.confirm(
-                                "คุณต้องการยกเลิกคำสั่งซื้อนี้หรือไม่?"
-                              )
+                              window.confirm("คุณต้องการยกเลิกคำสั่งซื้อนี้หรือไม่?")
                             ) {
                               try {
                                 await cancelOrder(order.orderId);
@@ -236,10 +244,31 @@ const BuyerOrder: React.FC = () => {
                         </button>
                       </div>
                     )}
+
+                    {order.statusLabel === "กำลังจัดส่ง" && (
+                      <button
+                        className="px-4 py-2 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition"
+                        onClick={async () => {
+                          if (window.confirm("คุณได้รับสินค้านี้แล้วใช่หรือไม่?")) {
+                            try {
+                              await updateOrderStatus(order.orderId, "สำเร็จ");
+                              toast.success("ยืนยันการรับสินค้าเรียบร้อยแล้ว");
+                              fetchOrders();
+                            } catch (err: any) {
+                              toast.error(
+                                err.message || "ไม่สามารถอัปเดตสถานะได้"
+                              );
+                            }
+                          }
+                        }}
+                      >
+                        ได้รับสินค้าแล้ว
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                {/* รายการสินค้า per seller */}
+                {/* รายการสินค้า */}
                 {(order.sellers ?? []).map((seller) => (
                   <div key={seller.sellerId}>
                     <ul className="divide-y divide-gray-200">
@@ -277,8 +306,7 @@ const BuyerOrder: React.FC = () => {
                               จำนวน: {item.quantity} ชิ้น
                             </p>
                             <p className="text-red-500 font-bold mt-2">
-                              ราคาหน่วยละ : {item.unitPrice.toLocaleString()}{" "}
-                              บาท
+                              ราคาหน่วยละ : {item.unitPrice.toLocaleString()} บาท
                             </p>
                           </div>
                         </li>
@@ -286,6 +314,7 @@ const BuyerOrder: React.FC = () => {
                     </ul>
                   </div>
                 ))}
+
                 {/* สรุปยอดรวม */}
                 <div className="flex justify-end mt-4 font-bold text-gray-800">
                   รวม: {totalPrice.toLocaleString()} บาท
@@ -293,77 +322,64 @@ const BuyerOrder: React.FC = () => {
 
                 {/* ที่อยู่จัดส่ง */}
                 <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                  <div className="flex justify-between items-start gap-3">
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-700 mb-1">
-                        ที่อยู่จัดส่ง
-                      </h4>
-
-                      {editingOrderId === order.orderId ? (
-                        <div className="flex flex-col gap-2 md:gap-4">
-                          <textarea
-                            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 resize-none"
-                            rows={3}
-                            value={tempAddress}
-                            onChange={(e) => setTempAddress(e.target.value)}
-                          />
-                          <div className="flex gap-2">
-                            <button
-                              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition text-sm"
-                              onClick={async () => {
-                                try {
-                                  await updateOrderAddress(
-                                    order.orderId,
-                                    tempAddress
-                                  );
-                                  toast.success("อัปเดตที่อยู่เรียบร้อย");
-                                  setEditingOrderId("");
-                                  fetchOrders();
-                                } catch (err: any) {
-                                  toast.error(
-                                    err.response?.data?.message ||
-                                      "ไม่สามารถอัปเดตที่อยู่ได้"
-                                  );
-                                }
-                              }}
-                            >
-                              บันทึก
-                            </button>
-                            <button
-                              className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition text-sm"
-                              onClick={() => setEditingOrderId("")}
-                            >
-                              ยกเลิก
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-gray-600 line-clamp-2">
-                          {order.address || "ไม่ระบุที่อยู่"}
-                        </p>
-                      )}
+                  <h4 className="font-semibold text-gray-700 mb-1">
+                    ที่อยู่จัดส่ง
+                  </h4>
+                  {order.statusLabel === "รอจ่าย" &&
+                  editingOrderId === order.orderId ? (
+                    <div className="flex flex-col gap-2 md:gap-4">
+                      <textarea
+                        className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 resize-none"
+                        rows={3}
+                        value={tempAddress}
+                        onChange={(e) => setTempAddress(e.target.value)}
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition text-sm"
+                          onClick={async () => {
+                            try {
+                              await updateOrderAddress(order.orderId, tempAddress);
+                              toast.success("อัปเดตที่อยู่เรียบร้อย");
+                              setEditingOrderId("");
+                              fetchOrders();
+                            } catch (err: any) {
+                              toast.error(
+                                err.response?.data?.message ||
+                                  "ไม่สามารถอัปเดตที่อยู่ได้"
+                              );
+                            }
+                          }}
+                        >
+                          บันทึก
+                        </button>
+                        <button
+                          className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition text-sm"
+                          onClick={() => setEditingOrderId("")}
+                        >
+                          ยกเลิก
+                        </button>
+                      </div>
                     </div>
+                  ) : (
+                    <p className="text-gray-600 line-clamp-2">
+                      {order.address || "ไม่ระบุที่อยู่"}
+                    </p>
+                  )}
 
-                    {editingOrderId !== order.orderId &&
-                      order.status === OrderStatus.Pending && (
-                        <div className="flex-shrink-0 mt-2 md:mt-0">
-                          <button
-                            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm"
-                            onClick={() => {
-                              setEditingOrderId(order.orderId);
-                              setTempAddress(order.address);
-                            }}
-                          >
-                            แก้ไข
-                          </button>
-                        </div>
-                      )}
-                  </div>
+                  {order.statusLabel === "รอจ่าย" &&
+                    editingOrderId !== order.orderId && (
+                      <button
+                        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm"
+                        onClick={() => {
+                          setEditingOrderId(order.orderId);
+                          setTempAddress(order.address);
+                        }}
+                      >
+                        แก้ไข
+                      </button>
+                    )}
                 </div>
-                {/* ข้อความเตือนสีแดง อยู่ข้างนอกกรอบ */}
-                <p className="text-red-500 text-sm mt-1 ml-2">
-                  **กรุณาตรวจสอบที่อยู่ให้ถูกต้องก่อนชำระเงิน**
-                </p>
               </div>
             );
           })}

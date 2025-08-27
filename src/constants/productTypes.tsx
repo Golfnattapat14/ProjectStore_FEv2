@@ -52,10 +52,11 @@ export const orderStatusColors: Record<string, string> = {
 
 // ปุ่ม action ต่อสถานะ (label คือข้อความปุ่ม, apiStatus คือค่าที่ส่งไปอัปเดต)
 export const statusNextAction: Record<string, { label: string; apiStatus: string } | null> = {
-  "จ่ายแล้ว": { label: "จัดส่งสินค้า", apiStatus: "กำลังจัดส่ง" },
-  "กำลังจัดส่ง": { label: "จัดส่งสำเร็จ", apiStatus: "จัดส่งสำเร็จ" },
+  "จ่ายแล้ว": { label: "จัดส่งสินค้า", apiStatus: "กำลังจัดส่ง" },       // Seller
+  "กำลังจัดส่ง": { label: "ได้รับสินค้าแล้ว", apiStatus: "จัดส่งสำเร็จ" }, // Buyer หรือ Seller
   "รอจ่าย": null,
   "จัดส่งสำเร็จ": null,
   "ยกเลิก": null,
 };
+
 

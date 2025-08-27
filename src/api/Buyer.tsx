@@ -3,7 +3,6 @@ import { getAuthHeadersJSON } from "./Token";
 
 const BASE = "http://localhost:5260/api/";
 
-
 export interface CheckoutItem {
   productId: string;
   quantity: number;
@@ -20,6 +19,12 @@ export interface CheckoutResponse {
   orderId: string;
   totalAmount: number;
   message: string;
+}
+
+export interface PaymentSlipPayload {
+  orderId: string;
+  paidAmount: number;
+  refCode: string;
 }
 
 export async function getProducts(
@@ -242,12 +247,6 @@ export const payOrder = async (
   return await res.json();
 };
 
-export interface PaymentSlipPayload {
-  orderId: string;
-  paidAmount: number;
-  refCode: string;
-}
-
 export const payOrderWithSlip = async (payload: PaymentSlipPayload) => {
   const headers = {
     ...getAuthHeadersJSON(),
@@ -295,3 +294,25 @@ export const updateOrderAddress = async (orderId: string, address: string) => {
 
   return res.json();
 };
+
+export async function updateOrderStatus(orderId: string, statusLabel: string) {
+  try {
+    const res = await fetch(`${BASE}buyer/update-order-status/${orderId}`, {
+      method: "POST", // หรือ PUT ตาม API ของคุณ
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeadersJSON(),
+      },
+      body: JSON.stringify({ statusLabel }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.message || "ไม่สามารถอัปเดตสถานะได้");
+    }
+
+    return await res.json();
+  } catch (err: any) {
+    throw err;
+  }
+}
