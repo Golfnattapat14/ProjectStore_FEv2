@@ -12,7 +12,10 @@ interface SlipSessionData {
   orderId: string;
   base64: string;
   refCode: string;
+  expireAt: number; // timestamp สิ้นสุด QR
 }
+
+const QR_EXPIRE_MIN = 30; // นาที
 
 const BuyerPayment: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -28,17 +31,15 @@ const BuyerPayment: React.FC = () => {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // เก็บ slip pending สำหรับหลาย seller
+  // เก็บ slip + countdown
   const [pendingSlips, setPendingSlips] = useState<SlipSessionData[]>([]);
+  const [qrCountdowns, setQrCountdowns] = useState<{ [key: string]: number }>({});
 
   const navigate = useNavigate();
 
   // --- session storage helpers ---
   const saveSlipToSession = (data: SlipSessionData) => {
-    sessionStorage.setItem(
-      `pendingSlip_${data.sellerId}`,
-      JSON.stringify(data)
-    );
+    sessionStorage.setItem(`pendingSlip_${data.sellerId}`, JSON.stringify(data));
   };
 
   const getSlipFromSession = (sellerId: string) => {
@@ -57,18 +58,21 @@ const BuyerPayment: React.FC = () => {
       const data = await getOrderDetail(orderId!);
       setOrder(data);
       setAllItems(data.Sellers?.flatMap((s: any) => s.Items) || []);
-      setTotalAmount(
-        data.Sellers?.reduce((sum: number, s: any) => sum + s.TotalAmount, 0) ??
-          0
-      );
+      setTotalAmount(data.Sellers?.reduce((sum: number, s: any) => sum + s.TotalAmount, 0) ?? 0);
 
-      // โหลด slip จาก session หากมี
+      // โหลด slip + countdown จาก session
       const loadedSlips: SlipSessionData[] = [];
+      const loadedCountdowns: { [key: string]: number } = {};
       data.Sellers?.forEach((seller: any) => {
         const slip = getSlipFromSession(seller.SellerId);
-        if (slip) loadedSlips.push(slip);
+        if (slip) {
+          loadedSlips.push(slip);
+          const remain = Math.max(0, Math.floor((slip.expireAt - Date.now()) / 1000));
+          loadedCountdowns[seller.SellerId] = remain;
+        }
       });
       setPendingSlips(loadedSlips);
+      setQrCountdowns(loadedCountdowns);
     } catch (err: any) {
       toast.error(err.message || "โหลดบิลไม่สำเร็จ");
     } finally {
@@ -81,12 +85,34 @@ const BuyerPayment: React.FC = () => {
     if (!order?.Sellers?.length) return toast.error("ข้อมูลบิลไม่ครบ");
     try {
       setPaying(true);
-      const list = order.Sellers.map((seller: any) => ({
-        sellerName: seller.SellerName,
-        sellerId: seller.SellerId,
-        totalAmount: seller.TotalAmount,
-        qrData: PromptPay(seller.SellerPhone, { amount: seller.TotalAmount }),
-      }));
+      const now = Date.now();
+      const list = order.Sellers.map((seller: any) => {
+        const qrData = PromptPay(seller.SellerPhone, { amount: seller.TotalAmount });
+        const expireAt = now + QR_EXPIRE_MIN * 60 * 1000; // 30 นาที
+        const slipData: SlipSessionData = {
+          sellerId: seller.SellerId,
+          orderId: order.OrderId,
+          base64: "",
+          refCode: "",
+          expireAt,
+        };
+        saveSlipToSession(slipData);
+
+        // update pendingSlips
+        setPendingSlips((prev) => {
+          const others = prev.filter((s) => s.sellerId !== seller.SellerId);
+          return [...others, slipData];
+        });
+
+        setQrCountdowns((prev) => ({ ...prev, [seller.SellerId]: QR_EXPIRE_MIN * 60 }));
+
+        return {
+          sellerName: seller.SellerName,
+          sellerId: seller.SellerId,
+          totalAmount: seller.TotalAmount,
+          qrData,
+        };
+      });
       setQrList(list);
       setShowQR(true);
     } catch (err: any) {
@@ -96,11 +122,23 @@ const BuyerPayment: React.FC = () => {
     }
   };
 
+  // --- countdown interval ---
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setQrCountdowns((prev) => {
+        const updated: { [key: string]: number } = {};
+        Object.keys(prev).forEach((key) => {
+          const val = prev[key] - 1;
+          if (val > 0) updated[key] = val;
+        });
+        return updated;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   // --- อัปโหลดสลิป + scan QR ---
-  const handleFileChange = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    seller: any
-  ) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, seller: any) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -121,21 +159,19 @@ const BuyerPayment: React.FC = () => {
 
         if (code) {
           toast.success(`สแกน QR สำเร็จ: ${code.data}`);
-
           const slipData: SlipSessionData = {
             sellerId: seller.SellerId,
             orderId: order.OrderId,
             base64,
             refCode: code.data,
+            expireAt: Date.now() + QR_EXPIRE_MIN * 60 * 1000, // reset countdown
           };
-
-          // update state pendingSlips
+          saveSlipToSession(slipData);
           setPendingSlips((prev) => {
             const others = prev.filter((s) => s.sellerId !== seller.SellerId);
             return [...others, slipData];
           });
-
-          saveSlipToSession(slipData);
+          setQrCountdowns((prev) => ({ ...prev, [seller.SellerId]: QR_EXPIRE_MIN * 60 }));
         } else {
           toast.error("ไม่พบ QR code ในสลิป");
         }
@@ -148,18 +184,25 @@ const BuyerPayment: React.FC = () => {
   const confirmPay = async (slip: SlipSessionData) => {
     const ok = window.confirm("คุณยืนยันที่จะชำระเงินหรือไม่?");
     if (!ok) return;
-
     await handlePayWithSlip(slip);
-
-    // remove หลังจ่าย
-    setPendingSlips((prev) => prev.filter((s) => s.sellerId !== slip.sellerId));
     removeSlipFromSession(slip.sellerId);
+    setPendingSlips((prev) => prev.filter((s) => s.sellerId !== slip.sellerId));
+    setQrCountdowns((prev) => {
+      const copy = { ...prev };
+      delete copy[slip.sellerId];
+      return copy;
+    });
   };
 
   // --- ยกเลิก slip ---
   const cancelSlip = (slip: SlipSessionData) => {
     removeSlipFromSession(slip.sellerId);
     setPendingSlips((prev) => prev.filter((s) => s.sellerId !== slip.sellerId));
+    setQrCountdowns((prev) => {
+      const copy = { ...prev };
+      delete copy[slip.sellerId];
+      return copy;
+    });
     toast.info("ยกเลิกการแนบสลิปแล้ว");
   };
 
@@ -178,9 +221,7 @@ const BuyerPayment: React.FC = () => {
 
       toast.success(result.message || "ชำระเงินสำเร็จ");
 
-      // reload หน้า
       navigate("/buyerOrder");
-      window.location.reload();
     } catch (error: any) {
       toast.error(error.message || "ชำระเงินล้มเหลว");
     } finally {
@@ -195,12 +236,16 @@ const BuyerPayment: React.FC = () => {
   if (loading) return <p className="text-center py-10">กำลังโหลดบิล...</p>;
   if (!order) return <p className="text-center py-10 text-red-500">ไม่พบบิล</p>;
 
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
+
   return (
     <div className="max-w-3xl mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-2xl font-bold mb-2">
-          บิลคำสั่งซื้อ #{order.OrderId}
-        </h2>
+        <h2 className="text-2xl font-bold mb-2">บิลคำสั่งซื้อ #{order.OrderId}</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -215,15 +260,9 @@ const BuyerPayment: React.FC = () => {
               {allItems.map((item: any, idx: number) => (
                 <tr key={idx} className="hover:bg-gray-50 transition-colors">
                   <td className="p-3 border-b">{item.ProductName}</td>
-                  <td className="p-3 border-b">
-                    {(item.UnitPrice ?? 0).toLocaleString()}
-                  </td>
+                  <td className="p-3 border-b">{(item.UnitPrice ?? 0).toLocaleString()}</td>
                   <td className="p-3 border-b">{item.Quantity}</td>
-                  <td className="p-3 border-b font-semibold">
-                    {(
-                      (item.UnitPrice ?? 0) * (item.Quantity ?? 0)
-                    ).toLocaleString()}
-                  </td>
+                  <td className="p-3 border-b font-semibold">{((item.UnitPrice ?? 0) * (item.Quantity ?? 0)).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -252,21 +291,18 @@ const BuyerPayment: React.FC = () => {
 
               {qrList.map((q, idx) => {
                 const seller = order.Sellers[idx];
-                const slip = pendingSlips.find(
-                  (s) => s.sellerId === seller.SellerId
-                );
+                const slip = pendingSlips.find((s) => s.sellerId === seller.SellerId);
+                const countdown = qrCountdowns[seller.SellerId] ?? 0;
                 return (
-                  <div
-                    key={idx}
-                    className="mb-6 flex flex-col items-center w-full"
-                  >
+                  <div key={idx} className="mb-6 flex flex-col items-center w-full">
                     <p className="font-semibold mb-2">{q.sellerName}</p>
                     <QRCode value={q.qrData} size={200} />
-                    <p className="mt-2 text-gray-700">
-                      ยอด: {q.totalAmount.toLocaleString()} บาท
-                    </p>
+                    <p className="mt-2 text-gray-700">ยอด: {q.totalAmount.toLocaleString()} บาท</p>
 
-                    {seller.StatusLabel === "รอจ่าย" && (
+                    {countdown > 0 && <p className="text-red-600 mt-1 font-semibold">เวลาที่เหลือ: {formatTime(countdown)}</p>}
+                    {countdown === 0 && <p className="text-gray-500 mt-1">หมดเวลา QR</p>}
+
+                    {seller.StatusLabel === "รอจ่าย" && countdown > 0 && (
                       <div className="mt-2 w-full flex flex-col items-center">
                         <input
                           type="file"
@@ -277,45 +313,22 @@ const BuyerPayment: React.FC = () => {
 
                         {slip && (
                           <div className="mt-2 flex flex-col items-center border rounded p-3 w-full bg-gray-50">
-                            <img
-                              src={slip.base64}
-                              alt="slip preview"
-                              className="w-40 h-auto mt-2 border rounded"
-                            />
+                            {slip.base64 && <img src={slip.base64} alt="slip preview" className="w-40 h-auto mt-2 border rounded" />}
                             <div className="flex gap-2 mt-3">
-                              <button
-                                onClick={() => confirmPay(slip)}
-                                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                              >
-                                ยืนยันการชำระ
-                              </button>
-                              <button
-                                onClick={() => cancelSlip(slip)}
-                                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                              >
-                                ยกเลิก
-                              </button>
+                              <button onClick={() => confirmPay(slip)} className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">ยืนยันการชำระ</button>
+                              <button onClick={() => cancelSlip(slip)} className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">ยกเลิก</button>
                             </div>
                           </div>
                         )}
                       </div>
                     )}
 
-                    {seller.StatusLabel === "ชำระแล้ว" && (
-                      <span className="text-green-600 font-semibold mt-2">
-                        ชำระแล้ว
-                      </span>
-                    )}
+                    {seller.StatusLabel === "ชำระแล้ว" && <span className="text-green-600 font-semibold mt-2">ชำระแล้ว</span>}
                   </div>
                 );
               })}
 
-              <button
-                onClick={() => setShowQR(false)}
-                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 mt-4"
-              >
-                ปิด
-              </button>
+              <button onClick={() => setShowQR(false)} className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 mt-4">ปิด</button>
               <canvas ref={canvasRef} style={{ display: "none" }} />
             </div>
           </div>
