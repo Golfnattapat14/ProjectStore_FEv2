@@ -22,6 +22,8 @@ const BuyerPayment: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const [pendingSlip, setPendingSlip] = useState<any>(null);
+
   const navigate = useNavigate();
 
   // โหลดบิล
@@ -88,13 +90,35 @@ const BuyerPayment: React.FC = () => {
 
         if (code) {
           toast.success(`สแกน QR สำเร็จ: ${code.data}`);
-          await handlePayWithSlip(seller, code.data);
+          // เก็บไว้ก่อน รอผู้ใช้กดปุ่มยืนยัน
+          setPendingSlip({
+            seller,
+            refCode: code.data,
+            base64,
+          });
         } else {
           toast.error("ไม่พบ QR code ในสลิป");
         }
       };
     };
     reader.readAsDataURL(file);
+  };
+
+  // ปุ่มกดยืนยัน → ค่อยคอล API
+  const confirmPay = async () => {
+    if (!pendingSlip) return toast.error("กรุณาอัปโหลดสลิปก่อน");
+
+    const ok = window.confirm("คุณยืนยันที่จะชำระเงินหรือไม่?");
+    if (!ok) return;
+
+    await handlePayWithSlip(pendingSlip.seller, pendingSlip.refCode);
+    setPendingSlip(null); // เคลียร์หลังจ่ายเสร็จ
+  };
+
+  // เคลียร์ slip ที่เลือกออก
+  const cancelSlip = () => {
+    setPendingSlip(null);
+    toast.info("ยกเลิกการแนบสลิปแล้ว");
   };
 
   // ส่งสลิป / refCode ไป API
@@ -197,9 +221,7 @@ const BuyerPayment: React.FC = () => {
         {showQR && qrList.length > 0 && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 overflow-y-auto">
             <div className="bg-white p-6 rounded shadow-lg text-center max-w-md w-full flex flex-col items-center">
-              <h3 className="text-lg font-bold mb-4">
-                สแกนจ่ายและอัปโหลดสลิป
-              </h3>
+              <h3 className="text-lg font-bold mb-4">สแกนจ่ายและอัปโหลดสลิป</h3>
 
               {qrList.map((q, idx) => {
                 const seller = order.Sellers[idx];
@@ -223,6 +245,30 @@ const BuyerPayment: React.FC = () => {
                           onChange={(e) => handleFileChange(e, seller)}
                           className="border px-2 py-1 w-full rounded mb-2"
                         />
+
+                        {pendingSlip?.seller.SellerId === seller.SellerId && (
+                          <div className="mt-2 flex flex-col items-center border rounded p-3 w-full bg-gray-50">
+                            <img
+                              src={pendingSlip.base64}
+                              alt="slip preview"
+                              className="w-40 h-auto mt-2 border rounded"
+                            />
+                            <div className="flex gap-2 mt-3">
+                              <button
+                                onClick={confirmPay}
+                                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                              >
+                                ยืนยันการชำระ
+                              </button>
+                              <button
+                                onClick={cancelSlip}
+                                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                              >
+                                ยกเลิก
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 
