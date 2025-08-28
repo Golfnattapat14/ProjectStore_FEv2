@@ -7,6 +7,13 @@ import QRCode from "react-qr-code";
 import jsQR from "jsqr";
 import { useNavigate } from "react-router-dom";
 
+interface SlipSessionData {
+  sellerId: string;
+  orderId: string;
+  base64: string;
+  refCode: string;
+}
+
 const BuyerPayment: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const [order, setOrder] = useState<any>(null);
@@ -19,14 +26,31 @@ const BuyerPayment: React.FC = () => {
   const [qrList, setQrList] = useState<any[]>([]);
   const [showQR, setShowQR] = useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const [pendingSlip, setPendingSlip] = useState<any>(null);
+  // เก็บ slip pending สำหรับหลาย seller
+  const [pendingSlips, setPendingSlips] = useState<SlipSessionData[]>([]);
 
   const navigate = useNavigate();
 
-  // โหลดบิล
+  // --- session storage helpers ---
+  const saveSlipToSession = (data: SlipSessionData) => {
+    sessionStorage.setItem(
+      `pendingSlip_${data.sellerId}`,
+      JSON.stringify(data)
+    );
+  };
+
+  const getSlipFromSession = (sellerId: string) => {
+    const data = sessionStorage.getItem(`pendingSlip_${sellerId}`);
+    return data ? (JSON.parse(data) as SlipSessionData) : null;
+  };
+
+  const removeSlipFromSession = (sellerId: string) => {
+    sessionStorage.removeItem(`pendingSlip_${sellerId}`);
+  };
+
+  // --- โหลดบิล ---
   const fetchOrder = async () => {
     try {
       setLoading(true);
@@ -37,6 +61,14 @@ const BuyerPayment: React.FC = () => {
         data.Sellers?.reduce((sum: number, s: any) => sum + s.TotalAmount, 0) ??
           0
       );
+
+      // โหลด slip จาก session หากมี
+      const loadedSlips: SlipSessionData[] = [];
+      data.Sellers?.forEach((seller: any) => {
+        const slip = getSlipFromSession(seller.SellerId);
+        if (slip) loadedSlips.push(slip);
+      });
+      setPendingSlips(loadedSlips);
     } catch (err: any) {
       toast.error(err.message || "โหลดบิลไม่สำเร็จ");
     } finally {
@@ -44,7 +76,7 @@ const BuyerPayment: React.FC = () => {
     }
   };
 
-  // สร้าง QR PromptPay
+  // --- สร้าง QR PromptPay ---
   const handlePay = async () => {
     if (!order?.Sellers?.length) return toast.error("ข้อมูลบิลไม่ครบ");
     try {
@@ -64,7 +96,7 @@ const BuyerPayment: React.FC = () => {
     }
   };
 
-  // อัปโหลดสลิป + scan QR → ส่ง API อัตโนมัติ
+  // --- อัปโหลดสลิป + scan QR ---
   const handleFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
     seller: any
@@ -75,7 +107,6 @@ const BuyerPayment: React.FC = () => {
     const reader = new FileReader();
     reader.onload = async () => {
       const base64 = reader.result as string;
-      sessionStorage.setItem(`slipBase64_${seller.SellerId}`, base64);
 
       const img = new Image();
       img.src = base64;
@@ -90,12 +121,21 @@ const BuyerPayment: React.FC = () => {
 
         if (code) {
           toast.success(`สแกน QR สำเร็จ: ${code.data}`);
-          // เก็บไว้ก่อน รอผู้ใช้กดปุ่มยืนยัน
-          setPendingSlip({
-            seller,
-            refCode: code.data,
+
+          const slipData: SlipSessionData = {
+            sellerId: seller.SellerId,
+            orderId: order.OrderId,
             base64,
+            refCode: code.data,
+          };
+
+          // update state pendingSlips
+          setPendingSlips((prev) => {
+            const others = prev.filter((s) => s.sellerId !== seller.SellerId);
+            return [...others, slipData];
           });
+
+          saveSlipToSession(slipData);
         } else {
           toast.error("ไม่พบ QR code ในสลิป");
         }
@@ -104,42 +144,41 @@ const BuyerPayment: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  // ปุ่มกดยืนยัน → ค่อยคอล API
-  const confirmPay = async () => {
-    if (!pendingSlip) return toast.error("กรุณาอัปโหลดสลิปก่อน");
-
+  // --- ยืนยันจ่าย ---
+  const confirmPay = async (slip: SlipSessionData) => {
     const ok = window.confirm("คุณยืนยันที่จะชำระเงินหรือไม่?");
     if (!ok) return;
 
-    await handlePayWithSlip(pendingSlip.seller, pendingSlip.refCode);
-    setPendingSlip(null); // เคลียร์หลังจ่ายเสร็จ
+    await handlePayWithSlip(slip);
+
+    // remove หลังจ่าย
+    setPendingSlips((prev) => prev.filter((s) => s.sellerId !== slip.sellerId));
+    removeSlipFromSession(slip.sellerId);
   };
 
-  // เคลียร์ slip ที่เลือกออก
-  const cancelSlip = () => {
-    setPendingSlip(null);
+  // --- ยกเลิก slip ---
+  const cancelSlip = (slip: SlipSessionData) => {
+    removeSlipFromSession(slip.sellerId);
+    setPendingSlips((prev) => prev.filter((s) => s.sellerId !== slip.sellerId));
     toast.info("ยกเลิกการแนบสลิปแล้ว");
   };
 
-  // ส่งสลิป / refCode ไป API
-  const handlePayWithSlip = async (seller: any, refCode: string) => {
-    const sellerId = seller.SellerId;
-    const paidAmount = seller.TotalAmount;
+  // --- ส่งสลิปไป API ---
+  const handlePayWithSlip = async (slip: SlipSessionData) => {
+    const seller = order.Sellers.find((s: any) => s.SellerId === slip.sellerId);
+    if (!seller) return toast.error("ไม่พบผู้ขาย");
 
     try {
       setPaying(true);
       const result = await payOrderWithSlip({
-        orderId: order.OrderId,
-        paidAmount,
-        refCode,
+        orderId: slip.orderId,
+        paidAmount: seller.TotalAmount,
+        refCode: slip.refCode,
       });
 
       toast.success(result.message || "ชำระเงินสำเร็จ");
 
-      // เคลียร์ sessionStorage ของ slip
-      sessionStorage.removeItem(`slipBase64_${sellerId}`);
-
-      // เด้งไปหน้า buyerOrder และบังคับ reload
+      // reload หน้า
       navigate("/buyerOrder");
       window.location.reload();
     } catch (error: any) {
@@ -162,19 +201,6 @@ const BuyerPayment: React.FC = () => {
         <h2 className="text-2xl font-bold mb-2">
           บิลคำสั่งซื้อ #{order.OrderId}
         </h2>
-        <p className="text-gray-600 mb-4">
-          สถานะ:{" "}
-          <span
-            className={`px-2 py-1 rounded text-sm font-semibold ${
-              order.Sellers?.some((s: any) => s.StatusLabel === "รอจ่าย")
-                ? "bg-yellow-100 text-yellow-800"
-                : "bg-green-100 text-green-800"
-            }`}
-          >
-            {order.Sellers?.[0]?.StatusLabel || "รอจ่าย"}
-          </span>
-        </p>
-
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -194,8 +220,9 @@ const BuyerPayment: React.FC = () => {
                   </td>
                   <td className="p-3 border-b">{item.Quantity}</td>
                   <td className="p-3 border-b font-semibold">
-                    {(item.UnitPrice ?? 0) *
-                      (item.Quantity ?? 0).toLocaleString()}
+                    {(
+                      (item.UnitPrice ?? 0) * (item.Quantity ?? 0)
+                    ).toLocaleString()}
                   </td>
                 </tr>
               ))}
@@ -225,6 +252,9 @@ const BuyerPayment: React.FC = () => {
 
               {qrList.map((q, idx) => {
                 const seller = order.Sellers[idx];
+                const slip = pendingSlips.find(
+                  (s) => s.sellerId === seller.SellerId
+                );
                 return (
                   <div
                     key={idx}
@@ -241,27 +271,26 @@ const BuyerPayment: React.FC = () => {
                         <input
                           type="file"
                           accept="image/*"
-                          ref={fileInputRef}
                           onChange={(e) => handleFileChange(e, seller)}
                           className="border px-2 py-1 w-full rounded mb-2"
                         />
 
-                        {pendingSlip?.seller.SellerId === seller.SellerId && (
+                        {slip && (
                           <div className="mt-2 flex flex-col items-center border rounded p-3 w-full bg-gray-50">
                             <img
-                              src={pendingSlip.base64}
+                              src={slip.base64}
                               alt="slip preview"
                               className="w-40 h-auto mt-2 border rounded"
                             />
                             <div className="flex gap-2 mt-3">
                               <button
-                                onClick={confirmPay}
+                                onClick={() => confirmPay(slip)}
                                 className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
                               >
                                 ยืนยันการชำระ
                               </button>
                               <button
-                                onClick={cancelSlip}
+                                onClick={() => cancelSlip(slip)}
                                 className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
                               >
                                 ยกเลิก
@@ -287,7 +316,6 @@ const BuyerPayment: React.FC = () => {
               >
                 ปิด
               </button>
-
               <canvas ref={canvasRef} style={{ display: "none" }} />
             </div>
           </div>
