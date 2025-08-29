@@ -213,13 +213,10 @@ const removeSlipFromSession = (orderId: string, sellerId: string) => {
   const confirmPay = async () => {
     if (!pendingSlip) return toast.error("กรุณาอัปโหลดสลิปก่อน");
     if (timeLeft <= 0)
-      return toast.error(
-        "QR code หมดอายุแล้ว กรุณาชำระเงินและแนบสลิปใหม่อีกครั้ง"
-      );
+      return toast.error("QR code หมดอายุแล้ว กรุณาชำระเงินและแนบสลิปใหม่");
 
     if (!window.confirm("คุณยืนยันที่จะชำระเงินหรือไม่?")) return;
 
-    const sellerId = pendingSlip.seller.SellerId;
     try {
       setPaying(true);
       const result = await payOrderWithSlip({
@@ -227,8 +224,9 @@ const removeSlipFromSession = (orderId: string, sellerId: string) => {
         paidAmount: pendingSlip.seller.TotalAmount,
         refCode: pendingSlip.refCode,
       });
+
       toast.success(result.message || "ชำระเงินสำเร็จ");
-      removeSlipFromSession(order.OrderId, sellerId);
+      removeSlipFromSession(order.OrderId, pendingSlip.seller.SellerId);
       removeQrFromSession(order.OrderId);
       setPendingSlip(null);
       setQrList([]);
@@ -241,6 +239,7 @@ const removeSlipFromSession = (orderId: string, sellerId: string) => {
       setPaying(false);
     }
   };
+
 
   const cancelSlip = () => {
     if (pendingSlip?.seller) {

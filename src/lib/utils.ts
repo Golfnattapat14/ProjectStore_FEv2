@@ -5,23 +5,25 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatThaiDateTime(dateStr: string | Date) {
-  const date = new Date(dateStr);
+export const formatThaiDateTime = (dateString: string) => {
+  const date = new Date(dateString);
 
-  const thaiDate = date.toLocaleDateString("th-TH", {
-    timeZone: "Asia/Bangkok",
-    day: "2-digit",
-    month: "2-digit",
+  // แปลงเป็นเวลาไทย (UTC+7)
+  const thaiDateObj = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+
+  // วันที่ภาษาไทย
+  const thaiDate = thaiDateObj.toLocaleDateString("th-TH", {
     year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 
-  const thaiTime = date.toLocaleTimeString("th-TH", {
-    timeZone: "Asia/Bangkok",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
+  // เวลาแบบ 24 ชั่วโมง พร้อม "น."
+  const hours = thaiDateObj.getHours().toString().padStart(2, "0");
+  const minutes = thaiDateObj.getMinutes().toString().padStart(2, "0");
+  const thaiTime = `${hours}:${minutes} น.`;
 
   return { thaiDate, thaiTime };
-}
+};
+
 
