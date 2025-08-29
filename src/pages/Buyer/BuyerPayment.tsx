@@ -339,6 +339,10 @@ const removeSlipFromSession = (orderId: string, sellerId: string) => {
                     key={idx}
                     className="mb-6 flex flex-col items-center w-full"
                   >
+                    <p className="text-sm mt-2 text-gray-500">
+                              เวลาที่เหลือ: {Math.floor(timeLeft / 60)}:
+                              {(timeLeft % 60).toString().padStart(2, "0")} นาที
+                            </p>
                     <p className="font-semibold mb-2">{q.sellerName}</p>
                     <QRCode value={q.qrData} size={200} />
                     <p className="mt-2 text-gray-700">
@@ -376,10 +380,6 @@ const removeSlipFromSession = (orderId: string, sellerId: string) => {
                                 ลบสลิป
                               </button>
                             </div>
-                            <p className="text-sm mt-2 text-gray-500">
-                              เวลาที่เหลือ: {Math.floor(timeLeft / 60)}:
-                              {(timeLeft % 60).toString().padStart(2, "0")} นาที
-                            </p>
                           </div>
                         )}
                       </div>
