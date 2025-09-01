@@ -119,7 +119,7 @@ export default function FilterSearch({
           type="text"
           value={localKeyword}
           onChange={(e) => setLocalKeyword(e.target.value)}
-          placeholder="พิมพ์คำค้น..."
+          placeholder="พิมพ์คำค้นหา..."
           className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
