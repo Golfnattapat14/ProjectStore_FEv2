@@ -1,41 +1,54 @@
-import React, { useEffect, useState } from "react";
-import { toast } from "react-toastify";
+// // OrderCountdown.tsx
+// import React, { useEffect, useState } from "react";
 
-interface OrderCountdownProps {
-  orderId: string;
-  createDate: string; // ISO string
-}
+// interface OrderCountdownProps {
+//   expireDate: string; // ISO string จาก backend (UTC)
+//   orderId?: string;   // สำหรับ log debug
+// }
 
-const OrderCountdown: React.FC<OrderCountdownProps> = ({ orderId, createDate }) => {
-  const [timeLeft, setTimeLeft] = useState<number>(0); // วินาที
+// const OrderCountdown: React.FC<OrderCountdownProps> = ({ expireDate, orderId }) => {
+//   const [timeLeft, setTimeLeft] = useState<string>("");
 
-  useEffect(() => {
-    const expiryTime = new Date(createDate).getTime() + 48 * 60 * 60 * 1000; // 48 ชั่วโมง
-    const updateCountdown = () => {
-      const now = Date.now();
-      const diff = Math.max(0, Math.floor((expiryTime - now) / 1000));
-      setTimeLeft(diff);
+//   useEffect(() => {
+//     const updateCountdown = () => {
+//       // แปลง expireDate → เวลาไทย (+7 ชั่วโมง)
+//       const expireUTC = new Date(expireDate).getTime(); // UTC
+//       const expireThai = expireUTC + 7 * 60 * 60 * 1000; // +7 ชั่วโมง
+//       const now = Date.now();
 
-      // แจ้งเตือนถ้าเหลือเวลาน้อยกว่า 1 ชั่วโมง
-      if (diff === 3600) {
-        toast.warning(`คำสั่งซื้อ ${orderId} เหลือเวลาเพียง 1 ชั่วโมงในการชำระเงิน!`);
-      }
-    };
+//       const diff = expireThai - now;
 
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-    return () => clearInterval(interval);
-  }, [createDate, orderId]);
+//       if (orderId) console.log(`[Countdown] OrderId: ${orderId} diff: ${diff}`);
 
-  const formatTime = (seconds: number) => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return `${h.toString().padStart(2,"0")}:${m.toString().padStart(2,"0")}:${s.toString().padStart(2,"0")}`;
-  };
+//       if (diff <= 0) {
+//         setTimeLeft("หมดเวลา");
+//         return;
+//       }
 
-  if (timeLeft <= 0) return <span className="text-red-500 font-bold">สลิปหมดอายุแล้ว</span>;
-  return <span className="text-yellow-600 font-semibold">กรุณาชำระเงินก่อน: {formatTime(timeLeft)}</span>;
-};
+//       const hours = Math.floor(diff / 1000 / 60 / 60);
+//       const minutes = Math.floor((diff / 1000 / 60) % 60);
+//       const seconds = Math.floor((diff / 1000) % 60);
 
-export default OrderCountdown;
+//       setTimeLeft(
+//         `${hours.toString().padStart(2, "0")} : ${minutes
+//           .toString()
+//           .padStart(2, "0")} : ${seconds.toString().padStart(2, "0")}`
+//       );
+//     };
+
+//     // อัปเดตทันที
+//     updateCountdown();
+
+//     const interval = setInterval(updateCountdown, 1000);
+
+//     return () => clearInterval(interval);
+//   }, [expireDate, orderId]);
+
+//   return (
+//     <p className="text-red-500 font-bold mt-1">
+//       ⏰ เวลาที่เหลือ: {timeLeft}
+//     </p>
+//   );
+// };
+
+// export default OrderCountdown;

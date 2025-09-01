@@ -1,3 +1,4 @@
+// src/pages/BuyerOrder.tsx
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import {
@@ -6,13 +7,9 @@ import {
   updateOrderAddress,
   cancelOrder,
 } from "@/api/Buyer";
-import {
-  getProductTypeName,
-  orderStatusColors,
-} from "@/constants/productTypes";
+import { getProductTypeName, orderStatusColors } from "@/constants/productTypes";
 import { useNavigate } from "react-router-dom";
 import { formatThaiDateTime } from "@/lib/utils";
-import OrderCountdown from "@/lib/OrderCountdown";
 
 interface BuyerOrderItem {
   productId: string;
@@ -22,6 +19,7 @@ interface BuyerOrderItem {
   productType: number;
   productTypeLabel: string;
   filePath?: string;
+  ExpireDate: string;
 }
 
 interface SellerGroup {
@@ -40,6 +38,7 @@ interface OrderType {
   createDate: string;
   address: string;
   sellers: SellerGroup[];
+  ExpireDate?: string;
 }
 
 const tabs = [
@@ -57,52 +56,51 @@ const BuyerOrder: React.FC = () => {
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("รอจ่าย");
   const [editingOrderId, setEditingOrderId] = useState("");
   const [tempAddress, setTempAddress] = useState("");
+  const [timeLeftMap, setTimeLeftMap] = useState<Record<string, string>>({});
   const navigate = useNavigate();
 
-  // โหลดคำสั่งซื้อ
+  // ดึงคำสั่งซื้อ
   const fetchOrders = async () => {
     try {
       setLoading(true);
       setError("");
       const data = await getBuyerOrders();
 
-      const mergedOrders: OrderType[] = data.reduce(
-        (acc: OrderType[], curr: any) => {
-          let order = acc.find((o) => o.orderId === curr.orderId);
-          if (!order) {
-            order = {
-              orderId: curr.orderId,
-              status: curr.status,
-              statusLabel: curr.statusLabel ?? "ไม่ระบุสถานะ",
-              buyerName: curr.buyerName,
-              buyerId: curr.buyerId,
-              createDate: curr.createDate,
-              address: curr.address || "",
-              sellers: [],
-            };
-            acc.push(order);
-          }
-
-          order.sellers.push({
-            sellerId: curr.sellerId,
-            sellerName: curr.sellerName || "ร้านค้าไม่ระบุชื่อ",
+      const mergedOrders: OrderType[] = data.reduce((acc: OrderType[], curr: any) => {
+        let order = acc.find((o) => o.orderId === curr.orderId);
+        if (!order) {
+          order = {
+            orderId: curr.orderId,
+            status: curr.status,
+            statusLabel: curr.statusLabel ?? "ไม่ระบุสถานะ",
+            buyerName: curr.buyerName,
+            buyerId: curr.buyerId,
+            createDate: curr.createDate,
             address: curr.address || "",
-            items: (curr.items ?? []).map((i: any) => ({
-              productId: i.productId,
-              productName: i.productName,
-              unitPrice: i.unitPrice ?? 0,
-              quantity: i.quantity ?? 1,
-              productType: i.productType,
-              productTypeLabel:
-                i.productTypeLabel ?? getProductTypeName(i.productType),
-              filePath: i.filePath ?? "",
-            })),
-          });
+            sellers: [],
+            ExpireDate: curr.expireDate,
+          };
+          acc.push(order);
+        }
 
-          return acc;
-        },
-        []
-      );
+        order.sellers.push({
+          sellerId: curr.sellerId,
+          sellerName: curr.sellerName || "ร้านค้าไม่ระบุชื่อ",
+          address: curr.address || "",
+          items: (curr.items ?? []).map((i: any) => ({
+            productId: i.productId,
+            productName: i.productName,
+            unitPrice: i.unitPrice ?? 0,
+            quantity: i.quantity ?? 1,
+            productType: i.productType,
+            productTypeLabel: i.productTypeLabel ?? getProductTypeName(i.productType),
+            filePath: i.filePath ?? "",
+            ExpireDate: i.expireDate,
+          })),
+        });
+
+        return acc;
+      }, []);
 
       setOrders(mergedOrders);
     } catch (err: any) {
@@ -117,9 +115,42 @@ const BuyerOrder: React.FC = () => {
     fetchOrders();
   }, []);
 
+  // Single interval สำหรับ countdown ทุก order
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeLeftMap(() => {
+        const newMap: Record<string, string> = {};
+        orders.forEach((order) => {
+          if (order.statusLabel === "รอจ่าย" && order.ExpireDate) {
+            const expireUTC = new Date(order.ExpireDate).getTime();
+            const expireThai = expireUTC + 7 * 60 * 60 * 1000;
+            const now = Date.now();
+            const diff = expireThai - now;
+
+            if (diff <= 0) {
+              newMap[order.orderId] = "หมดเวลา";
+            } else {
+              const hours = Math.floor(diff / 1000 / 60 / 60);
+              const minutes = Math.floor((diff / 1000 / 60) % 60);
+              const seconds = Math.floor((diff / 1000) % 60);
+
+              newMap[order.orderId] = `${hours
+                .toString()
+                .padStart(2, "0")} : ${minutes
+                .toString()
+                .padStart(2, "0")} : ${seconds.toString().padStart(2, "0")}`;
+            }
+          }
+        });
+        return newMap;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [orders]);
+
   const filteredOrders = orders.filter((o) => {
-    if (activeTab === "จ่ายแล้ว / รอจัดส่ง")
-      return o.statusLabel === "จ่ายแล้ว";
+    if (activeTab === "จ่ายแล้ว / รอจัดส่ง") return o.statusLabel === "จ่ายแล้ว";
     return o.statusLabel === activeTab;
   });
 
@@ -162,10 +193,11 @@ const BuyerOrder: React.FC = () => {
             const { thaiDate, thaiTime } = formatThaiDateTime(order.createDate);
             const totalPrice = order.sellers.reduce(
               (sum, seller) =>
-                sum +
-                seller.items.reduce((a, i) => a + i.unitPrice * i.quantity, 0),
+                sum + seller.items.reduce((a, i) => a + i.unitPrice * i.quantity, 0),
               0
             );
+
+            const isExpired = timeLeftMap[order.orderId] === "หมดเวลา";
 
             return (
               <div
@@ -190,29 +222,28 @@ const BuyerOrder: React.FC = () => {
                       วันที่สั่งซื้อ: {thaiDate} เวลา: {thaiTime}
                     </span>
 
-                    {/* นับถอยหลัง 48 ชั่วโมง */}
-                    {order.statusLabel === "รอจ่าย" && (
-                      <div className="mt-1">
-                        <OrderCountdown
-                          orderId={order.orderId}
-                          createDate={order.createDate}
-                        />
-                      </div>
+                    {/* Countdown */}
+                    {order.statusLabel === "รอจ่าย" && order.ExpireDate && (
+                      <p className="text-red-500 font-bold mt-1">
+                        {isExpired
+                          ? "หมดเวลา"
+                          : `กรุณาชำระเงินก่อน: ${timeLeftMap[order.orderId]}`}
+                      </p>
                     )}
                   </div>
 
+                  {/* Status & Action */}
                   <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0">
                     <span
                       className={`px-2 py-1 rounded text-sm font-semibold ${
-                        orderStatusColors[order.statusLabel] ||
-                        "bg-gray-100 text-gray-800"
+                        orderStatusColors[order.statusLabel] || "bg-gray-100 text-gray-800"
                       }`}
                     >
                       {order.statusLabel}
                     </span>
 
-                    {/* ปุ่ม Action */}
-                    {order.statusLabel === "รอจ่าย" && (
+                    {/* ปุ่มชำระเงิน / ยกเลิก */}
+                    {order.statusLabel === "รอจ่าย" && !isExpired && (
                       <div className="flex gap-2">
                         <button
                           className="px-4 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition"
@@ -254,21 +285,18 @@ const BuyerOrder: React.FC = () => {
                       </div>
                     )}
 
+                    {/* ปุ่มรับสินค้า */}
                     {order.statusLabel === "กำลังจัดส่ง" && (
                       <button
                         className="px-4 py-2 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition"
                         onClick={async () => {
-                          if (
-                            window.confirm("คุณได้รับสินค้านี้แล้วใช่หรือไม่?")
-                          ) {
+                          if (window.confirm("คุณได้รับสินค้านี้แล้วใช่หรือไม่?")) {
                             try {
                               await updateOrderStatus(order.orderId, "สำเร็จ");
                               toast.success("ยืนยันการรับสินค้าเรียบร้อยแล้ว");
                               fetchOrders();
                             } catch (err: any) {
-                              toast.error(
-                                err.message || "ไม่สามารถอัปเดตสถานะได้"
-                              );
+                              toast.error(err.message || "ไม่สามารถอัปเดตสถานะได้");
                             }
                           }
                         }}
@@ -281,15 +309,9 @@ const BuyerOrder: React.FC = () => {
 
                 {/* รายการสินค้า */}
                 {order.sellers.map((seller) => (
-                  <ul
-                    key={seller.sellerId}
-                    className="divide-y divide-gray-200 mt-2"
-                  >
+                  <ul key={seller.sellerId} className="divide-y divide-gray-200 mt-2">
                     {seller.items.map((item) => (
-                      <li
-                        key={item.productId}
-                        className="flex gap-4 py-4 items-center"
-                      >
+                      <li key={item.productId} className="flex gap-4 py-4 items-center">
                         <div className="w-20 h-20 flex-shrink-0 rounded overflow-hidden border border-gray-200">
                           {item.filePath ? (
                             <img
@@ -334,11 +356,10 @@ const BuyerOrder: React.FC = () => {
 
                 {/* ที่อยู่จัดส่ง */}
                 <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                  <h4 className="font-semibold text-gray-700 mb-1">
-                    ที่อยู่จัดส่ง
-                  </h4>
+                  <h4 className="font-semibold text-gray-700 mb-1">ที่อยู่จัดส่ง</h4>
                   {order.statusLabel === "รอจ่าย" &&
-                  editingOrderId === order.orderId ? (
+                  editingOrderId === order.orderId &&
+                  !isExpired ? (
                     <div className="flex flex-col gap-2 md:gap-4">
                       <textarea
                         className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 resize-none"
@@ -351,17 +372,13 @@ const BuyerOrder: React.FC = () => {
                           className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition text-sm"
                           onClick={async () => {
                             try {
-                              await updateOrderAddress(
-                                order.orderId,
-                                tempAddress
-                              );
+                              await updateOrderAddress(order.orderId, tempAddress);
                               toast.success("อัปเดตที่อยู่เรียบร้อย");
                               setEditingOrderId("");
                               fetchOrders();
                             } catch (err: any) {
                               toast.error(
-                                err.response?.data?.message ||
-                                  "ไม่สามารถอัปเดตที่อยู่ได้"
+                                err.response?.data?.message || "ไม่สามารถอัปเดตที่อยู่ได้"
                               );
                             }
                           }}
@@ -383,7 +400,8 @@ const BuyerOrder: React.FC = () => {
                   )}
 
                   {order.statusLabel === "รอจ่าย" &&
-                    editingOrderId !== order.orderId && (
+                    editingOrderId !== order.orderId &&
+                    !isExpired && (
                       <button
                         className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm"
                         onClick={() => {
