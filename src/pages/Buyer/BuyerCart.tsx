@@ -405,8 +405,8 @@ const BuyerCart: React.FC = () => {
                   onChange={(e) => setAddress(e.target.value)}
                   className="w-full p-2 border rounded-lg"
                   rows={3}
-                  placeholder="เช่น นายอำนวย แสงสุข
-99/9 ถนนเพชรบุรี เขตราชเทวี กรุงเทพฯ 10400 เบอร์โทร 0812345678"
+                  placeholder="ชื่อ-นามสกุล เบอร์โทร
+บ้านเลขที่, หมู่ที่, ซอย, ถนน, ตำบล/แขวง, อำเภอ/เขต, จังหวัด, รหัสไปรษณีย์"
                 />
               </div>
               <button
