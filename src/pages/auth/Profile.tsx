@@ -13,6 +13,7 @@ const Profile: React.FC = () => {
   const [username, setUsername] = useState<string>("");
   const [role, setRole] = useState<string>("");
 
+  const [fullName, setFullName] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState<string>("");
 
   const [currentPassword, setCurrentPassword] = useState<string>("");
@@ -43,7 +44,8 @@ const Profile: React.FC = () => {
       .then((u) => {
         setUsername(u.username);
         setRole(u.role);
-        setPhoneNumber((u as any).PhoneNumber || "");
+        setFullName((u as any).fullName ?? (u as any).FullName ?? "");
+        setPhoneNumber((u as any).PhoneNumber ?? (u as any).phoneNumber ?? (u as any).phone ?? "");
       })
       .catch((e) => toast.error(e.message || "โหลดโปรไฟล์ล้มเหลว"))
       .finally(() => setLoading(false));
@@ -55,6 +57,7 @@ const Profile: React.FC = () => {
     const preview: string[] = [];
     if (canEditUsername) preview.push(`- Username: ${username}`);
     if (canEditPayment) {
+      preview.push(`- ชื่อจริงตามธนาคาร: ${fullName || "(ว่าง)"}`);
       preview.push(`- PhoneNumber: ${phoneNumber || "(ว่าง)"}`);
     }
     const confirmSave = window.confirm(
@@ -66,11 +69,13 @@ const Profile: React.FC = () => {
       const payload: Record<string, unknown> = {};
       if (canEditUsername) payload.username = username;
       if (canEditPayment) {
+        (payload as any).fullName = fullName;
         (payload as any).PhoneNumber = phoneNumber;
       }
       const updated = await updateProfile(payload);
       setUsername(updated.username);
-      setPhoneNumber((updated as any).PhoneNumber || "");
+      setFullName((updated as any).fullName ?? (updated as any).FullName ?? "");
+      setPhoneNumber((updated as any).PhoneNumber ?? (updated as any).phoneNumber ?? (updated as any).phone ?? "");
       if (canEditUsername) localStorage.setItem("username", updated.username);
       toast.success("บันทึกโปรไฟล์สำเร็จ");
     } catch (err: unknown) {
@@ -124,10 +129,16 @@ const Profile: React.FC = () => {
         </div>
 
         {canEditPayment && (
-          <div>
-            <label className="block text-sm font-medium mb-1">PhoneNumber</label>
-            <Input value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="เช่น 0812345678" />
-          </div>
+          <>
+            <div>
+              <label className="block text-sm font-medium mb-1">ชื่อจริงตามธนาคาร</label>
+              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="เช่น สมชาย ใจดี" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">PhoneNumber</label>
+              <Input value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="เช่น 0812345678" />
+            </div>
+          </>
         )}
 
         {(canEditUsername || canEditPayment) && (

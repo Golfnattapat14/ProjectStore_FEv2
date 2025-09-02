@@ -49,11 +49,13 @@ export interface UserProfile {
   id: string;
   username: string;
   role: "Admin" | "Buyer" | "Seller";
+  fullName?: string | null;
   PhoneNumber?: string | null;
 }
 
 export interface UpdateProfileRequest {
   username?: string;
+  fullName?: string | null;
   PhoneNumber?: string | null;
 }
 
