@@ -53,6 +53,12 @@ const Profile: React.FC = () => {
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    // validate PhoneNumber แบบไทย (ถ้ามีสิทธิ์แก้)
+    const isValidThaiPhone = (value: string) => /^0\d{9}$/.test(value);
+    if (canEditPayment && phoneNumber && !isValidThaiPhone(phoneNumber)) {
+      toast.error("กรุณากรอกเบอร์โทร 10 หลักขึ้นต้นด้วย 0 (เช่น 0812345678)");
+      return;
+    }
     // ยืนยันก่อนบันทึก
     const preview: string[] = [];
     if (canEditUsername) preview.push(`- Username: ${username}`);

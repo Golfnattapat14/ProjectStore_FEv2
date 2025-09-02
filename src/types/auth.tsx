@@ -2,6 +2,7 @@ export interface RegisterRequest {
   username: string;
   password: string;
   role: "Buyer" | "Seller" | "Admin";
+  PhoneNumber?: string | null;
 }
 
 export interface ILoginState {
