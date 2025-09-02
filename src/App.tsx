@@ -21,6 +21,7 @@ import AdminAddProduct from "./pages/Admin/AdminAddProduct";
 import BuyerOrder from "./pages/Buyer/BuyerOrder";
 import BuyerPayment from "./pages/Buyer/BuyerPayment";
 import SellerOrder from "./pages/Seller/SellerOrder";
+import Profile from "./pages/auth/Profile";
 
 const AuthChecker = () => {
   const location = useLocation();
@@ -55,6 +56,9 @@ const App = () => {
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="*" element={<ErrorPage />} />
+
+        {/* Profile */}
+        <Route path="/profile" element={<Profile />} />
 
         {/* Seller */}
         <Route path="/seller" element={<SellerPage />} />

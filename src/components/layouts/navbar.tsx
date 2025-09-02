@@ -104,14 +104,18 @@ export const NavbarComponent = () => {
           ))}
         </div>
 
-        {/* โปรไฟล์ผู้ใช้และ Logout */}
+        {/* โปรไฟล์ผู้ใช้/โปรไฟล์ลิงก์ และ Logout */}
         {username && (
           <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center gap-3">
             <div className="flex items-center gap-2">
               <UserCircleIcon className="size-7 text-blue-400" />
               <span className="text-sm font-semibold text-blue-400">{username}</span>
+              <span className="text-gray-300">|</span>
+              <Link to="/profile" className="text-sm font-semibold text-blue-600 hover:underline">
+                โปรไฟล์
+              </Link>
             </div>
-            |
+            <span className="text-gray-300">|</span>
             <button
               onClick={() => setModalOpen(true)}
               className="flex items-center gap-1 text-sm font-semibold text-gray-600 hover:text-red-600 duration-300 ease-in-out hover:cursor-pointer"

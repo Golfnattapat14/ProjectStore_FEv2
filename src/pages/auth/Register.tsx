@@ -132,7 +132,7 @@ export const Register = () => {
               />
             </div>
 
-            <div className="w-full">
+            {/* <div className="w-full">
               <span className="font-semibold text-sm text-gray-400">Phone Number</span>
               <Input
                 id="phoneNumber"
@@ -142,7 +142,7 @@ export const Register = () => {
                 className={`w-full ${showError && !phoneNumber ? "border-2 border-red-400" : ""}`}
                 disabled={loading}
               />
-            </div>
+            </div> */}
 
             <div className="w-full">
               <span className="font-semibold text-sm text-gray-400">Role</span>
