@@ -27,7 +27,6 @@ export const Register = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState(""); // PhoneNumber สำหรับผู้ขาย
   const [role, setRole] = useState<RoleType>("Buyer");
   const [showError, setShowError] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -35,12 +34,12 @@ export const Register = () => {
   const navigate = useNavigate();
   const { refreshCart } = useCart();
 
-  const isValidThaiPhone = (value: string) => /^0\d{9}$/.test(value);
+  // ไม่ต้องตรวจเบอร์ในหน้าสมัครอีกต่อไป
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!username || !password || !confirmPassword || !role || (role === "Seller" && !phoneNumber)) {
+    if (!username || !password || !confirmPassword || !role) {
       setShowError(true);
       toast.error("Please fill in all required fields");
       return;
@@ -52,17 +51,11 @@ export const Register = () => {
       return;
     }
 
-    if (role === "Seller" && !isValidThaiPhone(phoneNumber)) {
-      setShowError(true);
-      toast.error("กรุณากรอกเบอร์โทร 10 หลักขึ้นต้นด้วย 0 (เช่น 0812345678)");
-      return;
-    }
-
     setShowError(false);
     setLoading(true);
 
     try {
-      const dataToSend = { username, password, role, PhoneNumber: role === "Seller" ? phoneNumber : "" };
+      const dataToSend = { username, password, role };
       const result = await registerUser(dataToSend);
 
       // สมมติ API ส่ง token กลับมาเหมือน login
@@ -134,22 +127,7 @@ export const Register = () => {
               />
             </div>
 
-            {role === "Seller" && (
-              <div className="w-full">
-                <span className="font-semibold text-sm text-gray-400">Phone Number</span>
-                <Input
-                  id="phoneNumber"
-                  name="phoneNumber"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className={`w-full ${
-                    showError && (!phoneNumber || !isValidThaiPhone(phoneNumber)) ? "border-2 border-red-400" : ""
-                  }`}
-                  disabled={loading}
-                />
-                <p className="text-xs text-gray-500 mt-1">กรอกเลข 10 หลักขึ้นต้นด้วย 0 เท่านั้น</p>
-              </div>
-            )}
+            {/* ยกเลิกกรอกเบอร์ในหน้าสมัคร */}
 
             <div className="w-full">
               <span className="font-semibold text-sm text-gray-400">Role</span>

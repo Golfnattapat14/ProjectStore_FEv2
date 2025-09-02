@@ -4,10 +4,7 @@ import { RegisterRequest,ILoginState, LoginResponse } from "@/types/auth";
 const BASE = "http://localhost:5260/api/";
 
 export async function registerUser(data: RegisterRequest) {
-  const payload = {
-    ...data,
-    PhoneNumber: data.PhoneNumber ?? "",
-  };
+  const payload = { ...data }; // ไม่บังคับส่ง PhoneNumber ในการสมัคร
   const response = await fetch(BASE + "users/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

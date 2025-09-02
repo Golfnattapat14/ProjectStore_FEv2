@@ -53,11 +53,20 @@ const Profile: React.FC = () => {
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    // validate PhoneNumber แบบไทย (ถ้ามีสิทธิ์แก้)
+    // validate ข้อมูลการชำระเงิน
     const isValidThaiPhone = (value: string) => /^0\d{9}$/.test(value);
-    if (canEditPayment && phoneNumber && !isValidThaiPhone(phoneNumber)) {
-      toast.error("กรุณากรอกเบอร์โทร 10 หลักขึ้นต้นด้วย 0 (เช่น 0812345678)");
-      return;
+    if (canEditPayment) {
+      // บังคับผู้ขายต้องกรอกครบ และรูปแบบถูกต้อง
+      if (storedRole === "seller") {
+        if (!fullName || !phoneNumber) {
+          toast.error("กรุณากรอกชื่อจริงและเบอร์โทรให้ครบก่อนบันทึก");
+          return;
+        }
+      }
+      if (phoneNumber && !isValidThaiPhone(phoneNumber)) {
+        toast.error("กรุณากรอกเบอร์โทร 10 หลักขึ้นต้นด้วย 0 (เช่น 0812345678)");
+        return;
+      }
     }
     // ยืนยันก่อนบันทึก
     const preview: string[] = [];
@@ -139,10 +148,12 @@ const Profile: React.FC = () => {
             <div>
               <label className="block text-sm font-medium mb-1">ชื่อจริงตามธนาคาร</label>
               <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="เช่น สมชาย ใจดี" />
+              <p className="text-xs text-gray-500 mt-1">ชื่อต้องตรงกับบัญชีธนาคาร/พร้อมเพย์</p>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">PhoneNumber</label>
               <Input value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="เช่น 0812345678" />
+              <p className="text-xs text-gray-500 mt-1">กรอกเลข 10 หลักขึ้นต้นด้วย 0 เท่านั้น</p>
             </div>
           </>
         )}
