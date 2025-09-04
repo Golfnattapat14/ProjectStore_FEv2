@@ -9,6 +9,8 @@ const Profile: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [changingPass, setChangingPass] = useState<boolean>(false);
+  const [confirmNewPassword, setConfirmNewPassword] = useState<string>("");
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
 
   const [username, setUsername] = useState<string>("");
   const [role, setRole] = useState<string>("");
@@ -72,8 +74,8 @@ const Profile: React.FC = () => {
     const preview: string[] = [];
     if (canEditUsername) preview.push(`- Username: ${username}`);
     if (canEditPayment) {
-      preview.push(`- ชื่อจริงตามธนาคาร: ${fullName || "(ว่าง)"}`);
-      preview.push(`- PhoneNumber: ${phoneNumber || "(ว่าง)"}`);
+      preview.push(`- ชื่อต้องตรงกับบัญชีธนาคาร/พร้อมเพย์: ${fullName || "(ว่าง)"}`);
+      preview.push(`- พร้อมเพย์: ${phoneNumber || "(ว่าง)"}`);
     }
     const confirmSave = window.confirm(
       `ยืนยันบันทึกการแก้ไขโปรไฟล์หรือไม่?\n\nรายการที่จะบันทึก:\n${preview.join("\n")}`
@@ -106,6 +108,10 @@ const Profile: React.FC = () => {
       toast.error("กรอกรหัสผ่านให้ครบ");
       return;
     }
+    if (newPassword !== confirmNewPassword) {
+      toast.error("รหัสผ่านใหม่กับยืนยันรหัสผ่านไม่ตรงกัน");
+      return;
+    }
     // ยืนยันก่อนเปลี่ยนรหัสผ่าน (ไม่แสดงรหัสผ่าน)
     const confirmChange = window.confirm("ยืนยันการเปลี่ยนรหัสผ่านใช่ไหม?");
     if (!confirmChange) return;
@@ -114,12 +120,33 @@ const Profile: React.FC = () => {
       await changePassword({ currentPassword, newPassword });
       setCurrentPassword("");
       setNewPassword("");
+      setConfirmNewPassword("");
       toast.success("เปลี่ยนรหัสผ่านสำเร็จ");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "เปลี่ยนรหัสผ่านล้มเหลว");
     } finally {
       setChangingPass(false);
     }
+  };
+
+  const handleSavePayment = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    // validate ข้อมูลการชำระเงิน
+    const isValidThaiPhone = (value: string) => /^0\d{9}$/.test(value);
+    if (phoneNumber && !isValidThaiPhone(phoneNumber)) {
+      toast.error("กรุณากรอกเบอร์โทร 10 หลักขึ้นต้นด้วย 0 (เช่น 0812345678)");
+      return;
+    }
+    // บันทึกลง localStorage แบบเดียวกับที่ Navbar อ่าน
+    localStorage.setItem("PhoneNumber", phoneNumber.trim());
+    localStorage.setItem("AccountName", fullName.trim());
+    // หรือ ถ้า backend ส่ง flag ให้ใช้ CheckPayment
+    localStorage.setItem("CheckPayment", String(true)); // "true" / "false"
+
+    // dispatch event ให้ Navbar อัปเดตทันที
+    window.dispatchEvent(new Event("paymentUpdated"));
+
+    toast.success("บันทึกข้อมูลการชำระเงินสำเร็จ");
   };
 
   if (loading) {
@@ -146,14 +173,17 @@ const Profile: React.FC = () => {
         {canEditPayment && (
           <>
             <div>
-              <label className="block text-sm font-medium mb-1">ชื่อจริงตามธนาคาร</label>
-              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="เช่น สมชาย ใจดี" />
-              <p className="text-xs text-gray-500 mt-1">ชื่อต้องตรงกับบัญชีธนาคาร/พร้อมเพย์</p>
+              <label className="block text-sm font-medium mb-1">ชื่อต้องตรงกับบัญชีธนาคาร/พร้อมเพย์</label>
+              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="ชื่อ-นามสกุล" />
+              <p className="text-xs text-gray-500 mt-1">*กรุณากรอกชื่อให้ตรงกับบัญชีพร้อมเพย์*</p>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">PhoneNumber</label>
-              <Input value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="เช่น 0812345678" />
-              <p className="text-xs text-gray-500 mt-1">กรอกเลข 10 หลักขึ้นต้นด้วย 0 เท่านั้น</p>
+              <label className="block text-sm font-medium mb-1">พร้อมเพย์เบอร์โทร</label>
+              <Input value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="หมายเลขพร้อมเพย์ (เบอร์โทร)" />
+              <p className="text-xs text-gray-500 mt-1">*กรุณากรอกพร้อมเพย์ให้ตรงกับชื่อบัญชีพร้อมเพย์*</p>
+              <p className="text-xs text-red-500 mt-2">
+                กรุณาตรวจสอบชื่อและหมายเลขพร้อมเพย์ให้ถูกต้องหากผิดพลาดทางเราจะไม่รับผิดชอบในกรณีที่บัญชีของท่านไม่ตรงกับข้อมูลที่ให้ไว้
+              </p>
             </div>
           </>
         )}
@@ -205,6 +235,29 @@ const Profile: React.FC = () => {
                 {showNewPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
               </button>
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">ยืนยันรหัสผ่านใหม่</label>
+            <div className="relative">
+              <Input
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                className="pr-10"
+                aria-invalid={confirmNewPassword !== "" && confirmNewPassword !== newPassword}
+              />
+              <button
+                type="button"
+                aria-label={showConfirmPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                onClick={() => setShowConfirmPassword((v) => !v)}
+              >
+                {showConfirmPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+              </button>
+            </div>
+            {confirmNewPassword !== "" && confirmNewPassword !== newPassword && (
+              <p className="text-xs text-red-500 mt-1">รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน</p>
+            )}
           </div>
           <div>
             <Button type="submit" disabled={changingPass}>{changingPass ? "กำลังเปลี่ยน..." : "เปลี่ยนรหัสผ่าน"}</Button>

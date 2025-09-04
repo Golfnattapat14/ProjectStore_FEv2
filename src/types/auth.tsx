@@ -15,4 +15,6 @@ export interface LoginResponse {
   username: string;
   token: string;
   role: "Admin" | "Buyer" | "Seller";
+  fullName?: string | null;
+  PhoneNumber?: string | null;
 }

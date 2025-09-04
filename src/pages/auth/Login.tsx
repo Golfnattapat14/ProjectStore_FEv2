@@ -27,20 +27,70 @@ export const Login = () => {
 
     try {
       const formData = { username: username, password: password };
-      const result = await loginUser(formData);
+      const result: any = await loginUser(formData);
 
       // เก็บ token และข้อมูล user
       localStorage.setItem("token", result.token);
       localStorage.setItem("username", result.username);
-      localStorage.setItem("role", result.role.toLowerCase());
+      localStorage.setItem("role", (result.role ?? "").toString().toLowerCase());
 
-      // โหลด cart ทันทีหลัง login
-      await refreshCart();
+      // เก็บค่า checkPayment จาก response (ถ้ามี) เพื่อให้ Navbar อ่านได้ทันที
+      if (typeof (result.checkPayment) === "boolean") {
+        localStorage.setItem("CheckPayment", String(result.checkPayment));
+      } else if (typeof (result.CheckPayment) === "boolean") {
+        localStorage.setItem("CheckPayment", String(result.CheckPayment));
+      }
+
+      // dispatch event ให้ Navbar รีเฟรชสถานะทันที
+      window.dispatchEvent(new Event("paymentUpdated"));
+
+      // โหลด cart ทันทีหลัง login แต่ไม่บล็อกการเข้าใช้งาน
+      try {
+        await refreshCart();
+      } catch (refreshErr) {
+        console.error("refreshCart failed:", refreshErr);
+      }
+
+      // ตรวจสอบ checkPayment / phone / account เพื่อแจ้งเตือน (แต่ไม่บล็อกการ login)
+      const role = (result.role ?? "").toString().toLowerCase();
+
+      const hasBoolean = (obj: any, key: string) =>
+        obj && typeof obj[key] === "boolean";
+
+      const checkPayment =
+        hasBoolean(result, "checkPayment")
+          ? result.checkPayment
+          : hasBoolean(result, "CheckPayment")
+          ? result.CheckPayment
+          : undefined;
+
+      const phone =
+        (result as any)?.PhoneNumber ?? (result as any)?.phoneNumber ?? "";
+      const account =
+        (result as any)?.AccountName ?? (result as any)?.accountName ?? "";
+
+      const isPaymentOk =
+        checkPayment === undefined ? !!(phone && account) : !!checkPayment;
+
+      if (role === "seller" && isPaymentOk === false) {
+        toast.warn(
+          "กรุณากรอกข้อมูลเบอร์โทรศัพท์และชื่อบัญชีให้ครบก่อน สินค้าจะยังไม่แสดงให้ผู้ซื้อเห็นจนกว่าจะกรอกข้อมูลครบ",
+          {
+            position: "top-center",
+            autoClose: false, // <-- ไม่ปิดอัตโนมัติ
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            hideProgressBar: false,
+            theme: "colored",
+          }
+        );
+      }
 
       toast.success("Login success!");
 
       // redirect ตาม role
-      switch (result.role.toLowerCase()) {
+      switch (role) {
         case "admin":
           navigate("/admin");
           break;
