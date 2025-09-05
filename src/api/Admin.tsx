@@ -1,20 +1,19 @@
 import { getAuthHeadersFormData, getAuthHeadersJSON } from "./Token";
-import type { ProductRequest, ProductResponse} from "../types/product";
-import { User,UpdateUserRequest,UserResponse } from "@/types/adminDashborad";
+import type { ProductRequest, ProductResponse } from "../types/product";
+import { User, UpdateUserRequest, UserResponse } from "@/types/adminDashborad";
 
 const BASE = "http://localhost:5260/api/";
-
 
 export async function getProducts(
   keyword?: string,
   page: number = 1,
   pageSize: number = 10,
   filters?: {
-    productTypes?: number[];      // ตัวเลข เช่น [1, 2]
+    productTypes?: number[]; // ตัวเลข เช่น [1, 2]
     minPrice?: number;
     maxPrice?: number;
-    releaseDateFrom?: string;     // YYYY-MM-DD
-    releaseDateTo?: string;       // YYYY-MM-DD
+    releaseDateFrom?: string; // YYYY-MM-DD
+    releaseDateTo?: string; // YYYY-MM-DD
     isActive?: boolean;
   }
 ) {
@@ -32,11 +31,16 @@ export async function getProducts(
         params.append("productTypes", String(type));
       });
     }
-    if (filters.minPrice != null) params.append("minPrice", String(filters.minPrice));
-    if (filters.maxPrice != null) params.append("maxPrice", String(filters.maxPrice));
-    if (filters.releaseDateFrom) params.append("releaseDateFrom", filters.releaseDateFrom);
-    if (filters.releaseDateTo) params.append("releaseDateTo", filters.releaseDateTo);
-    if (filters.isActive != null) params.append("isActive", String(filters.isActive));
+    if (filters.minPrice != null)
+      params.append("minPrice", String(filters.minPrice));
+    if (filters.maxPrice != null)
+      params.append("maxPrice", String(filters.maxPrice));
+    if (filters.releaseDateFrom)
+      params.append("releaseDateFrom", filters.releaseDateFrom);
+    if (filters.releaseDateTo)
+      params.append("releaseDateTo", filters.releaseDateTo);
+    if (filters.isActive != null)
+      params.append("isActive", String(filters.isActive));
   }
 
   const url = `${BASE}products/all?${params.toString()}`;
@@ -76,12 +80,11 @@ export async function getProductsAdmin(
 export async function getUserById(id: string): Promise<UserResponse> {
   const res = await fetch(`${BASE}admin/user/${id}`, {
     method: "GET",
-    headers:getAuthHeadersJSON(),
+    headers: getAuthHeadersJSON(),
   });
   if (!res.ok) throw new Error("ไม่พบผู้ใช้");
   return res.json();
 }
-
 
 export async function getUsers(): Promise<User[]> {
   const res = await fetch(`${BASE}Admin/users`, {
@@ -92,15 +95,41 @@ export async function getUsers(): Promise<User[]> {
   return await res.json();
 }
 
-export async function createProduct(req: ProductRequest) {
-  const res = await fetch(`${BASE}Admin`, {
+export async function createProductByAdmin(
+  product: ProductRequest & { SellerId: string }
+): Promise<ProductResponse> {
+  const headers = getAuthHeadersFormData();
+  if (!headers.Authorization) throw new Error("Token not found, please login");
+
+  const formData = new FormData();
+  formData.append("ProductName", product.ProductName);
+  formData.append("ProductPrice", String(product.ProductPrice));
+  formData.append("ProductType", String(product.ProductType));
+  formData.append("Quantity", String(product.Quantity));
+  formData.append("IsActive", product.IsActive ? "true" : "false");
+  formData.append("SellerId", product.SellerId);
+
+  if (product.FilePath) {
+    formData.append("FilePath", product.FilePath);
+  }
+
+  const { Authorization } = headers;
+
+  const response = await fetch(`${BASE}products`, {
     method: "POST",
-    headers: getAuthHeadersJSON(),
-    body: JSON.stringify(req),
+    headers: {
+      Authorization,
+    },
+    body: formData,
   });
-  if (res.status === 409) throw new Error("ชื่อซ้ำ");
-  if (!res.ok) throw new Error("เพิ่มสินค้าล้มเหลว");
-  return await res.json();
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.log("Error response from server:", errorData);
+    throw new Error(errorData.message || "ไม่สามารถเพิ่มสินค้าได้");
+  }
+
+  return response.json();
 }
 
 export async function updateUser(id: string, req: UpdateUserRequest) {
@@ -111,7 +140,6 @@ export async function updateUser(id: string, req: UpdateUserRequest) {
   });
   if (!res.ok) throw new Error("แก้ไขผู้ใช้ล้มเหลว");
 }
-
 
 export async function updateProduct(
   id: string,
@@ -151,7 +179,6 @@ export async function updateProduct(
 
   return response.json();
 }
-
 
 export async function deleteProduct(id: string): Promise<void> {
   const headers = getAuthHeadersJSON();
@@ -196,4 +223,12 @@ export async function deleteUser(id: string) {
   if (!res.ok) throw new Error("ลบผู้ใช้ล้มเหลว");
 }
 
-
+export async function getSellers(): Promise<User[]> {
+  const res = await fetch(`${BASE}admin/users/sellers`, {
+    // <-- เพิ่ม "admin"
+    method: "GET",
+    headers: getAuthHeadersJSON(),
+  });
+  if (!res.ok) throw new Error("โหลดรายชื่อ seller ล้มเหลว");
+  return await res.json();
+}

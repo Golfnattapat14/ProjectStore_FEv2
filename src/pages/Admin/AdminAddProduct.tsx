@@ -1,28 +1,33 @@
-import React, { useState, type ChangeEvent } from "react";
+import React, { useState, useEffect, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { addNewProduct } from "@/api/Seller";
-import { ProductRequest } from "@/types/product";
-import { productTypes } from "@/constants/productTypes";
-
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { ProductRequest } from "@/types/product";
+import { productTypes } from "@/constants/productTypes";
+import { User } from "@/types/adminDashborad";
+import { createProductByAdmin, getSellers } from "@/api/Admin";
 
 const AdminAddProduct: React.FC = () => {
   const navigate = useNavigate();
 
-  const savedUser = localStorage.getItem("user");
-  const currentUser = savedUser ? JSON.parse(savedUser) : null;
-  const [product, setProduct] = useState<ProductRequest>({
+  const [product, setProduct] = useState<ProductRequest & { SellerId?: string }>({
     ProductName: "",
     ProductPrice: 0,
     ProductType: 5,
     Quantity: 0,
     IsActive: true,
-    CreateBy: currentUser?.username || "",
     FilePath: null,
   });
 
+  const [sellers, setSellers] = useState<User[]>([]);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    // ดึงรายชื่อ seller
+    getSellers()
+      .then(setSellers)
+      .catch((err) => console.error("Failed to fetch sellers:", err));
+  }, []);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -62,10 +67,11 @@ const AdminAddProduct: React.FC = () => {
       product.ProductPrice <= 0 ||
       product.Quantity <= 0 ||
       product.ProductType < 1 ||
-      product.ProductType > 5
+      product.ProductType > 5 ||
+      !product.SellerId
     ) {
       toast.error(
-        "กรุณากรอกข้อมูลให้ถูกต้อง และประเภทสินค้าต้องอยู่ระหว่าง 1 ถึง 5"
+        "กรุณากรอกข้อมูลให้ถูกต้อง และเลือก seller และประเภทสินค้าต้องอยู่ระหว่าง 1 ถึง 5"
       );
       return;
     }
@@ -74,11 +80,12 @@ const AdminAddProduct: React.FC = () => {
       setSaving(true);
       toast.info("กำลังบันทึก...");
 
-      await addNewProduct(product);
+      await createProductByAdmin(product as ProductRequest & { SellerId: string });
 
       toast.success("เพิ่มสินค้าเรียบร้อยแล้ว");
       setTimeout(() => navigate("/admin"), 1500);
     } catch (err) {
+      console.error(err);
       toast.error("เกิดข้อผิดพลาดในการบันทึก");
     } finally {
       setSaving(false);
@@ -104,43 +111,58 @@ const AdminAddProduct: React.FC = () => {
           เพิ่มสินค้าใหม่
         </h2>
 
-        <label htmlFor="productName" className="block mb-4">
+        <label className="block mb-4">
+          <span className="block mb-1 font-medium">Seller:</span>
+          <select
+            name="SellerId"
+            value={product.SellerId ?? ""}
+            onChange={handleChange}
+            disabled={saving}
+            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+          >
+            <option value="" disabled>
+              -- กรุณาเลือก seller --
+            </option>
+            {sellers.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.username}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="block mb-4">
           <span className="block mb-1 font-medium">ชื่อสินค้า:</span>
           <input
-            id="productName"
             type="text"
             name="ProductName"
             maxLength={30}
             value={product.ProductName}
             onChange={handleChange}
-            aria-required="true"
             disabled={saving}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           />
         </label>
 
-        <label htmlFor="productPrice" className="block mb-4">
+        <label className="block mb-4">
           <span className="block mb-1 font-medium">
             ราคา: {Number(product.ProductPrice).toFixed(2)} บาท
           </span>
           <input
-            id="productPrice"
             type="number"
             name="ProductPrice"
             value={product.ProductPrice}
             onChange={handleChange}
             min={0}
             step="0.01"
-            aria-required="true"
             disabled={saving}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           />
         </label>
 
-        <label htmlFor="productType" className="block mb-4">
+        <label className="block mb-4">
           <span className="block mb-1 font-medium">ประเภทสินค้า:</span>
           <select
-            id="productType"
             name="ProductType"
             value={product.ProductType ?? 0}
             onChange={handleChange}
@@ -158,25 +180,22 @@ const AdminAddProduct: React.FC = () => {
           </select>
         </label>
 
-        <label htmlFor="quantity" className="block mb-4">
+        <label className="block mb-4">
           <span className="block mb-1 font-medium">จำนวน:</span>
           <input
-            id="quantity"
             type="number"
             name="Quantity"
             value={product.Quantity}
             onChange={handleChange}
             min={0}
-            aria-required="true"
             disabled={saving}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           />
         </label>
 
-        <label htmlFor="filePath" className="block mb-6">
+        <label className="block mb-6">
           <span className="block mb-1 font-medium">รูปภาพสินค้า:</span>
           <input
-            id="filePath"
             type="file"
             name="FilePath"
             onChange={handleChange}
@@ -191,12 +210,8 @@ const AdminAddProduct: React.FC = () => {
           )}
         </label>
 
-        <label
-          htmlFor="isActive"
-          className="flex items-center mb-6 cursor-pointer select-none"
-        >
+        <label className="flex items-center mb-6 cursor-pointer select-none">
           <input
-            id="isActive"
             type="checkbox"
             name="IsActive"
             checked={product.IsActive}
@@ -221,7 +236,7 @@ const AdminAddProduct: React.FC = () => {
           </button>
 
           <button
-            onClick={() => navigate("/seller")}
+            onClick={() => navigate("/admin")}
             disabled={saving}
             className="px-6 py-2 rounded-md border border-gray-400 hover:bg-gray-100 disabled:opacity-50"
           >

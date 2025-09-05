@@ -24,5 +24,6 @@ export interface ProductRequest {
   CreateBy?: string;
   IsActive?: boolean;
   FilePath? :File | null;
+  SellerId?: string;
 }
 
